@@ -568,7 +568,7 @@ class ReportForm(forms.ModelForm):
         self.initial['secondary_color'] = '#212121'
         self.initial['executive_summary_description'] = '''On **{scan_date}**, **{target_name}** engaged **{company_name}** to perform a security audit on their Web application.
 
-**{company_name}** performed both Security Audit and Reconnaissance using automated tool reconPoint. https://github.com/yogeshojha/reconpoint .
+**{company_name}** performed both Security Audit and Reconnaissance using automated tool reconPoint. https://github.com/khulnasoft/reconpoint .
 
 ## Observations
 
