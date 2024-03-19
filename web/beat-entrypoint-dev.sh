@@ -14,7 +14,4 @@ if [ "$REMOTE_DEBUG" == "1" ]; then
     apt install net-tools -y
 fi
 
-python3 manage.py migrate
-python3 manage.py runserver 0.0.0.0:8000
-
-exec "$@"
+./beat-entrypoint.sh
