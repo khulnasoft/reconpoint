@@ -82,7 +82,7 @@ services:
       context: ./web
     entrypoint: /usr/src/app/entrypoint.sh
     restart: always
-    image: docker.pkg.github.com/khulnasoft/reconpoint/reconpoint:latest
+    image: ghcr.io/khulnasoft/reconpoint/reconpoint:latest
     environment:
       - CELERY_BROKER=redis://redis:6379/0
       - CELERY_BACKEND=redis://redis:6379/0
