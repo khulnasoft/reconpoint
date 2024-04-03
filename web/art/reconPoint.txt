@@ -1,4 +1,4 @@
- ::::::::::::::: reconPoint automation script ::::::::::::::: 
+ ::::::::::::::: reconPoint automation script :::::::::::::: 
                        ______                                
                     .-        -.                             
                    /       *    \             by @KhulnaSoft
