@@ -2,31 +2,27 @@ import mimetypes
 import os
 
 from reconPoint.init import first_run
-from reconPoint.utilities import ReconpointTaskFormatter
+from reconPoint.utilities import RengineTaskFormatter
 
 mimetypes.add_type("text/javascript", ".js", True)
 mimetypes.add_type("text/css", ".css", True)
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#       RECONPOINT CONFIGURATIONS
+#       RENGINE CONFIGURATIONS
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Root env vars
-RECONPOINT_HOME = os.environ.get('RECONPOINT_HOME', '/usr/src/app')
-RECONPOINT_RESULTS = os.environ.get('RECONPOINT_RESULTS', f'{RECONPOINT_HOME}/scan_results')
-RECONPOINT_CACHE_ENABLED = bool(int(os.environ.get('RECONPOINT_CACHE_ENABLED', '0')))
-RECONPOINT_RECORD_ENABLED = bool(int(os.environ.get('RECONPOINT_RECORD_ENABLED', '1')))
-RECONPOINT_RAISE_ON_ERROR = bool(int(os.environ.get('RECONPOINT_RAISE_ON_ERROR', '0')))
-
-# Debug env vars
-DEBUG = bool(int(os.environ.get('DEBUG', '0')))
-REMOTE_DEBUG = bool(int(os.environ.get('REMOTE_DEBUG', '0')))
-REMOTE_DEBUG_PORT = int(os.environ.get('REMOTE_DEBUG_PORT', 5678))
+RENGINE_HOME = os.environ.get('RENGINE_HOME', '/usr/src/app')
+RENGINE_RESULTS = os.environ.get('RENGINE_RESULTS', f'{RENGINE_HOME}/scan_results')
+RENGINE_CACHE_ENABLED = bool(int(os.environ.get('RENGINE_CACHE_ENABLED', '0')))
+RENGINE_RECORD_ENABLED = bool(int(os.environ.get('RENGINE_RECORD_ENABLED', '1')))
+RENGINE_RAISE_ON_ERROR = bool(int(os.environ.get('RENGINE_RAISE_ON_ERROR', '0')))
 
 # Common env vars
+DEBUG = bool(int(os.environ.get('DEBUG', '0')))
 DOMAIN_NAME = os.environ.get('DOMAIN_NAME', 'localhost:8000')
 TEMPLATE_DEBUG = bool(int(os.environ.get('TEMPLATE_DEBUG', '0')))
-SECRET_FILE = os.path.join(RECONPOINT_HOME, 'secret')
+SECRET_FILE = os.path.join(RENGINE_HOME, 'secret')
 DEFAULT_ENABLE_HTTP_CRAWL = bool(int(os.environ.get('DEFAULT_ENABLE_HTTP_CRAWL', '1')))
 DEFAULT_RATE_LIMIT = int(os.environ.get('DEFAULT_RATE_LIMIT', '150')) # requests / second
 DEFAULT_HTTP_TIMEOUT = int(os.environ.get('DEFAULT_HTTP_TIMEOUT', '5')) # seconds
@@ -196,7 +192,7 @@ ROLEPERMISSIONS_REDIRECT_TO_LOGIN = True
 '''
 Cache settings
 '''
-RECONPOINT_TASK_IGNORE_CACHE_KWARGS = ['ctx']
+RENGINE_TASK_IGNORE_CACHE_KWARGS = ['ctx']
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -208,11 +204,6 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
     'handlers': {
-        'file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': 'errors.log',
-        },
         'null': {
             'class': 'logging.NullHandler'
         },
@@ -248,15 +239,10 @@ LOGGING = {
             'format': '%(name)-10s | %(message)s'
         },
         'task': {
-            '()': lambda : ReconpointTaskFormatter('%(task_name)-34s | %(levelname)s | %(message)s')
+            '()': lambda : RengineTaskFormatter('%(task_name)-34s | %(levelname)s | %(message)s')
         }
     },
     'loggers': {
-        'django': {
-            'handlers': ['file'],
-            'level': 'ERROR' if DEBUG else 'CRITICAL',
-            'propagate': True,
-        },
         '': {
             'handlers': ['brief'],
             'level': 'DEBUG' if DEBUG else 'INFO',
@@ -290,17 +276,3 @@ LOGGING = {
         }
     },
 }
-
-# debug
-def show_toolbar(request):
-    if DEBUG:
-        return True
-    return False
-
-if DEBUG:
-    DEBUG_TOOLBAR_CONFIG = {
-        'SHOW_TOOLBAR_CALLBACK': 'reconPoint.settings.show_toolbar',
-    }
-
-    INSTALLED_APPS.append('debug_toolbar')
-    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
