@@ -139,7 +139,7 @@ fi
 if [ ! -d "/usr/src/github/Infoga" ]
 then
   echo "Cloning Infoga"
-  git clone https://github.com/m4ll0k/Infoga /usr/src/github/Infoga
+  git clone https://github.com/cys3c/infoga /usr/src/github/Infoga
 fi
 
 # clone ctfr
