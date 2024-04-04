@@ -1,8 +1,8 @@
 import mimetypes
 import os
 
-from reconPoint.init import first_run
-from reconPoint.utilities import ReconpointTaskFormatter
+from reconPont.init import first_run
+from reconPont.utilities import ReconpontTaskFormatter
 
 mimetypes.add_type("text/javascript", ".js", True)
 mimetypes.add_type("text/css", ".css", True)
@@ -94,11 +94,11 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'reconPoint.context_processors.projects'
+                'reconPont.context_processors.projects'
             ],
     },
 }]
-ROOT_URLCONF = 'reconPoint.urls'
+ROOT_URLCONF = 'reconPont.urls'
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
@@ -113,7 +113,7 @@ REST_FRAMEWORK = {
     ),
     'PAGE_SIZE': 500,
 }
-WSGI_APPLICATION = 'reconPoint.wsgi.application'
+WSGI_APPLICATION = 'reconPont.wsgi.application'
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
@@ -146,7 +146,7 @@ USE_L10N = True
 USE_TZ = True
 
 # Temporary fix for celery beat crash
-# See https://github.com/khulnasoft/reconpoint/issues/971
+# See https://github.com/khulnasoft/reconpont/issues/971
 DJANGO_CELERY_BEAT_TZ_AWARE = False
 
 MEDIA_URL = '/media/'
@@ -186,7 +186,7 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 '''
 ROLES and PERMISSIONS
 '''
-ROLEPERMISSIONS_MODULE = 'reconPoint.roles'
+ROLEPERMISSIONS_MODULE = 'reconPont.roles'
 ROLEPERMISSIONS_REDIRECT_TO_LOGIN = True
 
 '''
@@ -239,7 +239,7 @@ LOGGING = {
             'format': '%(name)-10s | %(message)s'
         },
         'task': {
-            '()': lambda : ReconpointTaskFormatter('%(task_name)-34s | %(levelname)s | %(message)s')
+            '()': lambda : ReconpontTaskFormatter('%(task_name)-34s | %(levelname)s | %(message)s')
         }
     },
     'loggers': {
@@ -269,7 +269,7 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False
         },
-        'reconPoint.tasks': {
+        'reconPont.tasks': {
             'handlers': ['task'],
             'level': 'DEBUG' if DEBUG else 'INFO',
             'propagate': False

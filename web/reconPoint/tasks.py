@@ -24,20 +24,18 @@ from django.utils import timezone
 from pycvesearch import CVESearch
 from metafinder.extractor import extract_metadata_from_google_search
 
-from reconPoint.celery import app
-from reconPoint.gpt import GPTVulnerabilityReportGenerator
-from reconPoint.celery_custom_task import ReconpointTask
-from reconPoint.common_func import *
-from reconPoint.definitions import *
-from reconPoint.settings import *
-from reconPoint.gpt import *
-from reconPoint.utilities import *
+from reconPont.celery import app
+from reconPont.gpt import GPTVulnerabilityReportGenerator
+from reconPont.celery_custom_task import ReconpointTask
+from reconPont.common_func import *
+from reconPont.definitions import *
+from reconPont.settings import *
+from reconPont.gpt import *
+from reconPont.utilities import *
 from scanEngine.models import (EngineType, InstalledExternalTool, Notification, Proxy)
 from startScan.models import *
 from startScan.models import EndPoint, Subdomain, Vulnerability
 from targetApp.models import Domain
-if REMOTE_DEBUG:
-	import debugpy
 
 """
 Celery tasks.
@@ -73,9 +71,6 @@ def initiate_scan(
 		out_of_scope_subdomains (list): Out-of-scope subdomains.
 		url_filter (str): URL path. Default: ''
 	"""
-
-	if REMOTE_DEBUG:
-		debug()
 
 	# Get scan history
 	scan = ScanHistory.objects.get(pk=scan_history_id)
@@ -226,9 +221,6 @@ def initiate_subscan(
 		url_filter (str): URL path. Default: ''
 	"""
 
-	if REMOTE_DEBUG:
-		debug()
-
 	# Get Subdomain, Domain and ScanHistory
 	subdomain = Subdomain.objects.get(pk=subdomain_id)
 	scan = ScanHistory.objects.get(pk=subdomain.scan_history.id)
@@ -263,7 +255,7 @@ def initiate_subscan(
 	# Run task
 	method = globals().get(scan_type)
 	if not method:
-		logger.warning(f'Task {scan_type} is not supported by reconPoint. Skipping')
+		logger.warning(f'Task {scan_type} is not supported by reconPont. Skipping')
 		return
 	scan.tasks.append(scan_type)
 	scan.save()
@@ -370,7 +362,7 @@ def report(ctx={}, description=None):
 
 
 #------------------------- #
-# Tracked reconPoint tasks    #
+# Tracked reconPont tasks    #
 #--------------------------#
 
 @app.task(name='subdomain_discovery', queue='main_scan_queue', base=ReconpointTask, bind=True)
@@ -494,7 +486,7 @@ def subdomain_discovery(
 			cmd = cmd.replace('{PATH}', custom_tool.github_clone_path) if '{PATH}' in cmd else cmd
 		else:
 			logger.warning(
-				f'Subdomain discovery tool "{tool}" is not supported by reconPoint. Skipping.')
+				f'Subdomain discovery tool "{tool}" is not supported by reconPont. Skipping.')
 			continue
 
 		# Run tool
@@ -3106,7 +3098,7 @@ def send_file_to_discord(file_path, title=None):
 	webhook = DiscordWebhook(
 		url=notif.discord_hook_url,
 		rate_limit_retry=True,
-		username=title or "reconPoint Discord Plugin"
+		username=title or "reconPont Discord Plugin"
 	)
 	with open(file_path, "rb") as f:
 		head, tail = os.path.split(file_path)
@@ -4811,18 +4803,3 @@ def gpt_vulnerability_description(vulnerability_id):
 			vuln.save()
 
 	return response
-
-#----------------------#
-#     Remote debug     #
-#----------------------#
-
-def debug():
-	try:
-		# Activate remote debug for scan worker
-		if REMOTE_DEBUG:
-				logger.info('================= Debug activated, task paused, waiting attach from IDE =============')
-				os.environ['GEVENT_SUPPORT'] = 'True'
-				debugpy.listen(('0.0.0.0',REMOTE_DEBUG_PORT))
-				debugpy.wait_for_client()
-	except  Exception as e:
-		logger.error(e)
