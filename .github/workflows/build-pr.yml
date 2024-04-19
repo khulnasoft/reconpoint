@@ -1,7 +1,6 @@
 name: 🌄 Build Docker image for pull request
 
 on:
-  workflow_dispatch:
   pull_request:
     branches: [ master, stable, dev ]
 
