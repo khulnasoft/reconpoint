@@ -4,7 +4,7 @@ FROM --platform=linux/amd64 ubuntu:22.04
 # Labels and Credits
 LABEL \
     name="reconPoint" \
-    author="YKhulnaSoft DevOps <yogesh.ojha11@gmail.com>" \
+    author="KhulnaSoft DevOps <security@khulnasoft.com>" \
     description="reconPoint is a automated pipeline of recon process, useful for information gathering during web application penetration testing."
 
 # Environment Variables
