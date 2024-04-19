@@ -1,2 +1,0 @@
-* khulnasoft-lab
-* threatcode

@@ -13,6 +13,7 @@ schema_view = get_schema_view(
       title="reconPoint API",
       default_version='v1',
       description="reconPoint: An Automated reconnaissance framework.",
+      contact=openapi.Contact(email="yogesh.ojha11@gmail.com"),
    ),
    public=True,
    permission_classes=[permissions.AllowAny],
