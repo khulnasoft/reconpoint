@@ -10,6 +10,10 @@ usageFunction()
   exit 1
 }
 
+if ! command -v tput &> /dev/null; then
+  echo "tput could not be found, please install ncurses-bin"
+  exit 1
+fi
 tput setaf 2;
 cat web/art/reNgine.txt
 
