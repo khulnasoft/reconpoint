@@ -35,7 +35,8 @@ if [ $isNonInteractive = false ]; then
         ;;
         * )
           nano .env
-        ;;
+        read -sp "Enter the Django superuser password: " DJANGO_SUPERUSER_PASSWORD
+        export DJANGO_SUPERUSER_PASSWORD
     esac
 else
   echo "Non-interactive installation parameter set. Installation begins."
