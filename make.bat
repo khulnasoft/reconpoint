@@ -19,7 +19,10 @@ if "%1" == "certs" %DOCKER_COMPOSE% -f docker-compose.setup.yml run --rm certs
 :: Generate certificates.
 if "%1" == "setup" %DOCKER_COMPOSE% -f docker-compose.setup.yml run --rm certs
 :: Build and start all services.
-if "%1" == "up" %DOCKER_COMPOSE% %COMPOSE_ALL_FILES% up -d --build %SERVICES%
+if "%1" == "up" (
+    %DOCKER_COMPOSE% %COMPOSE_ALL_FILES% up -d --build %SERVICES%
+    if %errorlevel% neq 0 exit /b %errorlevel%
+)
 :: Build all services.
 if "%1" == "build" %DOCKER_COMPOSE% %COMPOSE_ALL_FILES% build %SERVICES%
 :: Generate Username (Use only after make up).
