@@ -5,7 +5,7 @@ ARG GECKOVERSION=0.33.0
 ARG GOVERSION=1.21.5
 
 RUN ARCH=$(dpkg --print-architecture) \ 
-    && if [ "${ARCH}" ! "arm64" ] || [ "${ARCH}" ! "amd64" ]; then \
+    && if [ "${ARCH}" != "arm64" ] && [ "${ARCH}" != "amd64" ]; then \
       echo "reconPoint not supported, encountered unknown architecture: ${TARGETPLATFORM}" \
       && exit 1; \
     fi
