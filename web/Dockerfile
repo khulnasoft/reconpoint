@@ -57,6 +57,7 @@ RUN add-apt-repository ppa:mozillateam/ppa
 
 RUN ARCH=$(dpkg --print-architecture) \ 
     && wget https://go.dev/dl/go${GOVERSION}.linux-${ARCH}.tar.gz \
+    && echo "$EXPECTED_SHA256SUM go${GOVERSION}.linux-${ARCH}.tar.gz" | sha256sum -c - \
     && tar -xvf go${GOVERSION}.linux-${ARCH}.tar.gz -C /usr/local \
     && rm go${GOVERSION}.linux-${ARCH}.tar.gz
 
