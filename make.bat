@@ -41,6 +41,10 @@ if "%1" == "logs" %DOCKER_COMPOSE% %COMPOSE_ALL_FILES% logs --follow --tail=1000
 :: Show all Docker images.
 if "%1" == "images" %DOCKER_COMPOSE% %COMPOSE_ALL_FILES% images %SERVICES%
 :: Remove containers and delete volume data.
-if "%1" == "prune" %DOCKER_COMPOSE% %COMPOSE_ALL_FILES% stop %SERVICES% & docker-compose %COMPOSE_ALL_FILES% rm -f %SERVICES% & docker volume prune -f
+if "%1" == "prune" (
+    %DOCKER_COMPOSE% %COMPOSE_ALL_FILES% stop %SERVICES%
+    docker-compose %COMPOSE_ALL_FILES% rm -f %SERVICES%
+    docker volume prune -f
+)
 :: Show this help.
 if "%1" == "help" @echo Make application Docker images and manage containers using Docker Compose files only for windows.
