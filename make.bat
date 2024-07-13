@@ -2,7 +2,7 @@
 
 :: Credits: https://github.com/ninjhacks
 
-set COMPOSE_ALL_FILES  = -f docker-compose.yml
+set COMPOSE_ALL_FILES=-f docker-compose.yml
 set SERVICES           = db web proxy redis celery celery-beat ollama
 
 :: Check if 'docker compose' command is available
