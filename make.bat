@@ -6,11 +6,7 @@ set COMPOSE_ALL_FILES=-f docker-compose.yml
 set SERVICES           = db web proxy redis celery celery-beat ollama
 
 :: Check if 'docker compose' command is available
-docker compose version >nul 2>&1
-if %errorlevel% == 0 (
-    set DOCKER_COMPOSE=docker compose
-) else (
-    set DOCKER_COMPOSE=docker-compose
+set DOCKER_COMPOSE=docker-compose
 )
 
 
