@@ -27,7 +27,7 @@ jobs:
           images: khulnasoft/reconpoint
 
       - name: Build Docker image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        uses: docker/build-push-action@a254f8ca60a858f3136a2f1f23a60969f2c402dd
         with:
           context: web/
           push: true
