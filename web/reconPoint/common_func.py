@@ -532,8 +532,9 @@ def get_cms_details(url):
 		find_dir += f'_{port}'
 
 	# subdomain may also have port number, and is stored in dir as _port
-
-	cms_dir_path =  f'/usr/src/github/CMSeeK/Result/{find_dir}'
+from urllib.parse import urljoin
+cms_dir_path =  f'/usr/src/github/CMSeeK/Result/{find_dir}'
+cms_json_path =  urljoin(cms_dir_path, 'cms.json')
 	cms_json_path =  cms_dir_path + '/cms.json'
 
 	if os.path.isfile(cms_json_path):
