@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 usageFunction()
 {
@@ -10,12 +10,8 @@ usageFunction()
   exit 1
 }
 
-if ! command -v tput &> /dev/null; then
-  echo "tput could not be found, please install ncurses-bin"
-  exit 1
-fi
 tput setaf 2;
-cat web/art/reNgine.txt
+cat web/art/reconPoint.txt
 
 tput setaf 1; echo "Before running this script, please make sure Docker is running and you have made changes to .env file."
 tput setaf 2; echo "Changing the postgres username & password from .env is highly recommended."
@@ -39,8 +35,7 @@ if [ $isNonInteractive = false ]; then
         ;;
         * )
           nano .env
-        read -sp "Enter the Django superuser password: " DJANGO_SUPERUSER_PASSWORD
-        export DJANGO_SUPERUSER_PASSWORD
+        ;;
     esac
 else
   echo "Non-interactive installation parameter set. Installation begins."
@@ -55,12 +50,12 @@ echo "#########################################################################"
 
 echo " "
 tput setaf 4;
-echo "Installing reNgine and it's dependencies"
+echo "Installing reconPoint and its dependencies"
 
 echo " "
 if [ "$EUID" -ne 0 ]
   then
-  tput setaf 1; echo "Error installing reNgine, Please run this script as root!"
+  tput setaf 1; echo "Error installing reconPoint, Please run this script as root!"
   tput setaf 1; echo "Example: sudo ./install.sh"
   exit
 fi
@@ -95,13 +90,7 @@ tput setaf 4;
 echo "#########################################################################"
 echo "Installing Docker Compose"
 echo "#########################################################################"
-if ! command -v docker-compose &> /dev/null; then
-  curl -L "https://github.com/docker/compose/releases/download/v2.5.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  chmod +x /usr/local/bin/docker-compose
-  ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
-else
-  echo "docker-compose is already installed."
-fi
+if [ -x "$(command -v docker compose)" ]; then
   tput setaf 2; echo "Docker Compose already installed, skipping."
 else
   curl -L "https://github.com/docker/compose/releases/download/v2.5.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -142,9 +131,9 @@ fi
 echo " "
 tput setaf 4;
 echo "#########################################################################"
-echo "Installing reNgine"
+echo "Installing reconPoint"
 echo "#########################################################################"
-make certs && make build && make up && tput setaf 2 && echo "reNgine is installed!!!" && failed=0 || failed=1
+make certs && make build && make up && tput setaf 2 && echo "reconPoint is installed!!!" && failed=0 || failed=1
 
 if [ "${failed}" -eq 0 ]; then
   sleep 3
@@ -155,9 +144,10 @@ if [ "${failed}" -eq 0 ]; then
   echo "Creating an account"
   echo "#########################################################################"
   make username isNonInteractive=$isNonInteractive
+  make migrate
 
-  tput setaf 2 && printf "\n%s\n" "Thank you for installing reNgine, happy recon!!"
+  tput setaf 2 && printf "\n%s\n" "Thank you for installing reconPoint, happy recon!!"
   echo "In case you have unapplied migrations (see above in red), run 'make migrate'"
 else
-  tput setaf 1 && printf "\n%s\n" "reNgine installation failed!!"
+  tput setaf 1 && printf "\n%s\n" "reconPoint installation failed!!"
 fi
