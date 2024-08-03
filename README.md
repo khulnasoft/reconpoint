@@ -16,10 +16,6 @@
 <a href="https://github.com/khulnasoft/reconpoint/actions/workflows/codeql-analysis.yml" target="_blank"><img src="https://github.com/khulnasoft/reconpoint/actions/workflows/codeql-analysis.yml/badge.svg" alt="" /></a>&nbsp;<a href="https://github.com/khulnasoft/reconpoint/actions/workflows/build.yml" target="_blank"><img src="https://github.com/khulnasoft/reconpoint/actions/workflows/build.yml/badge.svg" alt="" /></a>&nbsp;
 </p>
 
-<p align="center">
-<a href="https://discord.gg/H6WzebwX3H" target="_blank"><img src="https://img.shields.io/discord/880363103689277461" alt="" /></a>&nbsp;
-</p>
-
 <h3>reconPoint 2.0-jasper<br>Redefining the future of reconnaissance!</h3>
 
 <h4>What is reconPoint?</h4>
