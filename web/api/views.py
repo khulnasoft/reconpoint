@@ -1226,14 +1226,18 @@ class IPToDomain(APIView):
 			for ip in IPv4Network(ip_address, False):
 				domains = []
 				ips = []
-				try:
-					(domain, domains, ips) = socket.gethostbyaddr(str(ip))
-				except socket.herror:
-					logger.info(f'No PTR record for {ip_address}')
-					domain = str(ip)
-				if domain not in domains:
-					domains.append(domain)
-				resolved_ips.append({'ip': str(ip),'domain': domain, 'domains': domains, 'ips': ips})
+    try:
+        if ip in ip_cache:
+            (domain, domains, ips) = ip_cache[ip]
+        else:
+            (domain, domains, ips) = socket.gethostbyaddr(str(ip))
+            ip_cache[ip] = (domain, domains, ips)
+    except socket.herror:
+        logger.info(f'No PTR record for {ip_address}')
+        domain = str(ip)
+    if domain not in domains:
+        domains.append(domain)
+    resolved_ips.append({'ip': str(ip),'domain': domain, 'domains': domains, 'ips': ips})
 			response = {
 				'status': True,
 				'orig': ip_address,
