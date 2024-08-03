@@ -1,7 +1,7 @@
 import logging
 import re
 import socket
-import subprocess
+from ipaddress import IPv4Network
 
 import requests
 import validators
@@ -21,7 +21,7 @@ from reconPoint.celery import app
 from reconPoint.common_func import *
 from reconPoint.definitions import ABORTED_TASK
 from reconPoint.tasks import *
-from reconPoint.gpt import GPTAttackSuggestionGenerator
+from reconPoint.llm import *
 from reconPoint.utilities import is_safe_path
 from scanEngine.models import *
 from startScan.models import *
@@ -31,6 +31,82 @@ from targetApp.models import *
 from .serializers import *
 
 logger = logging.getLogger(__name__)
+
+
+class OllamaManager(APIView):
+	def get(self, request):
+		"""
+		API to download Ollama Models
+		sends a POST request to download the model
+		"""
+		req = self.request
+		model_name = req.query_params.get('model')
+		response = {
+			'status': False
+		}
+		try:
+			pull_model_api = f'{OLLAMA_INSTANCE}/api/pull'
+			_response = requests.post(
+				pull_model_api, 
+				json={
+					'name': model_name,
+					'stream': False
+				}
+			).json()
+			if _response.get('error'):
+				response['status'] = False
+				response['error'] = _response.get('error')
+			else:
+				response['status'] = True
+		except Exception as e:
+			response['error'] = str(e)		
+		return Response(response)
+	
+	def delete(self, request):
+		req = self.request
+		model_name = req.query_params.get('model')
+		delete_model_api = f'{OLLAMA_INSTANCE}/api/delete'
+		response = {
+			'status': False
+		}
+		try:
+			_response = requests.delete(
+				delete_model_api, 
+				json={
+					'name': model_name
+				}
+			).json()
+			if _response.get('error'):
+				response['status'] = False
+				response['error'] = _response.get('error')
+			else:
+				response['status'] = True
+		except Exception as e:
+			response['error'] = str(e)
+		return Response(response)
+	
+	def put(self, request):
+		req = self.request
+		model_name = req.query_params.get('model')
+		# check if model_name is in DEFAULT_GPT_MODELS
+		response = {
+			'status': False
+		}
+		use_ollama = True
+		if any(model['name'] == model_name for model in DEFAULT_GPT_MODELS):
+			use_ollama = False
+		try:
+			OllamaSettings.objects.update_or_create(
+				defaults={
+					'selected_model': model_name,
+					'use_ollama': use_ollama
+				},
+				id=1
+			)
+			response['status'] = True
+		except Exception as e:
+			response['error'] = str(e)
+		return Response(response)
 
 
 class GPTAttackSuggestion(APIView):
@@ -64,7 +140,7 @@ class GPTAttackSuggestion(APIView):
 		tech_used = ''
 		for tech in subdomain.technologies.all():
 			tech_used += f'{tech.name}, '
-		input = f'''
+		llm_input = f'''
 			Subdomain Name: {subdomain.name}
 			Subdomain Page Title: {subdomain.page_title}
 			Open Ports: {open_ports_str}
@@ -74,8 +150,9 @@ class GPTAttackSuggestion(APIView):
 			Web Server: {subdomain.webserver}
 			Page Content Length: {subdomain.content_length}
 		'''
-		gpt = GPTAttackSuggestionGenerator()
-		response = gpt.get_attack_suggestion(input)
+		llm_input = re.sub(r'\t', '', llm_input)
+		gpt = LLMAttackSuggestionGenerator(logger)
+		response = gpt.get_attack_suggestion(llm_input)
 		response['subdomain_name'] = subdomain.name
 		if response.get('status'):
 			subdomain.attack_surface = response.get('description')
@@ -83,7 +160,7 @@ class GPTAttackSuggestion(APIView):
 		return Response(response)
 
 
-class GPTVulnerabilityReportGenerator(APIView):
+class LLMVulnerabilityReportGenerator(APIView):
 	def get(self, request):
 		req = self.request
 		vulnerability_id = req.query_params.get('id')
@@ -92,7 +169,7 @@ class GPTVulnerabilityReportGenerator(APIView):
 				'status': False,
 				'error': 'Missing GET param Vulnerability `id`'
 			})
-		task = gpt_vulnerability_description.apply_async(args=(vulnerability_id,))
+		task = llm_vulnerability_description.apply_async(args=(vulnerability_id,))
 		response = task.wait()
 		return Response(response)
 
@@ -171,7 +248,7 @@ class ListTargetsDatatableViewSet(viewsets.ModelViewSet):
 
 
 			if _order_direction == 'desc':
-				order_col = '-{}'.format(order_col)
+				order_col = f'-{order_col}'
 
 			qs = self.queryset.filter(
 				Q(name__icontains=search_value) |
@@ -191,12 +268,15 @@ class WafDetector(APIView):
 		response = {}
 		response['status'] = False
 
+		# validate url as a first step to avoid command injection
+		if not (validators.url(url) or validators.domain(url)):
+			response['message'] = 'Invalid Domain/URL provided!'
+			return Response(response)
+		
 		wafw00f_command = f'wafw00f {url}'
-		output = subprocess.check_output(wafw00f_command, shell=True)
-		# use regex to get the waf
-		regex = "behind \\\\x1b\[1;96m(.*)\\\\x1b"
-		group = re.search(regex, str(output))
-
+		_, output = run_command(wafw00f_command, remove_ansi_sequence=True)
+		regex = r"behind (.*?) WAF"
+		group = re.search(regex, output)
 		if group:
 			response['status'] = True
 			response['results'] = group.group(1)
@@ -488,7 +568,6 @@ class AddReconNote(APIView):
 		data = req.data
 
 		subdomain_id = data.get('subdomain_id')
-		scan_history_id = data.get('scan_history_id')
 		title = data.get('title')
 		description = data.get('description')
 		project = data.get('project')
@@ -498,10 +577,6 @@ class AddReconNote(APIView):
 			note = TodoNote()
 			note.title = title
 			note.description = description
-
-			if scan_history_id:
-				scan_history = ScanHistory.objects.get(id=scan_history_id)
-				note.scan_history = scan_history
 
 			# get scan history for subdomain_id
 			if subdomain_id:
@@ -547,6 +622,7 @@ class AddTarget(APIView):
 		h1_team_handle = data.get('h1_team_handle')
 		description = data.get('description')
 		domain_name = data.get('domain_name')
+		organization_name = data.get('organization')
 		slug = data.get('slug')
 
 		# Validate domain name
@@ -563,6 +639,20 @@ class AddTarget(APIView):
 		if not domain.insert_date:
 			domain.insert_date = timezone.now()
 		domain.save()
+
+		# Create org object in DB
+		if organization_name:
+			organization_obj = None
+			organization_query = Organization.objects.filter(name=organization_name)
+			if organization_query.exists():
+				organization_obj = organization_query[0]
+			else:
+				organization_obj = Organization.objects.create(
+					name=organization_name,
+					project=project,
+					insert_date=timezone.now())
+			organization_obj.domains.add(domain)
+
 		return Response({
 			'status': True,
 			'message': 'Domain successfully added as target !',
@@ -712,6 +802,7 @@ class StopScan(APIView):
 				task_ids = scan.celery_ids
 				scan.scan_status = ABORTED_TASK
 				scan.stop_scan_date = timezone.now()
+				scan.aborted_by = request.user
 				scan.save()
 				create_scan_activity(
 					scan.id,
@@ -891,10 +982,14 @@ class UpdateTool(APIView):
 			tool_name = tool_name.split('/')[-1]
 			update_command = 'cd /usr/src/github/' + tool_name + ' && git pull && cd -'
 
-		run_command(update_command)
-		run_command.apply_async(args=(update_command,))
-		return Response({'status': True, 'message': tool.name + ' updated successfully.'})
-
+		
+		try:
+			run_command(update_command, shell=True)
+			run_command.apply_async(args=[update_command], kwargs={'shell': True})
+			return Response({'status': True, 'message': tool.name + ' updated successfully.'})
+		except Exception as e:
+			logger.error(str(e))
+			return Response({'status': False, 'message': str(e)})
 
 class GetExternalToolCurrentVersion(APIView):
 	def get(self, request):
@@ -949,7 +1044,7 @@ class GithubToolCheckGetLatestRelease(APIView):
 		# if tool_github_url has https://github.com/ remove and also remove trailing /
 		tool_github_url = tool.github_url.replace('http://github.com/', '').replace('https://github.com/', '')
 		tool_github_url = remove_lead_and_trail_slash(tool_github_url)
-		github_api = 'https://api.github.com/repos/{}/releases'.format(tool_github_url)
+		github_api = f'https://api.github.com/repos/{tool_github_url}/releases'
 		response = requests.get(github_api).json()
 		# check if api rate limit exceeded
 		if 'message' in response and response['message'] == 'RateLimited':
@@ -958,7 +1053,7 @@ class GithubToolCheckGetLatestRelease(APIView):
 			return Response({'status': False, 'message': 'Not Found'})
 		elif not response:
 			return Response({'status': False, 'message': 'Not Found'})
-		
+
 		# only send latest release
 		response = response[0]
 
@@ -1066,6 +1161,11 @@ class CMSDetector(APIView):
 		url = req.query_params.get('url')
 		#save_db = True if 'save_db' in req.query_params else False
 		response = {'status': False}
+
+		if not (validators.url(url) or validators.domain(url)):
+			response['message'] = 'Invalid Domain/URL provided!'
+			return Response(response)
+
 		try:
 			# response = get_cms_details(url)
 			response = {}
@@ -1122,27 +1222,29 @@ class IPToDomain(APIView):
 			})
 		try:
 			logger.info(f'Resolving IP address {ip_address} ...')
-			domain, domains, ips = socket.gethostbyaddr(ip_address)
+			resolved_ips = []
+			for ip in IPv4Network(ip_address, False):
+				domains = []
+				ips = []
+				try:
+					(domain, domains, ips) = socket.gethostbyaddr(str(ip))
+				except socket.herror:
+					logger.info(f'No PTR record for {ip_address}')
+					domain = str(ip)
+				if domain not in domains:
+					domains.append(domain)
+				resolved_ips.append({'ip': str(ip),'domain': domain, 'domains': domains, 'ips': ips})
 			response = {
 				'status': True,
-				'ip_address': ip_address,
-				'domains': domains or [domain],
-				'resolves_to': domain
-			}
-		except socket.herror: # ip does not have a PTR record
-			logger.info(f'No PTR record for {ip_address}')
-			response = {
-				'status': True,
-				'ip_address': ip_address,
-				'domains': [ip_address],
-				'resolves_to': ip_address
+				'orig': ip_address,
+				'ip_address': resolved_ips,
 			}
 		except Exception as e:
 			logger.exception(e)
 			response = {
 				'status': False,
 				'ip_address': ip_address,
-				'message': 'Exception {}'.format(e)
+				'message': f'Exception {e}'
 			}
 		finally:
 			return Response(response)
@@ -1788,7 +1890,7 @@ class InterestingSubdomainViewSet(viewsets.ModelViewSet):
 			order_col = 'content_length'
 
 		if _order_direction == 'desc':
-			order_col = '-{}'.format(order_col)
+			order_col = f'-{order_col}'
 
 		if search_value:
 			qs = self.queryset.filter(
@@ -1844,6 +1946,9 @@ class SubdomainDatatableViewSet(viewsets.ModelViewSet):
 
 		subdomains = Subdomain.objects.filter(target_domain__project__slug=project)
 
+		if 'is_important' in req.query_params:
+			subdomains = subdomains.filter(is_important=True)
+
 		if target_id:
 			self.queryset = (
 				subdomains
@@ -1895,7 +2000,7 @@ class SubdomainDatatableViewSet(viewsets.ModelViewSet):
 		elif _order_col == '10':
 			order_col = 'response_time'
 		if _order_direction == 'desc':
-			order_col = '-{}'.format(order_col)
+			order_col = f'-{order_col}'
 		# if the search query is separated by = means, it is a specific lookup
 		# divide the search query into two half and lookup
 		if search_value:
@@ -2225,7 +2330,7 @@ class EndPointViewSet(viewsets.ModelViewSet):
 			elif _order_col == '9':
 				order_col = 'response_time'
 			if _order_direction == 'desc':
-				order_col = '-{}'.format(order_col)
+				order_col = f'-{order_col}'
 			# if the search query is separated by = means, it is a specific lookup
 			# divide the search query into two half and lookup
 			if '=' in search_value or '&' in search_value or '|' in search_value or '>' in search_value or '<' in search_value or '!' in search_value:
