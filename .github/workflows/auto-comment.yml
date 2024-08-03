@@ -10,7 +10,7 @@ jobs:
           issuesOpened: >
             👋 Hi @{{ author }},
 
-            Issues is only for reporting a bug/feature request. Please read documentation before raising an issue https://reconpoint.wiki
+            Issues is only for reporting a bug/feature request. Please read documentation before raising an issue https://recon.khulnasoft.com
 
             For very limited support, questions, and discussions, please join reconPoint mail security@khulnasoft.com
 
