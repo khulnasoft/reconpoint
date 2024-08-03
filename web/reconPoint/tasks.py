@@ -5,7 +5,6 @@ import pprint
 import subprocess
 import time
 import validators
-import whatportis
 import xmltodict
 import yaml
 import tldextract
@@ -25,12 +24,11 @@ from pycvesearch import CVESearch
 from metafinder.extractor import extract_metadata_from_google_search
 
 from reconPoint.celery import app
-from reconPoint.gpt import GPTVulnerabilityReportGenerator
 from reconPoint.celery_custom_task import ReconpointTask
 from reconPoint.common_func import *
 from reconPoint.definitions import *
 from reconPoint.settings import *
-from reconPoint.gpt import *
+from reconPoint.llm import *
 from reconPoint.utilities import *
 from scanEngine.models import (EngineType, InstalledExternalTool, Notification, Proxy)
 from startScan.models import *
@@ -58,6 +56,7 @@ def initiate_scan(
 		results_dir=RECONPOINT_RESULTS,
 		imported_subdomains=[],
 		out_of_scope_subdomains=[],
+		initiated_by_id=None,
 		url_filter=''):
 	"""Initiate a new scan.
 
@@ -69,137 +68,153 @@ def initiate_scan(
 		results_dir (str): Results directory.
 		imported_subdomains (list): Imported subdomains.
 		out_of_scope_subdomains (list): Out-of-scope subdomains.
-		url_filter (str): URL path. Default: ''
+		url_filter (str): URL path. Default: ''.
+		initiated_by (int): User ID initiating the scan.
 	"""
+	logger.info('Initiating scan on celery')
+	scan = None
+	try:
+		# Get scan engine
+		engine_id = engine_id or scan.scan_type.id # scan history engine_id
+		engine = EngineType.objects.get(pk=engine_id)
 
-	# Get scan history
-	scan = ScanHistory.objects.get(pk=scan_history_id)
+		# Get YAML config
+		config = yaml.safe_load(engine.yaml_configuration)
+		enable_http_crawl = config.get(ENABLE_HTTP_CRAWL, DEFAULT_ENABLE_HTTP_CRAWL)
+		gf_patterns = config.get(GF_PATTERNS, [])
 
-	# Get scan engine
-	engine_id = engine_id or scan.scan_type.id # scan history engine_id
-	engine = EngineType.objects.get(pk=engine_id)
+		# Get domain and set last_scan_date
+		domain = Domain.objects.get(pk=domain_id)
+		domain.last_scan_date = timezone.now()
+		domain.save()
 
-	# Get YAML config
-	config = yaml.safe_load(engine.yaml_configuration)
-	enable_http_crawl = config.get(ENABLE_HTTP_CRAWL, DEFAULT_ENABLE_HTTP_CRAWL)
-	gf_patterns = config.get(GF_PATTERNS, [])
+		# Get path filter
+		url_filter = url_filter.rstrip('/')
 
-	# Get domain and set last_scan_date
-	domain = Domain.objects.get(pk=domain_id)
-	domain.last_scan_date = timezone.now()
-	domain.save()
+		# for live scan scan history id is passed as scan_history_id 
+		# and no need to create scan_history object
+	
+		if scan_type == SCHEDULED_SCAN: # scheduled
+			# we need to create scan_history object for each scheduled scan 
+			scan_history_id = create_scan_object(
+				host_id=domain_id,
+				engine_id=engine_id,
+				initiated_by_id=initiated_by_id,
+			)
 
-	# Get path filter
-	url_filter = url_filter.rstrip('/')
-
-	# Get or create ScanHistory() object
-	if scan_type == LIVE_SCAN: # immediate
 		scan = ScanHistory.objects.get(pk=scan_history_id)
 		scan.scan_status = RUNNING_TASK
-	elif scan_type == SCHEDULED_SCAN: # scheduled
-		scan = ScanHistory()
-		scan.scan_status = INITIATED_TASK
-	scan.scan_type = engine
-	scan.celery_ids = [initiate_scan.request.id]
-	scan.domain = domain
-	scan.start_scan_date = timezone.now()
-	scan.tasks = engine.tasks
-	scan.results_dir = f'{results_dir}/{domain.name}_{scan.id}'
-	add_gf_patterns = gf_patterns and 'fetch_url' in engine.tasks
-	if add_gf_patterns:
-		scan.used_gf_patterns = ','.join(gf_patterns)
-	scan.save()
+		scan.scan_type = engine
+		scan.celery_ids = [initiate_scan.request.id]
+		scan.domain = domain
+		scan.start_scan_date = timezone.now()
+		scan.tasks = engine.tasks
+		scan.results_dir = f'{results_dir}/{domain.name}_{scan.id}'
+		add_gf_patterns = gf_patterns and 'fetch_url' in engine.tasks
+		if add_gf_patterns:
+			scan.used_gf_patterns = ','.join(gf_patterns)
+		scan.save()
 
-	# Create scan results dir
-	os.makedirs(scan.results_dir)
+		# Create scan results dir
+		os.makedirs(scan.results_dir)
 
-	# Build task context
-	ctx = {
-		'scan_history_id': scan_history_id,
-		'engine_id': engine_id,
-		'domain_id': domain.id,
-		'results_dir': scan.results_dir,
-		'url_filter': url_filter,
-		'yaml_configuration': config,
-		'out_of_scope_subdomains': out_of_scope_subdomains
-	}
-	ctx_str = json.dumps(ctx, indent=2)
+		# Build task context
+		ctx = {
+			'scan_history_id': scan_history_id,
+			'engine_id': engine_id,
+			'domain_id': domain.id,
+			'results_dir': scan.results_dir,
+			'url_filter': url_filter,
+			'yaml_configuration': config,
+			'out_of_scope_subdomains': out_of_scope_subdomains
+		}
+		ctx_str = json.dumps(ctx, indent=2)
 
-	# Send start notif
-	logger.warning(f'Starting scan {scan_history_id} with context:\n{ctx_str}')
-	send_scan_notif.delay(
-		scan_history_id,
-		subscan_id=None,
-		engine_id=engine_id,
-		status=CELERY_TASK_STATUS_MAP[scan.scan_status])
+		# Send start notif
+		logger.warning(f'Starting scan {scan_history_id} with context:\n{ctx_str}')
+		send_scan_notif.delay(
+			scan_history_id,
+			subscan_id=None,
+			engine_id=engine_id,
+			status=CELERY_TASK_STATUS_MAP[scan.scan_status])
 
-	# Save imported subdomains in DB
-	save_imported_subdomains(imported_subdomains, ctx=ctx)
+		# Save imported subdomains in DB
+		save_imported_subdomains(imported_subdomains, ctx=ctx)
 
-	# Create initial subdomain in DB: make a copy of domain as a subdomain so
-	# that other tasks using subdomains can use it.
-	subdomain_name = domain.name
-	subdomain, _ = save_subdomain(subdomain_name, ctx=ctx)
+		# Create initial subdomain in DB: make a copy of domain as a subdomain so
+		# that other tasks using subdomains can use it.
+		subdomain_name = domain.name
+		subdomain, _ = save_subdomain(subdomain_name, ctx=ctx)
 
-	# If enable_http_crawl is set, create an initial root HTTP endpoint so that
-	# HTTP crawling can start somewhere
-	http_url = f'{domain.name}{url_filter}' if url_filter else domain.name
-	endpoint, _ = save_endpoint(
-		http_url,
-		ctx=ctx,
-		crawl=enable_http_crawl,
-		is_default=True,
-		subdomain=subdomain
-	)
-	if endpoint and endpoint.is_alive:
-		# TODO: add `root_endpoint` property to subdomain and simply do
-		# subdomain.root_endpoint = endpoint instead
-		logger.warning(f'Found subdomain root HTTP URL {endpoint.http_url}')
-		subdomain.http_url = endpoint.http_url
-		subdomain.http_status = endpoint.http_status
-		subdomain.response_time = endpoint.response_time
-		subdomain.page_title = endpoint.page_title
-		subdomain.content_type = endpoint.content_type
-		subdomain.content_length = endpoint.content_length
-		for tech in endpoint.techs.all():
-			subdomain.technologies.add(tech)
-		subdomain.save()
-
-
-	# Build Celery tasks, crafted according to the dependency graph below:
-	# subdomain_discovery --> port_scan --> fetch_url --> dir_file_fuzz
-	# osint								             	  vulnerability_scan
-	# osint								             	  dalfox xss scan
-	#						 	   		         	  	  screenshot
-	#													  waf_detection
-	workflow = chain(
-		group(
-			subdomain_discovery.si(ctx=ctx, description='Subdomain discovery'),
-			osint.si(ctx=ctx, description='OS Intelligence')
-		),
-		port_scan.si(ctx=ctx, description='Port scan'),
-		fetch_url.si(ctx=ctx, description='Fetch URL'),
-		group(
-			dir_file_fuzz.si(ctx=ctx, description='Directories & files fuzz'),
-			vulnerability_scan.si(ctx=ctx, description='Vulnerability scan'),
-			screenshot.si(ctx=ctx, description='Screenshot'),
-			waf_detection.si(ctx=ctx, description='WAF detection')
+		# If enable_http_crawl is set, create an initial root HTTP endpoint so that
+		# HTTP crawling can start somewhere
+		http_url = f'{domain.name}{url_filter}' if url_filter else domain.name
+		endpoint, _ = save_endpoint(
+			http_url,
+			ctx=ctx,
+			crawl=enable_http_crawl,
+			is_default=True,
+			subdomain=subdomain
 		)
-	)
+		if endpoint and endpoint.is_alive:
+			# TODO: add `root_endpoint` property to subdomain and simply do
+			# subdomain.root_endpoint = endpoint instead
+			logger.warning(f'Found subdomain root HTTP URL {endpoint.http_url}')
+			subdomain.http_url = endpoint.http_url
+			subdomain.http_status = endpoint.http_status
+			subdomain.response_time = endpoint.response_time
+			subdomain.page_title = endpoint.page_title
+			subdomain.content_type = endpoint.content_type
+			subdomain.content_length = endpoint.content_length
+			for tech in endpoint.techs.all():
+				subdomain.technologies.add(tech)
+			subdomain.save()
 
-	# Build callback
-	callback = report.si(ctx=ctx).set(link_error=[report.si(ctx=ctx)])
 
-	# Run Celery chord
-	logger.info(f'Running Celery workflow with {len(workflow.tasks) + 1} tasks')
-	task = chain(workflow, callback).on_error(callback).delay()
-	scan.celery_ids.append(task.id)
-	scan.save()
+		# Build Celery tasks, crafted according to the dependency graph below:
+		# subdomain_discovery --> port_scan --> fetch_url --> dir_file_fuzz
+		# osint								             	  vulnerability_scan
+		# osint								             	  dalfox xss scan
+		#						 	   		         	  	  screenshot
+		#													  waf_detection
+		workflow = chain(
+			group(
+				subdomain_discovery.si(ctx=ctx, description='Subdomain discovery'),
+				osint.si(ctx=ctx, description='OS Intelligence')
+			),
+			port_scan.si(ctx=ctx, description='Port scan'),
+			fetch_url.si(ctx=ctx, description='Fetch URL'),
+			group(
+				dir_file_fuzz.si(ctx=ctx, description='Directories & files fuzz'),
+				vulnerability_scan.si(ctx=ctx, description='Vulnerability scan'),
+				screenshot.si(ctx=ctx, description='Screenshot'),
+				waf_detection.si(ctx=ctx, description='WAF detection')
+			)
+		)
 
-	return {
-		'success': True,
-		'task_id': task.id
-	}
+		# Build callback
+		callback = report.si(ctx=ctx).set(link_error=[report.si(ctx=ctx)])
+
+		# Run Celery chord
+		logger.info(f'Running Celery workflow with {len(workflow.tasks) + 1} tasks')
+		task = chain(workflow, callback).on_error(callback).delay()
+		scan.celery_ids.append(task.id)
+		scan.save()
+
+		return {
+			'success': True,
+			'task_id': task.id
+		}
+	except Exception as e:
+		logger.exception(e)
+		if scan:
+			scan.scan_status = FAILED_TASK
+			scan.error_message = str(e)
+			scan.save()
+		return {
+			'success': False,
+			'error': str(e)
+		}
 
 
 @app.task(name='initiate_subscan', bind=False, queue='subscan_queue')
@@ -443,7 +458,7 @@ def subdomain_discovery(
 
 			elif tool == 'oneforall':
 				cmd = f'python3 /usr/src/github/OneForAll/oneforall.py --target {host} run'
-				cmd_extract = f'cut -d\',\' -f6 /usr/src/github/OneForAll/results/{host}.csv > {self.results_dir}/subdomains_oneforall.txt'
+				cmd_extract = f'cut -d\',\' -f6 /usr/src/github/OneForAll/results/{host}.csv | tail -n +2 > {self.results_dir}/subdomains_oneforall.txt'
 				cmd_rm = f'rm -rf /usr/src/github/OneForAll/results/{host}.csv'
 				cmd += f' && {cmd_extract} && {cmd_rm}'
 
@@ -548,9 +563,10 @@ def subdomain_discovery(
 
 		# Add subdomain
 		subdomain, _ = save_subdomain(subdomain_name, ctx=ctx)
-		subdomain_count += 1
-		subdomains.append(subdomain)
-		urls.append(subdomain.name)
+		if subdomain:
+			subdomain_count += 1
+			subdomains.append(subdomain)
+			urls.append(subdomain.name)
 
 	# Bulk crawl subdomains
 	if enable_http_crawl:
@@ -689,10 +705,6 @@ def osint_discovery(config, host, scan_history_id, activity_id, results_dir, ctx
 	grouped_tasks = []
 
 	if 'emails' in osint_lookup:
-		emails = get_and_save_emails(scan_history, activity_id, results_dir)
-		emails_str = '\n'.join([f'• `{email}`' for email in emails])
-		# self.notify(fields={'Emails': emails_str})
-		# ctx['track'] = False
 		_task = h8mail.si(
 			config=config,
 			host=host,
@@ -1206,11 +1218,22 @@ def screenshot(self, ctx={}, description=None):
 
 	# Loop through results and save objects in DB
 	screenshot_paths = []
-	with open(output_path, 'r') as file:
-		reader = csv.reader(file)
+	required_cols = [
+		'Protocol',
+		'Port',
+		'Domain',
+		'Request Status',
+		'Screenshot Path'
+	]
+	with open(output_path, 'r', newline='') as file:
+		reader = csv.DictReader(file)
 		for row in reader:
-			"Protocol,Port,Domain,Request Status,Screenshot Path, Source Path"
-			protocol, port, subdomain_name, status, screenshot_path, source_path = tuple(row)
+			parsed_row = {col: row[col] for col in required_cols if col in row}
+			protocol = parsed_row['Protocol']
+			port = parsed_row['Port']
+			subdomain_name = parsed_row['Domain']
+			status = parsed_row['Request Status']
+			screenshot_path = parsed_row['Screenshot Path']
 			logger.info(f'{protocol}:{port}:{subdomain_name}:{status}')
 			subdomain_query = Subdomain.objects.filter(name=subdomain_name)
 			if self.scan:
@@ -1224,7 +1247,7 @@ def screenshot(self, ctx={}, description=None):
 
 	# Remove all db, html extra files in screenshot results
 	run_command(
-		'rm -rf {0}/*.csv {0}/*.db {0}/*.js {0}/*.html {0}/*.css'.format(screenshots_path),
+		f'rm -rf {screenshots_path}/*.csv {screenshots_path}/*.db {screenshots_path}/*.js {screenshots_path}/*.html {screenshots_path}/*.css',
 		shell=True,
 		history_file=self.history_file,
 		scan_id=self.scan_id,
@@ -1360,16 +1383,17 @@ def port_scan(self, hosts=[], ctx={}, description=None):
 			urls.append(http_url)
 
 		# Add Port in DB
-		port_details = whatportis.get_ports(str(port_number))
-		service_name = port_details[0].name if len(port_details) > 0 else 'unknown'
-		description = port_details[0].description if len(port_details) > 0 else ''
-
+		res = get_port_service_description(port_number)
 		# get or create port
-		port, created = Port.objects.get_or_create(
-			number=port_number,
-			service_name=service_name,
-			description=description
+		port, created = update_or_create_port(
+			port_number=port_number,
+			service_name=res.get('service_name', ''),
+			description=res.get('description', '')
 		)
+
+		if created:
+			logger.warning(f'Added new port {port_number} to DB')
+
 		if port_number in UNCOMMON_WEB_PORTS:
 			port.is_uncommon = True
 			port.save()
@@ -1587,7 +1611,12 @@ def dir_file_fuzz(self, ctx={}, description=None):
 	# Config
 	cmd = 'ffuf'
 	config = self.yaml_configuration.get(DIR_FILE_FUZZ) or {}
+	custom_headers = self.yaml_configuration.get(CUSTOM_HEADERS, [])
+	# support for custom header will be remove in next major release, as of now it will be supported
+	# for backward compatibility
 	custom_header = self.yaml_configuration.get(CUSTOM_HEADER)
+	if custom_header:
+		custom_headers.append(custom_header)
 	auto_calibration = config.get(AUTO_CALIBRATION, True)
 	enable_http_crawl = config.get(ENABLE_HTTP_CRAWL, DEFAULT_ENABLE_HTTP_CRAWL)
 	rate_limit = config.get(RATE_LIMIT) or self.yaml_configuration.get(RATE_LIMIT, DEFAULT_RATE_LIMIT)
@@ -1623,7 +1652,9 @@ def dir_file_fuzz(self, ctx={}, description=None):
 	cmd += ' -fr' if follow_redirect else ''
 	cmd += ' -ac' if auto_calibration else ''
 	cmd += f' -mc {mc}' if mc else ''
-	cmd += f' -H "{custom_header}"' if custom_header else ''
+	formatted_headers = ' '.join(f'-H "{header}"' for header in custom_headers)
+	if formatted_headers:
+		cmd += formatted_headers
 
 	# Grab URLs to fuzz
 	urls = get_http_urls(
@@ -1734,7 +1765,7 @@ def dir_file_fuzz(self, ctx={}, description=None):
 			dirscan.save()
 
 			# Get subdomain and add dirscan
-			if ctx['subdomain_id'] > 0:
+			if ctx.get('subdomain_id', 0) > 0:
 				subdomain = Subdomain.objects.get(id=ctx['subdomain_id'])
 			else:
 				subdomain_name = get_subdomain_from_url(endpoint.http_url)
@@ -1770,8 +1801,17 @@ def fetch_url(self, urls=[], ctx={}, description=None):
 	ignore_file_extension = config.get(IGNORE_FILE_EXTENSION, DEFAULT_IGNORE_FILE_EXTENSIONS)
 	tools = config.get(USES_TOOLS, ENDPOINT_SCAN_DEFAULT_TOOLS)
 	threads = config.get(THREADS) or self.yaml_configuration.get(THREADS, DEFAULT_THREADS)
-	domain_request_headers = self.domain.request_headers if self.domain else None
-	custom_header = domain_request_headers or self.yaml_configuration.get(CUSTOM_HEADER)
+	# domain_request_headers = self.domain.request_headers if self.domain else None
+	custom_headers = self.yaml_configuration.get(CUSTOM_HEADERS, [])
+	'''
+	# TODO: Remove custom_header in next major release
+		support for custom_header will be remove in next major release, 
+		as of now it will be supported for backward compatibility
+		only custom_headers will be supported
+	'''
+	custom_header = self.yaml_configuration.get(CUSTOM_HEADER)
+	if custom_header:
+		custom_headers.append(custom_header)
 	exclude_subdomains = config.get(EXCLUDED_SUBDOMAINS, False)
 
 	# Get URLs to scan and save to input file
@@ -1808,15 +1848,12 @@ def fetch_url(self, urls=[], ctx={}, description=None):
 		cmd_map['gau'] += f' --threads {threads}'
 		cmd_map['gospider'] += f' -t {threads}'
 		cmd_map['katana'] += f' -c {threads}'
-	if custom_header:
-		header_string = ';;'.join([
-			f'{key}: {value}' for key, value in custom_header.items()
-		])
-		cmd_map['hakrawler'] += f' -h {header_string}'
-		cmd_map['katana'] += f' -H {header_string}'
-		header_flags = [':'.join(h) for h in header_string.split(';;')]
-		for flag in header_flags:
-			cmd_map['gospider'] += f' -H {flag}'
+	if custom_headers:
+		# gau, waybackurls does not support custom headers
+		formatted_headers = ' '.join(f'-H "{header}"' for header in custom_headers)
+		cmd_map['gospider'] += formatted_headers
+		cmd_map['hakrawler'] += ';;'.join(header for header in custom_headers)
+		cmd_map['katana'] += formatted_headers
 	cat_input = f'cat {input_path}'
 	grep_output = f'grep -Eo {host_regex}'
 	cmd_map = {
@@ -2240,6 +2277,8 @@ def nuclei_individual_severity_module(self, cmd, severity, enable_http_crawl, sh
 def get_vulnerability_gpt_report(vuln):
 	title = vuln[0]
 	path = vuln[1]
+	if not path:
+		path = '/'
 	logger.info(f'Getting GPT Report for {title}, PATH: {path}')
 	# check if in db already exists
 	stored = GPTVulnerabilityReport.objects.filter(
@@ -2247,7 +2286,7 @@ def get_vulnerability_gpt_report(vuln):
 	).filter(
 		title=title
 	).first()
-	if stored:
+	if stored and stored.description and stored.impact and stored.remediation:
 		response = {
 			'description': stored.description,
 			'impact': stored.impact,
@@ -2255,7 +2294,7 @@ def get_vulnerability_gpt_report(vuln):
 			'references': [url.url for url in stored.references.all()]
 		}
 	else:
-		report = GPTVulnerabilityReportGenerator()
+		report = LLMVulnerabilityReportGenerator(logger=logger)
 		vulnerability_description = get_gpt_vuln_input_description(
 			title,
 			path
@@ -2285,6 +2324,9 @@ def get_vulnerability_gpt_report(vuln):
 
 
 def add_gpt_description_db(title, path, description, impact, remediation, references):
+	logger.info(f'Adding GPT Report to DB for {title}, PATH: {path}')
+	if not path:
+		path = '/'
 	gpt_report = GPTVulnerabilityReport()
 	gpt_report.url_path = path
 	gpt_report.title = title
@@ -2319,7 +2361,16 @@ def nuclei_scan(self, urls=[], ctx={}, description=None):
 	rate_limit = config.get(RATE_LIMIT) or self.yaml_configuration.get(RATE_LIMIT, DEFAULT_RATE_LIMIT)
 	retries = config.get(RETRIES) or self.yaml_configuration.get(RETRIES, DEFAULT_RETRIES)
 	timeout = config.get(TIMEOUT) or self.yaml_configuration.get(TIMEOUT, DEFAULT_HTTP_TIMEOUT)
-	custom_header = config.get(CUSTOM_HEADER) or self.yaml_configuration.get(CUSTOM_HEADER)
+	custom_headers = self.yaml_configuration.get(CUSTOM_HEADERS, [])
+	'''
+	# TODO: Remove custom_header in next major release
+		support for custom_header will be remove in next major release, 
+		as of now it will be supported for backward compatibility
+		only custom_headers will be supported
+	'''
+	custom_header = self.yaml_configuration.get(CUSTOM_HEADER)
+	if custom_header:
+		custom_headers.append(custom_header)
 	should_fetch_gpt_report = config.get(FETCH_GPT_REPORT, DEFAULT_GET_GPT_REPORT)
 	proxy = get_random_proxy()
 	nuclei_specific_config = config.get('nuclei', {})
@@ -2386,7 +2437,9 @@ def nuclei_scan(self, urls=[], ctx={}, description=None):
 	cmd = 'nuclei -j'
 	cmd += ' -config /root/.config/nuclei/config.yaml' if use_nuclei_conf else ''
 	cmd += f' -irr'
-	cmd += f' -H "{custom_header}"' if custom_header else ''
+	formatted_headers = ' '.join(f'-H "{header}"' for header in custom_headers)
+	if formatted_headers:
+		cmd += formatted_headers
 	cmd += f' -l {input_path}'
 	cmd += f' -c {str(concurrency)}' if concurrency > 0 else ''
 	cmd += f' -proxy {proxy} ' if proxy else ''
@@ -2436,7 +2489,16 @@ def dalfox_xss_scan(self, urls=[], ctx={}, description=None):
 	vuln_config = self.yaml_configuration.get(VULNERABILITY_SCAN) or {}
 	should_fetch_gpt_report = vuln_config.get(FETCH_GPT_REPORT, DEFAULT_GET_GPT_REPORT)
 	dalfox_config = vuln_config.get(DALFOX) or {}
-	custom_header = dalfox_config.get(CUSTOM_HEADER) or self.yaml_configuration.get(CUSTOM_HEADER)
+	custom_headers = self.yaml_configuration.get(CUSTOM_HEADERS, [])
+	'''
+	# TODO: Remove custom_header in next major release
+		support for custom_header will be remove in next major release, 
+		as of now it will be supported for backward compatibility
+		only custom_headers will be supported
+	'''
+	custom_header = self.yaml_configuration.get(CUSTOM_HEADER)
+	if custom_header:
+		custom_headers.append(custom_header)
 	proxy = get_random_proxy()
 	is_waf_evasion = dalfox_config.get(WAF_EVASION, False)
 	blind_xss_server = dalfox_config.get(BLIND_XSS_SERVER)
@@ -2471,8 +2533,10 @@ def dalfox_xss_scan(self, urls=[], ctx={}, description=None):
 	cmd += f' -b {blind_xss_server}' if blind_xss_server else ''
 	cmd += f' --delay {delay}' if delay else ''
 	cmd += f' --timeout {timeout}' if timeout else ''
+	formatted_headers = ' '.join(f'-H "{header}"' for header in custom_headers)
+	if formatted_headers:
+		cmd += formatted_headers
 	cmd += f' --user-agent {user_agent}' if user_agent else ''
-	cmd += f' --header {custom_header}' if custom_header else ''
 	cmd += f' --worker {threads}' if threads else ''
 	cmd += f' --format json'
 
@@ -2561,7 +2625,16 @@ def crlfuzz_scan(self, urls=[], ctx={}, description=None):
 	"""
 	vuln_config = self.yaml_configuration.get(VULNERABILITY_SCAN) or {}
 	should_fetch_gpt_report = vuln_config.get(FETCH_GPT_REPORT, DEFAULT_GET_GPT_REPORT)
-	custom_header = vuln_config.get(CUSTOM_HEADER) or self.yaml_configuration.get(CUSTOM_HEADER)
+	custom_headers = self.yaml_configuration.get(CUSTOM_HEADERS, [])
+	'''
+	# TODO: Remove custom_header in next major release
+		support for custom_header will be remove in next major release, 
+		as of now it will be supported for backward compatibility
+		only custom_headers will be supported
+	'''
+	custom_header = self.yaml_configuration.get(CUSTOM_HEADER)
+	if custom_header:
+		custom_headers.append(custom_header)
 	proxy = get_random_proxy()
 	user_agent = vuln_config.get(USER_AGENT) or self.yaml_configuration.get(USER_AGENT)
 	threads = vuln_config.get(THREADS) or self.yaml_configuration.get(THREADS, DEFAULT_THREADS)
@@ -2586,7 +2659,9 @@ def crlfuzz_scan(self, urls=[], ctx={}, description=None):
 	cmd = 'crlfuzz -s'
 	cmd += f' -l {input_path}'
 	cmd += f' -x {proxy}' if proxy else ''
-	cmd += f' --H {custom_header}' if custom_header else ''
+	formatted_headers = ' '.join(f'-H "{header}"' for header in custom_headers)
+	if formatted_headers:
+		cmd += formatted_headers
 	cmd += f' -o {output_path}'
 
 	run_command(
@@ -2736,7 +2811,16 @@ def http_crawl(
 		logger.info('Running From Subdomain Scan...')
 	cmd = '/go/bin/httpx'
 	cfg = self.yaml_configuration.get(HTTP_CRAWL) or {}
-	custom_header = cfg.get(CUSTOM_HEADER, '')
+	custom_headers = self.yaml_configuration.get(CUSTOM_HEADERS, [])
+	'''
+	# TODO: Remove custom_header in next major release
+		support for custom_header will be remove in next major release, 
+		as of now it will be supported for backward compatibility
+		only custom_headers will be supported
+	'''
+	custom_header = self.yaml_configuration.get(CUSTOM_HEADER)
+	if custom_header:
+		custom_headers.append(custom_header)
 	threads = cfg.get(THREADS, DEFAULT_THREADS)
 	follow_redirect = cfg.get(FOLLOW_REDIRECT, True)
 	self.output_path = None
@@ -2771,7 +2855,9 @@ def http_crawl(
 	cmd += f' -cl -ct -rt -location -td -websocket -cname -asn -cdn -probe -random-agent'
 	cmd += f' -t {threads}' if threads > 0 else ''
 	cmd += f' --http-proxy {proxy}' if proxy else ''
-	cmd += f' -H "{custom_header}"' if custom_header else ''
+	formatted_headers = ' '.join(f'-H "{header}"' for header in custom_headers)
+	if formatted_headers:
+		cmd += formatted_headers
 	cmd += f' -json'
 	cmd += f' -u {urls[0]}' if len(urls) == 1 else f' -l {input_path}'
 	cmd += f' -x {method}' if method else ''
@@ -2941,6 +3027,7 @@ def send_notif(
 		message = enrich_notification(message, scan_history_id, subscan_id)
 	send_discord_message(message, **options)
 	send_slack_message(message)
+	send_lark_message(message)
 	send_telegram_message(message)
 
 
@@ -3145,7 +3232,7 @@ def send_hackerone_report(vulnerability_id):
 				"type": "report",
 				"attributes": {
 				  "team_handle": vulnerability.target_domain.h1_team_handle,
-				  "title": '{} found in {}'.format(vulnerability.name, vulnerability.http_url),
+				  "title": f'{vulnerability.name} found in {vulnerability.http_url}',
 				  "vulnerability_information": tpl,
 				  "severity_rating": severity_value,
 				  "impact": "More information about the impact and vulnerability can be found here: \n" + vulnerability.reference if vulnerability.reference else "NA",
@@ -3753,7 +3840,7 @@ def query_whois(ip_domain, force_reload_whois=False):
 		netlas_key = get_netlas_key()
 		command += f' -a {netlas_key}' if netlas_key else ''
 
-		result = subprocess.check_output(command.split()).decode('utf-8')
+		_, result = run_command(command, remove_ansi_sequence=True)
 		if 'Failed to parse response data' in result:
 			# do fallback
 			return {
@@ -4329,56 +4416,6 @@ def get_and_save_dork_results(lookup_target, results_dir, type, lookup_keywords=
 
 	return results
 
-
-def get_and_save_emails(scan_history, activity_id, results_dir):
-	"""Get and save emails from Google, Bing and Baidu.
-
-	Args:
-		scan_history (startScan.ScanHistory): Scan history object.
-		activity_id: ScanActivity Object
-		results_dir (str): Results directory.
-
-	Returns:
-		list: List of emails found.
-	"""
-	emails = []
-
-	# Proxy settings
-	# get_random_proxy()
-
-	# Gather emails from Google, Bing and Baidu
-	output_file = f'{results_dir}/emails_tmp.txt'
-	history_file = f'{results_dir}/commands.txt'
-	command = f'python3 /usr/src/github/Infoga/infoga.py --domain {scan_history.domain.name} --source all --report {output_file}'
-	try:
-		run_command(
-			command,
-			shell=False,
-			history_file=history_file,
-			scan_id=scan_history.id,
-			activity_id=activity_id)
-
-		if not os.path.isfile(output_file):
-			logger.info('No Email results')
-			return []
-
-		with open(output_file) as f:
-			for line in f.readlines():
-				if 'Email' in line:
-					split_email = line.split(' ')[2]
-					emails.append(split_email)
-
-		output_path = f'{results_dir}/emails.txt'
-		with open(output_path, 'w') as output_file:
-			for email_address in emails:
-				save_email(email_address, scan_history)
-				output_file.write(f'{email_address}\n')
-
-	except Exception as e:
-		logger.exception(e)
-	return emails
-
-
 def save_metadata_info(meta_dict):
 	"""Extract metadata from Google Search.
 
@@ -4752,8 +4789,8 @@ def query_ip_history(domain):
 	return get_domain_historical_ip_address(domain)
 
 
-@app.task(name='gpt_vulnerability_description', bind=False, queue='gpt_queue')
-def gpt_vulnerability_description(vulnerability_id):
+@app.task(name='llm_vulnerability_description', bind=False, queue='llm_queue')
+def llm_vulnerability_description(vulnerability_id):
 	"""Generate and store Vulnerability Description using GPT.
 
 	Args:
@@ -4771,8 +4808,11 @@ def gpt_vulnerability_description(vulnerability_id):
 		}
 
 	# check in db GPTVulnerabilityReport model if vulnerability description and path matches
+	if not path:
+		path = '/'
 	stored = GPTVulnerabilityReport.objects.filter(url_path=path).filter(title=lookup_vulnerability.name).first()
-	if stored:
+	if stored and stored.description and stored.impact and stored.remediation:
+		logger.info('Found cached Vulnerability Description')
 		response = {
 			'status': True,
 			'description': stored.description,
@@ -4781,14 +4821,16 @@ def gpt_vulnerability_description(vulnerability_id):
 			'references': [url.url for url in stored.references.all()]
 		}
 	else:
+		logger.info('Fetching new Vulnerability Description')
 		vulnerability_description = get_gpt_vuln_input_description(
 			lookup_vulnerability.name,
 			path
 		)
 		# one can add more description here later
 
-		gpt_generator = GPTVulnerabilityReportGenerator()
+		gpt_generator = LLMVulnerabilityReportGenerator(logger=logger)
 		response = gpt_generator.get_vulnerability_description(vulnerability_description)
+		logger.info(response)
 		add_gpt_description_db(
 			lookup_vulnerability.name,
 			path,
@@ -4799,7 +4841,7 @@ def gpt_vulnerability_description(vulnerability_id):
 		)
 
 	# for all vulnerabilities with the same vulnerability name this description has to be stored.
-	# also the consition is that the url must contain a part of this.
+	# also the condition is that the url must contain a part of this.
 
 	for vuln in Vulnerability.objects.filter(name=lookup_vulnerability.name, http_url__icontains=path):
 		vuln.description = response.get('description', vuln.description)
