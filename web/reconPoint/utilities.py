@@ -1,4 +1,5 @@
 import os
+import validators
 
 from celery._state import get_current_task
 from celery.utils.log import ColorFormatter
@@ -30,12 +31,12 @@ def get_time_taken(latest, earlier):
 	minutes = (seconds % 3600) // 60
 	seconds = seconds % 60
 	if not hours and not minutes:
-		return '{} seconds'.format(seconds)
+		return f'{seconds} seconds'
 	elif not hours:
-		return '{} minutes'.format(minutes)
+		return f'{minutes} minutes'
 	elif not minutes:
-		return '{} hours'.format(hours)
-	return '{} hours {} minutes'.format(hours, minutes)
+		return f'{hours} hours'
+	return f'{hours} hours {minutes} minutes'
 
 # Check if value is a simple string, a string with commas, a list [], a tuple (), a set {} and return an iterable
 def return_iterable(string):
@@ -86,3 +87,30 @@ def replace_nulls(obj):
 		return {key: replace_nulls(value) for key, value in obj.items()}
 	else:
 		return obj
+
+
+def is_valid_url(url, validate_only_http_scheme=True):
+	"""
+		Validate a URL/endpoint
+
+		Args:
+		url (str): The URL to validate.
+		validate_only_http_scheme (bool): If True, only validate HTTP/HTTPS URLs.
+
+		Returns:
+		bool: True if the URL is valid, False otherwise.
+	"""
+	# no urls returns false
+	if not url:
+		return False
+	
+	# urls with space are not valid urls
+	if ' ' in url:
+		return False
+
+	if validators.url(url):
+		# check for scheme, for example ftp:// can be a valid url but may not be required to crawl etc
+		if validate_only_http_scheme:
+			return url.startswith('http://') or url.startswith('https://')
+		return True
+	return False
