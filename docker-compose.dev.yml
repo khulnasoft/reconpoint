@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     restart: always
@@ -98,7 +96,7 @@ services:
       - POSTGRES_HOST=${POSTGRES_HOST}
       # THIS IS A MUST FOR CHECKING UPDATE, EVERYTIME A COMMIT IS MERGED INTO
       # MASTER, UPDATE THIS!!! MAJOR.MINOR.PATCH https://semver.org/
-      - RECONPOINT_CURRENT_VERSION='2.0.5'
+      - RECONPOINT_CURRENT_VERSION='2.1.2'
     volumes:
       - ./web:/usr/src/app
       - github_repos:/usr/src/github
@@ -115,6 +113,13 @@ services:
       - celery-beat
     networks:
       - reconpoint_network
+  ollama:
+    image: ollama/ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - reconpoint_network
+    restart: always
 
 networks:
   reconpoint_network:
@@ -126,3 +131,4 @@ volumes:
   github_repos:
   wordlist:
   scan_results:
+  ollama_data:
