@@ -25,7 +25,7 @@ from metafinder.extractor import extract_metadata_from_google_search
 
 from reconPoint.celery import app
 from reconPoint.celery_custom_task import ReconpointTask
-from reconPoint.common_func import *
+from reconPoint.common_func import function1, function2  # example functions
 from reconPoint.definitions import *
 from reconPoint.settings import *
 from reconPoint.llm import *
