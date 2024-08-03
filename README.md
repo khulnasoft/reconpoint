@@ -1,6 +1,4 @@
-<p align="center">
-<a href="https://reconpoint.wiki"><img src=".github/screenshots/banner.gif" alt=""/></a>
-</p>
+# ReconPoint
 
 <p align="center"><a href="https://github.com/khulnasoft/reconpoint/releases" target="_blank"><img src="https://img.shields.io/badge/version-v2.0.0-informational?&logo=none" alt="reconPoint Latest Version" /></a>&nbsp;<a href="https://www.gnu.org/licenses/gpl-3.0" target="_blank"><img src="https://img.shields.io/badge/License-GPLv3-red.svg?&logo=none" alt="License" /></a>&nbsp;<a href="#" target="_blank"><img src="https://img.shields.io/badge/first--timers--only-friendly-blue.svg?&logo=none" alt="" /></a>&nbsp;<a href="https://huntr.dev/bounties/disclose/?target=https%3A%2F%2Fgithub.com%2Fkhulnasoft%2Freconpoint" target="_blank"><img src="https://cdn.huntr.dev/huntr_security_badge_mono.svg" alt="" /></a>&nbsp;</p>
 
