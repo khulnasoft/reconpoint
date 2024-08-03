@@ -1227,9 +1227,13 @@ class IPToDomain(APIView):
 				domains = []
 				ips = []
     try:
-        if ip in ip_cache:
-            (domain, domains, ips) = ip_cache[ip]
-        else:
+        (domain, domains, ips) = socket.gethostbyaddr(str(ip))
+    except socket.herror:
+        logger.info(f'No PTR record for {ip_address}')
+        domain = str(ip)
+    except socket.gaierror:
+        logger.error(f'Failed to get host by address for {ip}')
+        continue
             (domain, domains, ips) = socket.gethostbyaddr(str(ip))
             ip_cache[ip] = (domain, domains, ips)
     except socket.herror:
