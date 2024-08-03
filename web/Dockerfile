@@ -6,7 +6,7 @@ ARG GOVERSION=1.21.5
 
 RUN ARCH=$(dpkg --print-architecture) \ 
     && if [ "${ARCH}" ! "arm64" ] || [ "${ARCH}" ! "amd64" ]; then \
-      echo "reNgine not supported, encountered unknown architecture: ${TARGETPLATFORM}" \
+      echo "reconPoint not supported, encountered unknown architecture: ${TARGETPLATFORM}" \
       && exit 1; \
     fi
 
