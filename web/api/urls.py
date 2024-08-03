@@ -156,7 +156,7 @@ urlpatterns = [
         name='waf_detector'),
     path(
         'tools/gpt_vulnerability_report/',
-        GPTVulnerabilityReportGenerator.as_view(),
+        LLMVulnerabilityReportGenerator.as_view(),
         name='gpt_vulnerability_report_generator'),
     path(
         'tools/gpt_get_possible_attacks/',
@@ -178,6 +178,10 @@ urlpatterns = [
         'tool/uninstall/',
         UninstallTool.as_view(),
         name='uninstall_tool'),
+	path(
+        'tool/ollama/',
+        OllamaManager.as_view(),
+        name='ollama_manager'),
     path(
         'reconpoint/update/',
         ReconpointUpdateCheck.as_view(),
