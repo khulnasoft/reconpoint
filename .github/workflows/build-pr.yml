@@ -1,14 +1,21 @@
-name: 🌄 Build Docker image for pull request
+name: 🌥 Docker pull request
 
 on:
   workflow_dispatch:
   pull_request:
-    branches: [ master, stable, dev ]
+    branches: 
+      - master
+      - release/*
 
 jobs:
   build:
     name: Build Docker image
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
     steps:
       - name: Checkout the git repo
         uses: actions/checkout@v4

@@ -611,7 +611,14 @@ function get_interesting_subdomains(project, target_id, scan_history_id) {
 				return `<a href="https://` + data + `" class="text-primary" target="_blank">` + data + `</a>` + tech_badge;
 			},
 			"targets": 0
-		}, {
+		}, 
+		{
+			"render": function(data, type, row) {
+				return htmlEncode(data);
+			},
+			"targets": 1
+		},
+		{
 			"render": function(data, type, row) {
 				// display badge based on http status
 				// green for http status 2XX, orange for 3XX and warning for everything else
@@ -692,7 +699,14 @@ function get_interesting_endpoints(project, target_id, scan_history_id) {
 				return "<a href='" + data + "' target='_blank' class='text-primary'>" + url + "</a>";
 			},
 			"targets": 0
-		}, {
+		}, 
+		{
+			"render": function(data, type, row) {
+				return htmlEncode(data);
+			},
+			"targets": 1
+		},
+		{
 			"render": function(data, type, row) {
 				// display badge based on http status
 				// green for http status 2XX, orange for 3XX and warning for everything else
@@ -1096,7 +1110,7 @@ function render_endpoint_in_xlmodal(endpoint_count, subdomain_name, result) {
 			<tr>
 			<td>${http_url_td}</td>
 			<td>${get_http_status_badge(endpoint['http_status'])}</td>
-			<td>${return_str_if_not_null(endpoint['page_title'])}</td>
+			<td>${return_str_if_not_null(htmlEncode(endpoint['page_title']))}</td>
 			<td>${parse_comma_values_into_span(endpoint['matched_gf_patterns'], "danger", outline=true)}</td>
 			<td>${return_str_if_not_null(endpoint['content_type'])}</td>
 			<td>${return_str_if_not_null(endpoint['content_length'])}</td>
@@ -1854,10 +1868,15 @@ function show_quick_add_target_modal() {
 			<label for="target_description_modal" class="form-label">Description (Optional)</label>
 			<input class="form-control" type="text" id="target_description_modal" required="" placeholder="Target Description">
 		</div>
-
+		
 		<div class="mb-3">
 			<label for="h1_handle_modal" class="form-label">Hackerone Target Team Handle (Optional)</label>
 			<input class="form-control" type="text" id="h1_handle_modal" placeholder="hackerone.com/team_handle, Only enter team_handle after /">
+		</div>
+
+		<div class="mb-3">
+			<label for="target_organization_modal" class="form-label">Target Organization (Optional)</label>
+			<input class="form-control" type="text" id="target_organization_modal" placeholder="Target Org">
 		</div>
 
 		<div class="mb-3 text-center">
@@ -1874,11 +1893,12 @@ function add_quick_target() {
 	var domain_name = $('#target_name_modal').val();
 	var description = $('#target_description_modal').val();
 	var h1_handle = $('#h1_handle_modal').val();
-	add_target(domain_name, h1_handle = h1_handle, description = description);
+	var organization = $('#target_organization_modal').val();
+	add_target(domain_name, h1_handle = h1_handle, description = description, organization = organization);
 }
 
 
-function add_target(domain_name, h1_handle = null, description = null) {
+function add_target(domain_name, h1_handle = null, description = null, organization = null) {
 	var current_slug = getCurrentProjectSlug();
 	// this function will add domain_name as target
 	console.log('Adding new target ' + domain_name)
@@ -1887,6 +1907,7 @@ function add_target(domain_name, h1_handle = null, description = null) {
 		'domain_name': domain_name,
 		'h1_team_handle': h1_handle,
 		'description': description,
+		'organization': organization,
 		'slug': current_slug
 	};
 	swal.queue([{
@@ -2812,7 +2833,7 @@ function render_vuln_offcanvas(vuln){
 		</a>
 		</h5>
 		<div id="description" class="collapse show mt-2">
-		<p>${description}</p>
+		<p>${htmlEncode(description)}</p>
 		</div>
 		</div>`;
 	}
@@ -2829,7 +2850,7 @@ function render_vuln_offcanvas(vuln){
 		</a>
 		</h5>
 		<div id="impact" class="collapse show mt-2">
-		<p>${impact}</p>
+		<p>${htmlEncode(impact)}</p>
 		</div>
 		</div>`;
 	}
@@ -2846,7 +2867,7 @@ function render_vuln_offcanvas(vuln){
 		</a>
 		</h5>
 		<div id="remediation" class="collapse show mt-2">
-		<p>${remediation}</p>
+		<p>${htmlEncode(remediation)}</p>
 		</div>
 		</div>`;
 	}
@@ -3059,7 +3080,7 @@ function render_vuln_offcanvas(vuln){
 	}
 
 	if (vuln.is_gpt_used) {
-		body += `<small class="text-muted float-end">(GPT was used to generate vulnerability details.)</small>`;
+		body += `<small class="text-muted float-end">(LLM was used to generate vulnerability details.)</small>`;
 	}
 
 
@@ -3254,4 +3275,19 @@ function convertToCamelCase(inputString) {
 	const camelCaseString = words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
 	return camelCaseString;
+}
+
+function handleHashInUrl(){
+	// this function handles hash in url used to tab navigation
+	const hash = window.location.hash;
+	if (hash) {
+		const targetId = hash.substring(1);
+		const tabLink = $(`a[href="#${targetId}"][data-bs-toggle="tab"]`);
+		if (tabLink.length) {
+			tabLink.tab('show');
+			setTimeout(() => {
+				tabLink.click();
+			}, 100);
+		}
+	}
 }

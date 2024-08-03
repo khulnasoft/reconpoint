@@ -430,8 +430,29 @@ def get_domain_from_subdomain(subdomain):
 	Returns:
 		str: Domain name.
 	"""
-	ext = tldextract.extract(subdomain)
-	return '.'.join(ext[1:3])
+	# ext = tldextract.extract(subdomain)
+	# return '.'.join(ext[1:3])
+
+	if not validators.domain(subdomain):
+		return None
+	
+	# Use tldextract to parse the subdomain
+	extracted = tldextract.extract(subdomain)
+
+	# if tldextract recognized the tld then its the final result
+	if extracted.suffix:
+		domain = f"{extracted.domain}.{extracted.suffix}"
+	else:
+		# Fallback method for unknown TLDs, like .clouds or .local etc
+		parts = subdomain.split('.')
+		if len(parts) >= 2:
+			domain = '.'.join(parts[-2:])
+		else:
+			return None
+		
+	# Validate the domain before returning
+	return domain if validators.domain(domain) else None
+
 
 
 def sanitize_url(http_url):
@@ -515,8 +536,7 @@ def get_cms_details(url):
 	# this function will fetch cms details using cms_detector
 	response = {}
 	cms_detector_command = f'python3 /usr/src/github/CMSeeK/cmseek.py --random-agent --batch --follow-redirect -u {url}'
- import subprocess
- subprocess.run(cms_detector_command, shell=True, check=True)
+	os.system(cms_detector_command)
 
 	response['status'] = False
 	response['message'] = 'Could not detect CMS!'
@@ -532,14 +552,12 @@ def get_cms_details(url):
 		find_dir += f'_{port}'
 
 	# subdomain may also have port number, and is stored in dir as _port
-from urllib.parse import urljoin
-cms_dir_path =  f'/usr/src/github/CMSeeK/Result/{find_dir}'
-cms_json_path =  urljoin(cms_dir_path, 'cms.json')
+
+	cms_dir_path =  f'/usr/src/github/CMSeeK/Result/{find_dir}'
 	cms_json_path =  cms_dir_path + '/cms.json'
 
 	if os.path.isfile(cms_json_path):
-  with open(cms_json_path, 'r') as file:
-      cms_file_content = json.loads(file.read())
+		cms_file_content = json.loads(open(cms_json_path, 'r').read())
 		if not cms_file_content.get('cms_id'):
 			return response
 		response = {}
@@ -1073,7 +1091,6 @@ def get_port_service_description(port):
 		Args:
 			port (int or str): The port number to look up. 
 				Can be an integer or a string representation of an integer.
-
 		Returns:
 			dict: A dictionary containing the service name and description for the port number.
 	"""

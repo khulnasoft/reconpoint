@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import unittest
@@ -6,7 +5,6 @@ import unittest
 os.environ['RECONPOINT_SECRET_KEY'] = 'secret'
 os.environ['CELERY_ALWAYS_EAGER'] = 'True'
 
-import yaml
 from celery.utils.log import get_task_logger
 from reconPoint.settings import DEBUG
 from reconPoint.tasks import parse_nmap_results, parse_nmap_vuln_output, parse_nmap_vulscan_output
