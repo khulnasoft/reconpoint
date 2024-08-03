@@ -2,12 +2,19 @@ name: 🌄 Build Docker image for pull request
 
 on:
   pull_request:
-    branches: [ master, stable, dev ]
+    branches: 
+      - master
+      - release/*
 
 jobs:
   build:
     name: Build Docker image
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
     steps:
       - name: Checkout the git repo
         uses: actions/checkout@v4
@@ -15,7 +22,7 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
+          username: ${{ secrets.DOCKER_USERNAMENAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Extract metadata (tags, labels) for Docker
