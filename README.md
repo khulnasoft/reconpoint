@@ -38,7 +38,7 @@ Checkout our contributers here: [Contributers](https://github.com/khulnasoft/rec
 
 ### Documentation
 
-You can find detailed documentation at [https://reconpoint.wiki](https://reconpoint.wiki)
+You can find detailed documentation at [https://recon.khulnasoft.com](https://recon.khulnasoft.com)
 
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
 
@@ -137,8 +137,6 @@ reconPoint is not an ordinary reconnaissance suite; it's a game-changer! We've t
 * Toolbox: Comes bundled with most commonly used tools during penetration testing such as whois lookup, CMS detector, CVE lookup, etc.
 * Identification of related domains and related TLDs for targets
 * Find actionable insights such as Most Common Vulnerability, Most Common CVE ID, Most Vulnerable Target/Subdomain, etc.
-
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
 
 ### Scan Engine
 
@@ -287,8 +285,6 @@ screenshot: {
 # custom_header: "Cookie: Test"
 ```
 
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
-
 ### Quick Installation
 
 **Note:** Only Ubuntu/VPS
@@ -332,7 +328,7 @@ screenshot: {
 
 ### Installation (Mac/Windows/Other)
 
-Installation instructions can be found at [https://reconPoint.wiki/install/detailed/](https://reconPoint.wiki/install/detailed/)
+Installation instructions can be found at [https://recon.khulnasoft.com/install/detailed/](https://recon.khulnasoft.com/install/detailed/)
 
 ### Updating
 
@@ -348,41 +344,8 @@ Installation instructions can be found at [https://reconPoint.wiki/install/detai
 
 ### Changelog
 
-[Please find the latest release notes and changelog here.](https://reconpoint.wiki/changelog/)
+[Please find the latest release notes and changelog here.](https://recon.khulnasoft.com/changelog/)
 
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)  
-
-### Screenshots
-
-#### Scan Results
-
-![](.github/screenshots/scan_results.gif)
-
-#### General Usage
-
-<img src="https://user-images.githubusercontent.com/17223002/164993781-b6012995-522b-480a-a8bf-911193d35894.gif">
-
-#### Initiating Subscan
-
-<img src="https://user-images.githubusercontent.com/17223002/164993749-1ad343d6-8ce7-43d6-aee7-b3add0321da7.gif">
-
-#### Recon Data filtering
-
-<img src="https://user-images.githubusercontent.com/17223002/164993687-b63f3de8-e033-4ac0-808e-a2aa377d3cf8.gif">
-
-#### Report Generation
-
-<img src="https://user-images.githubusercontent.com/17223002/164993689-c796c6cd-eb61-43f4-800d-08aba9740088.gif">
-
-#### Toolbox
-
-<img src="https://user-images.githubusercontent.com/17223002/164993751-d687e88a-eb79-440f-9dc0-0ad006901620.gif">
-
-#### Adding Custom tool in Tools Arsenal
-
-<img src="https://user-images.githubusercontent.com/17223002/164993670-466f6459-9499-498b-a9bd-526476d735a7.gif">
-
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
 
 ### Contributing
 
@@ -400,13 +363,6 @@ Please note that reconPoint is beginner friendly. If you have never done open-so
 
 You can start by resolving any [open issues](https://github.com/khulnasoft/reconpoint/issues).
 
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
-
-### reconPoint Support
-
-Please do not use GitHub for support requests. Instead, [join our Discord channel #support](https://discord.gg/azv6fzhNCE).
-
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
 
 ### Support and Sponsoring
 
@@ -426,8 +382,6 @@ OR
 It takes a considerable amount of time to add new features and make sure everything works. Donating is your way of saying: **reconPoint is awesome**.
 
 Any support is greatly appreciated! Thank you!
-
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
 
 ### reconPoint Bug Bounty Program
 
@@ -456,12 +410,8 @@ The bounty reward is determined by an industry-first equation developed by huntr
 
 Please find the [FAQ](https://www.huntr.dev/faq) and [Responsible disclosure policy](https://www.huntr.dev/policy/) from huntr.dev.
 
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
-
 ### License
 
 Distributed under the GNU GPL v3 License. See [LICENSE](LICENSE) for more information.
-
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
 
 <p align="right">(ChatGPT was used to write some or most part of this README section.)</p>
