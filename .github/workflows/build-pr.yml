@@ -1,4 +1,4 @@
-name: 🌄 Build Docker image for pull request
+name: 🌥 Docker pull request
 
 on:
   pull_request:
