@@ -20,11 +20,6 @@
 <a href="https://discord.gg/H6WzebwX3H" target="_blank"><img src="https://img.shields.io/discord/880363103689277461" alt="" /></a>&nbsp;
 </p>
 
-<p align="center">
-<a href="https://opensourcesecurityindex.io/" target="_blank" rel="noopener">
-<img style="width: 282px; height: 56px" src="https://opensourcesecurityindex.io/badge.svg" alt="Open Source Security Index - Fastest Growing Open Source Security Projects" width="282" height="56" /> </a>
-</p>
-
 <h3>reconPoint 2.0-jasper<br>Redefining the future of reconnaissance!</h3>
 
 <h4>What is reconPoint?</h4>
