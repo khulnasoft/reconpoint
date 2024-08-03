@@ -57,8 +57,6 @@ You can find detailed documentation at [https://reconpoint.wiki](https://reconpo
 * [reconPoint Bug Bounty Program](#reconpoint-bug-bounty-program)
 * [License](#license)
 
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
-
 ### About reconPoint
 
 reconPoint is not an ordinary reconnaissance suite; it's a game-changer! We've turbocharged the traditional workflow with groundbreaking features that is sure to ease your reconnaissance game. reconPoint redefines the art of reconnaissance with highly configurable scan engines, recon data correlation, continuous monitoring, GPT powered Vulnerability Report, Project Management and role based access control etc.
@@ -88,14 +86,7 @@ reconPoint is not an ordinary reconnaissance suite; it's a game-changer! We've t
 
 🧭&nbsp;&nbsp;Continuous monitoring: Continuous monitoring is at the core of reconPoint's mission, and it's robust continuous monitoring feature ensures that their targets are under constant scrutiny. With the flexibility to schedule scans at regular intervals, penetration testers can effortlessly stay informed about their targets. What sets reconPoint apart is its seamless integration with popular notification channels such as Discord, Slack, and Telegram, delivering real-time alerts for newly discovered subdomains, vulnerabilities, or any changes in reconnaissance data.
 
-
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
-
 ### Workflow
-
-<img src="https://github.com/khulnasoft/reconpoint/assets/17223002/10c475b8-b4a8-440d-9126-77fe2038a386">
-
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
 
 ### Features
 
