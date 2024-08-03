@@ -1,10 +1,6 @@
 name: 🌥 Docker Push
 
 on:
-  workflow_run:
-    workflows: ["🎉 Release Binary"]
-    types:
-      - completed
   workflow_dispatch:
 
 jobs:
