@@ -1,3 +1,5 @@
+import whatportis
+import socket
 import json
 import os
 import pickle
@@ -25,6 +27,7 @@ from scanEngine.models import *
 from dashboard.models import *
 from startScan.models import *
 from targetApp.models import *
+from reconPoint.utilities import is_valid_url
 
 
 logger = get_task_logger(__name__)
@@ -43,9 +46,8 @@ def dump_custom_scan_engines(results_dir):
 	if not os.path.exists(results_dir):
 		os.makedirs(results_dir, exist_ok=True)
 	for engine in custom_engines:
-		with open(f'{results_dir}/{engine.engine_name}.yaml', 'w') as f:
-			config = yaml.safe_load(engine.yaml_configuration)
-			yaml.dump(config, f, indent=4)
+		with open(os.path.join(results_dir, f"{engine.engine_name}.yaml"), 'w') as f:
+			f.write(engine.yaml_configuration)
 
 def load_custom_scan_engines(results_dir):
 	"""Load custom scan engines from YAML files. The filename without .yaml will
@@ -56,15 +58,16 @@ def load_custom_scan_engines(results_dir):
 	"""
 	config_paths = [
 		f for f in os.listdir(results_dir)
-		if os.path.isfile(os.path.join(results_dir, f))
+		if os.path.isfile(os.path.join(results_dir, f)) and f.endswith('.yaml')
 	]
 	for path in config_paths:
-		engine_name = path.replace('.yaml', '').split('/')[-1]
+		engine_name = os.path.splitext(os.path.basename(path))[0]
 		full_path = os.path.join(results_dir, path)
 		with open(full_path, 'r') as f:
-			yaml_configuration = yaml.safe_load(f)
+			yaml_configuration = f.read()
+
 		engine, _ = EngineType.objects.get_or_create(engine_name=engine_name)
-		engine.yaml_configuration = yaml.dump(yaml_configuration)
+		engine.yaml_configuration = yaml_configuration
 		engine.save()
 
 
@@ -103,12 +106,9 @@ def get_subdomains(write_filepath=None, exclude_subdomains=False, ctx={}):
 	"""Get Subdomain objects from DB.
 
 	Args:
-		target_domain (startScan.models.Domain): Target Domain object.
-		scan_history (startScan.models.ScanHistory, optional): ScanHistory object.
 		write_filepath (str): Write info back to a file.
-		subdomain_id (int): Subdomain id.
 		exclude_subdomains (bool): Exclude subdomains, only return subdomain matching domain.
-		path (str): Add URL path to subdomain.
+		ctx (dict): ctx
 
 	Returns:
 		list: List of subdomains matching query.
@@ -289,11 +289,8 @@ def get_http_urls(
 	specific path.
 
 	Args:
-		target_domain (startScan.models.Domain): Target Domain object.
-		scan_history (startScan.models.ScanHistory, optional): ScanHistory object.
 		is_alive (bool): If True, select only alive urls.
 		is_uncrawled (bool): If True, select only urls that have not been crawled.
-		path (str): URL path.
 		write_filepath (str): Write info back to a file.
 		get_only_default_urls (bool):
 
@@ -340,7 +337,7 @@ def get_http_urls(
 		endpoints = [e for e in endpoints if e.is_alive]
 
 	# Grab only http_url from endpoint objects
-	endpoints = [e.http_url for e in endpoints]
+	endpoints = [e.http_url for e in endpoints if is_valid_url(e.http_url)]
 	if ignore_files: # ignore all files
 		extensions_path = f'{RECONPOINT_HOME}/fixtures/extensions.txt'
 		with open(extensions_path, 'r') as f:
@@ -450,7 +447,7 @@ def sanitize_url(http_url):
 	if "://" not in http_url:
 		http_url = "http://" + http_url
 	url = urlparse(http_url)
-	
+
 	if url.netloc.endswith(':80'):
 		url = url._replace(netloc=url.netloc.replace(':80', ''))
 	elif url.netloc.endswith(':443'):
@@ -501,10 +498,57 @@ def get_random_proxy():
 def remove_ansi_escape_sequences(text):
 	# Regular expression to match ANSI escape sequences
 	ansi_escape_pattern = r'\x1b\[.*?m'
-	
+
 	# Use re.sub() to replace the ANSI escape sequences with an empty string
 	plain_text = re.sub(ansi_escape_pattern, '', text)
 	return plain_text
+
+def get_cms_details(url):
+	"""Get CMS details using cmseek.py.
+
+	Args:
+		url (str): HTTP URL.
+
+	Returns:
+		dict: Response.
+	"""
+	# this function will fetch cms details using cms_detector
+	response = {}
+	cms_detector_command = f'python3 /usr/src/github/CMSeeK/cmseek.py --random-agent --batch --follow-redirect -u {url}'
+	os.system(cms_detector_command)
+
+	response['status'] = False
+	response['message'] = 'Could not detect CMS!'
+
+	parsed_url = urlparse(url)
+
+	domain_name = parsed_url.hostname
+	port = parsed_url.port
+
+	find_dir = domain_name
+
+	if port:
+		find_dir += f'_{port}'
+
+	# subdomain may also have port number, and is stored in dir as _port
+
+	cms_dir_path =  f'/usr/src/github/CMSeeK/Result/{find_dir}'
+	cms_json_path =  cms_dir_path + '/cms.json'
+
+	if os.path.isfile(cms_json_path):
+		cms_file_content = json.loads(open(cms_json_path, 'r').read())
+		if not cms_file_content.get('cms_id'):
+			return response
+		response = {}
+		response = cms_file_content
+		response['status'] = True
+		# remove cms dir path
+		try:
+			shutil.rmtree(cms_dir_path)
+		except Exception as e:
+			print(e)
+
+	return response
 
 
 #--------------------#
@@ -549,6 +593,23 @@ def send_slack_message(message):
 	hook_url = notif.slack_hook_url
 	requests.post(url=hook_url, data=json.dumps(message), headers=headers)
 
+def send_lark_message(message):
+	"""Send lark message.
+
+	Args:
+		message (str): Message.
+	"""
+	headers = {'content-type': 'application/json'}
+	message = {"msg_type":"interactive","card":{"elements":[{"tag":"div","text":{"content":message,"tag":"lark_md"}}]}}
+	notif = Notification.objects.first()
+	do_send = (
+		notif and
+		notif.send_to_lark and
+		notif.lark_hook_url)
+	if not do_send:
+		return
+	hook_url = notif.lark_hook_url
+	requests.post(url=hook_url, data=json.dumps(message), headers=headers)
 
 def send_discord_message(
 		message,
@@ -648,7 +709,7 @@ def send_discord_message(
 
 		webhook.add_embed(embed)
 
-		# Add webhook and embed objects to cache so we can pick them up later
+		# Add webhook and embed objects to cache, so we can pick them up later
 		DISCORD_WEBHOOKS_CACHE.set(title + '_webhook', pickle.dumps(webhook))
 		DISCORD_WEBHOOKS_CACHE.set(title + '_embed', pickle.dumps(embed))
 
@@ -808,6 +869,19 @@ def fmt_traceback(exc):
 # CLI BUILDERS #
 #--------------#
 
+def _build_cmd(cmd, options, flags, sep=" "):
+	for k,v in options.items():
+		if not v:
+			continue
+		cmd += f" {k}{sep}{v}"
+
+	for flag in flags:
+		if not flag:
+			continue
+		cmd += f" --{flag}"
+
+	return cmd
+
 def get_nmap_cmd(
 		input_file,
 		cmd=None,
@@ -821,41 +895,29 @@ def get_nmap_cmd(
 		flags=[]):
 	if not cmd:
 		cmd = 'nmap'
-	cmd += f' -sV' if service_detection else ''
-	cmd += f' -p {ports}' if ports else ''
-	for flag in flags:
-		cmd += flag
-	cmd += f' --script {script}' if script else ''
-	cmd += f' --script-args {script_args}' if script_args else ''
-	cmd += f' --max-rate {max_rate}' if max_rate else ''
-	cmd += f' -oX {output_file}' if output_file else ''
-	if input_file:
-		cmd += f' -iL {input_file}'
-	elif host:
-		cmd += f' {host}'
-	return cmd
 
-# TODO: replace all cmd += ' -{proxy}' if proxy else '' by this function
-# def build_cmd(cmd, options, flags, sep=' '):
-# 	for k, v in options.items():
-# 		if v is None:
-# 			continue
-#		cmd += f' {k}{sep}{v}'
-#	for flag in flags:
-#		if not flag:
-#			continue
-#		cmd += f' --{flag}'
-# 	return cmd
-# build_cmd(cmd, proxy=proxy, option_prefix='-')
+	options = {
+		"-sV": service_detection,
+		"-p": ports,
+		"--script": script,
+		"--script-args": script_args,
+		"--max-rate": max_rate,
+		"-oX": output_file
+	}
+	cmd = _build_cmd(cmd, options, flags)
+
+	if not input_file:
+		cmd += f" {host}" if host else ""
+	else:
+		cmd += f" -iL {input_file}"
+
+	return cmd
 
 
 def xml2json(xml):
-	xmlfile = open(xml)
-	xml_content = xmlfile.read()
-	xmlfile.close()
-	xmljson = json.dumps(xmltodict.parse(xml_content), indent=4, sort_keys=True)
-	jsondata = json.loads(xmljson)
-	return jsondata
+	with open(xml) as xml_file:
+		xml_content = xml_file.read()
+	return xmltodict.parse(xml_content)
 
 
 def reverse_whois(lookup_keyword):
@@ -917,7 +979,7 @@ def get_domain_historical_ip_address(domain):
 	}
 	response = requests.get(url, headers=headers)
 	soup = BeautifulSoup(response.content, 'lxml')
-	table = soup.find("table", {"border" : "1"})
+	table = soup.find("table", {"border" : "1"})					   
 	for row in table or []:
 		ip = row.findAll('td')[0].getText()
 		location = row.findAll('td')[1].getText()
@@ -945,9 +1007,134 @@ def get_netlas_key():
 	netlas_key = NetlasAPIKey.objects.all()
 	return netlas_key[0] if netlas_key else None
 
+def parse_llm_vulnerability_report(report):
+	report = report.replace('**', '')
+	data = {}
+	sections = re.split(r'\n(?=(?:Description|Impact|Remediation|References):)', report.strip())
+	
+	try:
+		for section in sections:
+			if not section.strip():
+				continue
+			
+			section_title, content = re.split(r':\n', section.strip(), maxsplit=1)
+			
+			if section_title == 'Description':
+				data['description'] = content.strip()
+			elif section_title == 'Impact':
+				data['impact'] = content.strip()
+			elif section_title == 'Remediation':
+				data['remediation'] = content.strip()
+			elif section_title == 'References':
+				data['references'] = [ref.strip() for ref in content.split('\n') if ref.strip()]
+	except Exception as e:
+		return data
+	
+	return data
 
-def extract_between(text, pattern):
-	match = pattern.search(text)
-	if match:
-		return match.group(1).strip()
-	return ""
+
+def create_scan_object(host_id, engine_id, initiated_by_id=None):
+	'''
+	create task with pending status so that celery task will execute when
+	threads are free
+	Args:
+		host_id: int: id of Domain model
+		engine_id: int: id of EngineType model
+		initiated_by_id: int : id of User model (Optional)
+	'''
+	# get current time
+	current_scan_time = timezone.now()
+	# fetch engine and domain object
+	engine = EngineType.objects.get(pk=engine_id)
+	domain = Domain.objects.get(pk=host_id)
+	scan = ScanHistory()
+	scan.scan_status = INITIATED_TASK
+	scan.domain = domain
+	scan.scan_type = engine
+	scan.start_scan_date = current_scan_time
+	if initiated_by_id:
+		user = User.objects.get(pk=initiated_by_id)
+		scan.initiated_by = user
+	scan.save()
+	# save last scan date for domain model
+	domain.start_scan_date = current_scan_time
+	domain.save()
+	return scan.id
+
+
+def get_port_service_description(port):
+	"""
+		Retrieves the standard service name and description for a given port 
+		number using whatportis and the builtin socket library as fallback.
+
+		Args:
+			port (int or str): The port number to look up. 
+				Can be an integer or a string representation of an integer.
+
+		Returns:
+			dict: A dictionary containing the service name and description for the port number.
+	"""
+	logger.info('Fetching Port Service Name and Description')
+	try:
+		port = int(port)
+		whatportis_result = whatportis.get_ports(str(port))
+		
+		if whatportis_result and whatportis_result[0].name:
+			return {
+				"service_name": whatportis_result[0].name,
+				"description": whatportis_result[0].description
+			}
+		else:
+			try:
+				service = socket.getservbyport(port)
+				return {
+					"service_name": service,
+					"description": "" # Keep description blank when using socket
+				}
+			except OSError:
+				# If both whatportis and socket fail
+				return {
+					"service_name": "",
+					"description": ""
+				}
+	except:
+		# port is not a valid int or any other exception
+		return {
+			"service_name": "",
+			"description": ""
+		}
+
+
+def update_or_create_port(port_number, service_name=None, description=None):
+	"""
+		Updates or creates a new Port object with the provided information to 
+		avoid storing duplicate entries when service or description information is updated.
+
+		Args:
+			port_number (int): The port number to update or create.
+			service_name (str, optional): The name of the service associated with the port.
+			description (str, optional): A description of the service associated with the port.
+
+		Returns:
+			Tuple: A tuple containing the Port object and a boolean indicating whether the object was created.
+	"""
+	created = False
+	try:
+		port = Port.objects.get(number=port_number)
+		
+		# avoid updating None values in service and description if they already exist
+		if service_name is not None and port.service_name != service_name:
+			port.service_name = service_name
+		if description is not None and port.description != description:
+			port.description = description
+		port.save()	
+	except Port.DoesNotExist:
+		# for cases if the port doesn't exist, create a new one
+		port = Port.objects.create(
+			number=port_number,
+			service_name=service_name,
+			description=description
+		)
+		created = True
+	finally:
+		return port, created
