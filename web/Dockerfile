@@ -65,9 +65,9 @@ RUN ARCH=$(dpkg --print-architecture) && \
 # Download and install Geckodriver
 RUN ARCH=$(dpkg --print-architecture) && \
     case "${ARCH}" in \
-      arm64) GECKOPATH="geckodriver-v${GECKOVERSION}-linux-arm64.tar.gz" ;; \
+      arm64) GECKOPATH="geckodriver-v${GECKOVERSION}-linux-aarch64.tar.gz" ;; \
       amd64) GECKOPATH="geckodriver-v${GECKOVERSION}-linux64.tar.gz" ;; \
-      armhf) GECKOPATH="geckodriver-v${GECKOVERSION}-linux-armv7l.tar.gz" ;; \
+      armhf) GECKOPATH="geckodriver-v${GECKOVERSION}-linux-aarch64.tar.gz" ;; \
       *) echo "Unknown architecture: ${ARCH}" && exit 1 ;; \
     esac && \
     wget https://github.com/mozilla/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH} && \
