@@ -43,5 +43,6 @@ jobs:
           context: web/
           push: true
           platforms: ${{ matrix.platform }}
-          tags: ${{ steps.meta.outputs.tags }}-${{ matrix.platform | replace('/', '-') }}
+          tags: >
+            ${{ steps.meta.outputs.tags }}-${{ matrix.platform == 'linux/amd64' && 'linux-amd64' || matrix.platform == 'linux/arm/v7' && 'linux-armhf' || matrix.platform == 'linux/arm64' && 'linux-arm64' }}
           labels: ${{ steps.meta.outputs.labels }}
