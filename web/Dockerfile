@@ -5,11 +5,10 @@ ARG GECKOVERSION=0.33.0
 ARG GOVERSION=1.21.5
 
 RUN ARCH=$(dpkg --print-architecture) \ 
-    RUN ARCH=$(dpkg --print-architecture) \ 
-        && if [ "${ARCH}" != "arm64" ] && [ "${ARCH}" != "amd64" ] && [ "${ARCH}" != "armhf" ]; then \
-          echo "reconPoint not supported, encountered unknown architecture: ${ARCH}" \
-          && exit 1; \
-        fi
+     && if [ "${ARCH}" ! "arm64" ] || [ "${ARCH}" ! "amd64" ]; then \
+       echo "reconPoint not supported, encountered unknown architecture: ${ARCH}" \
+       && exit 1; \
+     fi
 
 # Labels and Credits
 LABEL \
