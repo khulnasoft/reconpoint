@@ -58,7 +58,9 @@ RUN ARCH=$(dpkg --print-architecture) && \
     esac && \
     wget https://go.dev/dl/${GOFILE} && \
     tar -xvf ${GOFILE} -C /usr/local && \
-    rm ${GOFILE}
+    rm ${GOFILE} && \
+    echo "Go installed at:" && ls -la /usr/local/go/bin && \
+    go version
 
 # Download and install Geckodriver
 RUN ARCH=$(dpkg --print-architecture) && \
