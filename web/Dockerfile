@@ -71,7 +71,7 @@ RUN ARCH=$(dpkg --print-architecture) \
 # Download and install Geckodriver
 RUN ARCH=$(dpkg --print-architecture) \ 
     && if [ "${ARCH}" = "arm64" ]; then \
-      GECKOPATH="geckodriver-v${GECKOVERSION}-linux-aarch64.tar.gz"; \
+      GECKOPATH="geckodriver-v${GECKOVERSION}-linux-arm64.tar.gz"; \
     elif [ "${ARCH}" = "amd64" ]; then \
       GECKOPATH="geckodriver-v${GECKOVERSION}-linux64.tar.gz"; \
     elif [ "${ARCH}" = "armhf" ]; then \
