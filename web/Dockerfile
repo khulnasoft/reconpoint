@@ -5,7 +5,7 @@ ARG GECKOVERSION=0.33.0
 ARG GOVERSION=1.21.5
 
 RUN ARCH=$(dpkg --print-architecture) \ 
-    && if [ "${ARCH}" ! "arm64" ] || [ "${ARCH}" ! "amd64" ]; then \
+    && if [ "${ARCH}" != "arm64" ] && [ "${ARCH}" != "amd64" ] && [ "${ARCH}" != "armhf" ]; then \
       echo "reconPoint not supported, encountered unknown architecture: ${TARGETPLATFORM}" \
       && exit 1; \
     fi
@@ -55,27 +55,37 @@ RUN apt install -y --no-install-recommends \
 
 RUN add-apt-repository ppa:mozillateam/ppa
 
-# Download and install go 1.20
-RUN wget https://golang.org/dl/go1.21.4.linux-amd64.tar.gz
-RUN tar -xvf go1.21.4.linux-amd64.tar.gz
-RUN rm go1.21.4.linux-amd64.tar.gz
-RUN mv go /usr/local
+# Download and install Go
+RUN ARCH=$(dpkg --print-architecture) \
+    && if [ "${ARCH}" = "arm64" ]; then \
+      GOFILE="go${GOVERSION}.linux-arm64.tar.gz"; \
+    elif [ "${ARCH}" = "amd64" ]; then \
+      GOFILE="go${GOVERSION}.linux-amd64.tar.gz"; \
+    elif [ "${ARCH}" = "armhf" ]; then \
+      GOFILE="go${GOVERSION}.linux-armv6l.tar.gz"; \
+    fi \
+    && wget https://go.dev/dl/${GOFILE} \
+    && tar -xvf ${GOFILE} -C /usr/local \
+    && rm ${GOFILE}
 
-RUN ARCH=$(dpkg --print-architecture) \ 
-    && wget https://go.dev/dl/go${GOVERSION}.linux-${ARCH}.tar.gz \
-    && tar -xvf go${GOVERSION}.linux-${ARCH}.tar.gz -C /usr/local \
-    && rm go${GOVERSION}.linux-${ARCH}.tar.gz
-
+# Download and install Geckodriver
 RUN ARCH=$(dpkg --print-architecture) \ 
     && if [ "${ARCH}" = "arm64" ]; then \
       GECKOPATH="geckodriver-v${GECKOVERSION}-linux-aarch64.tar.gz"; \
     elif [ "${ARCH}" = "amd64" ]; then \
       GECKOPATH="geckodriver-v${GECKOVERSION}-linux64.tar.gz"; \
+    elif [ "${ARCH}" = "armhf" ]; then \
+      GECKOPATH="geckodriver-v${GECKOVERSION}-linux-armv7l.tar.gz"; \
     fi \
     && wget https://github.com/mozilla/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH} \
     && tar -xvf ${GECKOPATH} \
     && rm ${GECKOPATH} \
     && mv geckodriver /usr/bin
+
+# Install Rust for orjson
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN pip3 install maturin
 
 # Make directory for app
 WORKDIR /usr/src/app
@@ -106,16 +116,17 @@ RUN printf "\
     xargs -L1 go install -ldflags="-s -w" -v && \
     rm -rf /go/pkg/* && rm -rf /root/.cache/go-build
 
-# Nuclei-Templates
+
+# Update Nuclei and Nuclei-Templates
 RUN nuclei -update-templates
 
 # Copy requirements
 COPY ./requirements.txt /tmp/requirements.txt
-RUN pip3 install --upgrade setuptools==72.1.0 pip && \
-    pip3 install -r /tmp/requirements.txt --no-cache-dir
+RUN pip3 install --upgrade setuptools==72.1.0
+RUN pip3 install -r /tmp/requirements.txt --no-cache-dir
 
 # install eyewitness
-RUN python3 -m pip install --no-cache-dir fuzzywuzzy \
+RUN pip3 install --no-cache-dir fuzzywuzzy \
     selenium==4.9.1 \
     python-Levenshtein \
     pyvirtualdisplay \
