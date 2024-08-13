@@ -1091,6 +1091,7 @@ def get_port_service_description(port):
 		Args:
 			port (int or str): The port number to look up. 
 				Can be an integer or a string representation of an integer.
+
 		Returns:
 			dict: A dictionary containing the service name and description for the port number.
 	"""
