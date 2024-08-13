@@ -6,13 +6,11 @@ Your contributions are highly appreciated and we welcome any kind of contributio
 
 If you are new to open source community, reconPoint is beginner-friendly. Please create pull requests for any new features, bug fixes, improvements on documentation, or anything!
 
-Join our developer chat on [Discord Developer Room](https://discord.gg/JuhHdHTtwd) if you would like to contribute to reconPoint.
-
 ## Bug reporting
 
 We appreciate your effort to improve reconPoint by submitting a bug report. But, Before doing so, please check the following things:
 
-1. Please **do not** use the issue tracker for personal support requests, instead use [reconPoint Support Discord channel](https://discord.gg/azv6fzhNCE) for any personal support request.
+1. Please **do not** use the issue tracker for personal support requests, instead use [reconPoint Support Mail](security@khulnasoft.com) for any personal support request.
 2. Check whether the bug **hasn't been already reported**. Duplicate reports take us time, that we could be used to fix other bugs or make improvements.
 3. If you get an error while using reconPoint, please **describe what happened** and add a verbose error message. Reports like "I got an error when I started scanning some random website." are not worth anybody's time. Please be as descriptive as you can.
 4. Provide easy steps to reproduce. This will help us solve your issues easily and quickly.

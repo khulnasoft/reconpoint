@@ -18,3 +18,4 @@ def serve_protected_media(request, path):
         return response
     else:
         raise Http404("File not found")
+
