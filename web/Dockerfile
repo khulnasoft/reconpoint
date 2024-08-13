@@ -13,7 +13,7 @@ RUN ARCH=$(dpkg --print-architecture) \
 # Labels and Credits
 LABEL \
     name="reconPoint" \
-    author="Yogesh Ojha <yogesh.ojha11@gmail.com>" \
+    author="KhulnaSoft DevSec <security@khulnasoft.com>" \
     description="reconPoint is a automated pipeline of recon process, useful for information gathering during web application penetration testing."
 
 # Environment Variables
