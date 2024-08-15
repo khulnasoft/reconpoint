@@ -13,7 +13,7 @@ LABEL \
     name="reconPoint" \
     author="KhulnaSoft DevOps <security@khulnasoft.com>" \
     description="reconPoint is a automated pipeline of recon process, useful for information gathering during web application penetration testing."
-    
+
 # Environment variables
 ENV DEBIAN_FRONTEND="noninteractive" \
     DATABASE="postgres" \
@@ -22,7 +22,7 @@ ENV DEBIAN_FRONTEND="noninteractive" \
     HOME="/root" \
     GOROOT="/usr/local/go" \
     GOPATH="/root/go" \
-    PATH="$PATH:$GOROOT/bin:$GOPATH/bin" \
+    PATH="$PATH:/usr/local/go/bin:/root/go/bin" \
     GO111MODULE=on
 
 # Install required packages and add Mozilla Team PPA
@@ -61,19 +61,21 @@ RUN ARCH=$(dpkg --print-architecture) \
              GECKOREPO="https://github.com/khulnasoft-lab/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH}" ;; \
       armv7l) GECKOPATH="geckodriver-v${GECKOVERSION}-linux-armv7l.tar.gz" \
              GECKOREPO="https://github.com/khulnasoft-lab/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH}" ;; \
-      amd64) GECKOPATH="geckodriver-v${GECKOVERSION}-linux64.tar.gz" \
-             GECKOREPO="https://github.com/mozilla/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH}" ;; \
-      armhf|armv6|i386) GECKOPATH="geckodriver-v${GECKOVERSION}-linux32.tar.gz" \
-             GECKOREPO="https://github.com/mozilla/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH}" ;; \
+      amd64) GECKOPATH="geckodriver-v${GECKOVERSION}-linux64.tar.gz" ;; \
+      armhf|armv6|i386) GECKOPATH="geckodriver-v${GECKOVERSION}-linux32.tar.gz" ;; \
       *) echo "Unsupported architecture: $ARCH"; exit 1 ;; \
     esac \
-    && wget ${GECKOREPO} \
+    && wget ${GECKOREPO:-https://github.com/mozilla/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH}} \
     && tar -xvf ${GECKOPATH} -C /usr/local/bin \
     && rm ${GECKOPATH}
 
 # Install Rust for orjson
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+    && echo "source $HOME/.cargo/env" >> $HOME/.bashrc
+
+ENV PATH="/root/.cargo/bin:$PATH"
+
+# Install Maturin for Python bindings
 RUN pip3 install maturin
 
 # Set working directory
