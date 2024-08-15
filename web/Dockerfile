@@ -27,6 +27,11 @@ ENV DEBIAN_FRONTEND="noninteractive" \
 
 # Install required packages and add Mozilla Team PPA
 RUN ARCH=$(dpkg --print-architecture) \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        # Add your required packages here \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
     && echo "$SUPPORTED_ARCH" | grep -qw "$ARCH" || { \
          echo "Unsupported architecture: $ARCH"; exit 1; \
     } \
@@ -71,12 +76,11 @@ RUN ARCH=$(dpkg --print-architecture) \
 
 # Install Rust for orjson
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
-    && echo "source $HOME/.cargo/env" >> $HOME/.bashrc
+    && echo "source $HOME/.cargo/env" >> $HOME/.bashrc \
+    && . $HOME/.cargo/env \
+    && pip3 install maturin
 
 ENV PATH="/root/.cargo/bin:$PATH"
-
-# Install Maturin for Python bindings
-RUN pip3 install maturin
 
 # Set working directory
 WORKDIR /usr/src/app
