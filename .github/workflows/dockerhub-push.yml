@@ -1,10 +1,11 @@
 name: 🌥 Docker Push
 
 on:
+  workflow_dispatch:
+  pull_request:
   push:
-    branches: [ master ]
-  schedule:
-    - cron: '0 18 * * 5'
+    tags:
+      - '*'
 
 jobs:
   docker:
@@ -33,7 +34,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: web/
           platforms: linux/amd64,linux/arm64
           push: true
           tags: khulnasoft/reconpoint:latest,khulnasoft/reconpoint:${{ steps.meta.outputs.TAG }}
