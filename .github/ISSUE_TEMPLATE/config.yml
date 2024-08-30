@@ -1,11 +1,1 @@
 blank_issues_enabled: false
-
-contact_links:
-
-  - name: Ask an question / advise on using reconpoint
-    url: https://github.com/khulnasoft/reconpoint/discussions/categories/q-a
-    about: Ask a question or request support for using reconpoint
-
-  - name: Share idea / feature to discuss for reconpoint
-    url: https://github.com/khulnasoft/reconpoint/discussions/categories/ideas
-    about: Share idea / feature to discuss for reconpoint
