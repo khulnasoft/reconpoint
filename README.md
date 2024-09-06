@@ -1,67 +1,115 @@
 # Recon Point
 
-<p align=""><a href="https://github.com/khulnasoft/reconpoint/releases" target="_blank"><img src="https://img.shields.io/badge/version-v2.2.0-informational?&logo=none" alt="reconPoint Latest Version" /></a>&nbsp;<a href="https://www.gnu.org/licenses/gpl-3.0" target="_blank"><img src="https://img.shields.io/badge/License-GPLv3-red.svg?&logo=none" alt="License" /></a>&nbsp;<a href="#" target="_blank"><img src="https://img.shields.io/badge/first--timers--only-friendly-blue.svg?&logo=none" alt="" /></a>&nbsp;<a href="https://huntr.dev/bounties/disclose/?target=https%3A%2F%2Fgithub.com%2Fkhulnasoft%2Freconpoint" target="_blank"><img src="https://cdn.huntr.dev/huntr_security_badge_mono.svg" alt="" /></a>&nbsp;</p>
 
-<p align="">
-  <a href="https://www.youtube.com/watch?v=Xk_YH83IQgg" target="_blank"><img src="https://img.shields.io/badge/BlackHat--Arsenal--Asia-2023-blue.svg?logo=none" alt="" /></a>&nbsp;
-  <a href="https://www.youtube.com/watch?v=Xk_YH83IQgg" target="_blank"><img src="https://img.shields.io/badge/BlackHat--Arsenal--USA-2022-blue.svg?logo=none" alt="" /></a>&nbsp;
-  <a href="https://www.youtube.com/watch?v=Xk_YH83IQgg" target="_blank"><img src="https://img.shields.io/badge/Open--Source--Summit-2022-blue.svg?logo=none" alt="" /></a>&nbsp;
-  <a href="https://cyberweek.ae/2021/hitb-armory/" target="_blank"><img src="https://img.shields.io/badge/HITB--Armory-2021-blue.svg?logo=none" alt="" /></a>&nbsp;
-  <a href="https://www.youtube.com/watch?v=7uvP6MaQOX0" target="_blank"><img src="https://img.shields.io/badge/BlackHat--Arsenal--USA-2021-blue.svg?logo=none" alt="" /></a>&nbsp;
-  <a href="https://drive.google.com/file/d/1Bh8lbf-Dztt5ViHJVACyrXMiglyICPQ2/view?usp=sharing" target="_blank"><img src="https://img.shields.io/badge/Defcon--Demolabs--29-2021-blue.svg?logo=none" alt="" /></a>&nbsp;
-  <a href="https://www.youtube.com/watch?v=A1oNOIc0h5A" target="_blank"><img src="https://img.shields.io/badge/BlackHat--Arsenal--Europe-2020-blue.svg?&logo=none" alt="" /></a>&nbsp;
+<p>
+  <a href="https://github.com/khulnasoft/reconpoint/releases" target="_blank">
+    <img src="https://img.shields.io/badge/version-v2.2.0-informational?&logo=none" alt="reconPoint Latest Version" />
+  </a>
+  <a href="https://www.gnu.org/licenses/gpl-3.0" target="_blank">
+    <img src="https://img.shields.io/badge/License-GPLv3-red.svg?&logo=none" alt="License" />
+  </a>
+  <a href="#" target="_blank">
+    <img src="https://img.shields.io/badge/first--timers--only-friendly-blue.svg?&logo=none" alt="First Timers Only" />
+  </a>
 </p>
 
-<p align="">
-<a href="https://github.com/khulnasoft/reconpoint/actions/workflows/codeql-analysis.yml" target="_blank"><img src="https://github.com/khulnasoft/reconpoint/actions/workflows/codeql-analysis.yml/badge.svg" alt="" /></a>&nbsp;<a href="https://github.com/khulnasoft/reconpoint/actions/workflows/build.yml" target="_blank"><img src="https://github.com/khulnasoft/reconpoint/actions/workflows/build.yml/badge.svg" alt="" /></a>&nbsp;
+<p>
+  <a href="https://www.youtube.com/watch?v=Xk_YH83IQgg" target="_blank">
+    <img src="https://img.shields.io/badge/BlackHat--Arsenal--Asia-2023-blue.svg?logo=none" alt="BlackHat Arsenal Asia 2023" />
+  </a>
+  <a href="https://www.youtube.com/watch?v=Xk_YH83IQgg" target="_blank">
+    <img src="https://img.shields.io/badge/BlackHat--Arsenal--USA-2022-blue.svg?logo=none" alt="BlackHat Arsenal USA 2022" />
+  </a>
+  <a href="https://www.youtube.com/watch?v=Xk_YH83IQgg" target="_blank">
+    <img src="https://img.shields.io/badge/Open--Source--Summit-2022-blue.svg?logo=none" alt="Open Source Summit 2022" />
+  </a>
+  <a href="https://cyberweek.ae/2021/hitb-armory/" target="_blank">
+    <img src="https://img.shields.io/badge/HITB--Armory-2021-blue.svg?logo=none" alt="HITB Armory 2021" />
+  </a>
+  <a href="https://www.youtube.com/watch?v=7uvP6MaQOX0" target="_blank">
+    <img src="https://img.shields.io/badge/BlackHat--Arsenal--USA-2021-blue.svg?logo=none" alt="BlackHat Arsenal USA 2021" />
+  </a>
+  <a href="https://drive.google.com/file/d/1Bh8lbf-Dztt5ViHJVACyrXMiglyICPQ2/view?usp=sharing" target="_blank">
+    <img src="https://img.shields.io/badge/Defcon--Demolabs--29-2021-blue.svg?logo=none" alt="Defcon Demolabs 29 2021" />
+  </a>
+  <a href="https://www.youtube.com/watch?v=A1oNOIc0h5A" target="_blank">
+    <img src="https://img.shields.io/badge/BlackHat--Arsenal--Europe-2020-blue.svg?&logo=none" alt="BlackHat Arsenal Europe 2020" />
+  </a>
 </p>
 
-<h4>What is reconPoint?</h4>
-reconPoint is your ultimate web application reconnaissance suite, designed to supercharge the recon process for security pros, pentesters, and bug bounty hunters. It is go-to web application reconnaissance suite that's designed to simplify and streamline the reconnaissance process for all the needs of security professionals, penetration testers, and bug bounty hunters. With its highly configurable engines, data correlation capabilities, continuous monitoring, database-backed reconnaissance data, and an intuitive user interface, reconPoint redefines how you gather critical information about your target web applications.
-
-Traditional reconnaissance tools often fall short in terms of configurability and efficiency. reconPoint addresses these shortcomings and emerges as an excellent alternative to existing commercial tools.
-
-reconPoint was created to address the limitations of traditional reconnaissance tools and provide a better alternative, even surpassing some commercial offerings. Whether you're a bug bounty hunter, a penetration tester, or a corporate security team, reconPoint is your go-to solution for automating and enhancing your information-gathering efforts.
-
+<p>
+  <a href="https://github.com/khulnasoft/reconpoint/actions/workflows/codeql-analysis.yml" target="_blank">
+    <img src="https://github.com/khulnasoft/reconpoint/actions/workflows/codeql-analysis.yml/badge.svg" alt="CodeQL Analysis" />
+  </a>
+  <a href="https://github.com/khulnasoft/reconpoint/actions/workflows/build.yml" target="_blank">
+    <img src="https://github.com/khulnasoft/reconpoint/actions/workflows/build.yml/badge.svg" alt="Build Status" />
+  </a>
 </p>
+
+## What is reconPoint?
+
+reconPoint is your ultimate web application reconnaissance suite, designed to supercharge the recon process for security pros, pentesters, and bug bounty hunters. It is a go-to tool that simplifies and streamlines reconnaissance, featuring configurable engines, data correlation, continuous monitoring, database-backed reconnaissance data, and an intuitive user interface. reconPoint redefines how you gather critical information about target web applications.
+
+Traditional reconnaissance tools often fall short in configurability and efficiency. reconPoint addresses these shortcomings and emerges as an excellent alternative to existing commercial tools.
 
 [Watch reconPoint 2.0-jasper release trailer here!](https://youtu.be/VwkOWqiWW5g)
 
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
+---
 
 ## Documentation
 
 Detailed documentation available at [https://recon.khulnasoft.com](https://recon.khulnasoft.com)
 
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
+---
 
 ## Table of Contents
 
-- [About reconPoint](#about-reconpoint)
-- [Workflow](#workflow)
-- [Features](#features)
-- [Quick Installation](#quick-installation)
-- [Installation Video](#installation-video-tutorial)
-- [Community-Curated Videos](#community-curated-videos)
-- [Screenshots](#screenshots)
-- [What's new in reconPoint](https://github.com/khulnasoft/reconpoint/releases)
-- [Contributing](#contributing)
-- [reconPoint Support](#reconpoint-support)
-- [Support and Sponsoring](#support-and-sponsoring)
-- [Reporting Security Vulnerabilities](#reporting-security-vulnerabilities)
-- [License](#license)
+- [Recon Point](#recon-point)
+  - [What is reconPoint?](#what-is-reconpoint)
+  - [Documentation](#documentation)
+  - [Table of Contents](#table-of-contents)
+  - [About reconPoint](#about-reconpoint)
+  - [Workflow](#workflow)
+  - [Features](#features)
+  - [Quick Installation](#quick-installation)
+    - [Quick Setup for Ubuntu/VPS](#quick-setup-for-ubuntuvps)
+    - [Installation on Other Platforms](#installation-on-other-platforms)
+    - [Installation Video Tutorial](#installation-video-tutorial)
+  - [Updating](#updating)
+  - [Community-Curated Videos](#community-curated-videos)
+  - [Screenshots](#screenshots)
+    - [Scan Results](#scan-results)
+    - [General Usage](#general-usage)
+    - [Initiating Subscan](#initiating-subscan)
+    - [Recon Data filtering](#recon-data-filtering)
+    - [Report Generation](#report-generation)
+    - [Toolbox](#toolbox)
+    - [Adding Custom tool in Tools Arsenal](#adding-custom-tool-in-tools-arsenal)
+  - [Contributing](#contributing)
+  - [Submitting issues](#submitting-issues)
+  - [First-time Open Source contributors](#first-time-open-source-contributors)
+  - [reconPoint Support](#reconpoint-support)
+  - [Support and Sponsoring](#support-and-sponsoring)
+  - [Reporting Security Vulnerabilities](#reporting-security-vulnerabilities)
+  - [License](#license)
 
-![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
+---
 
 ## About reconPoint
 
-reconPoint is not an ordinary reconnaissance suite; it's a game-changer! We've turbocharged the traditional workflow with groundbreaking features that is sure to ease your reconnaissance game. reconPoint redefines the art of reconnaissance with highly configurable scan engines, recon data correlation, continuous monitoring, GPT powered Vulnerability Report, Project Management and role based access control etc.
+reconPoint is a game-changing reconnaissance suite. It has turbocharged features for security professionals, penetration testers, and bug bounty hunters. It includes:
 
-🦾&nbsp;&nbsp; reconPoint has advanced reconnaissance capabilities, harnessing a range of open-source tools to deliver a comprehensive web application reconnaissance experience. With its intuitive User Interface, it excels in subdomain discovery, pinpointing IP addresses and open ports, collecting endpoints, conducting directory and file fuzzing, capturing screenshots, and performing vulnerability scans. To summarize, it does end-to-end reconnaissance. With WHOIS identification and WAF detection, it offers deep insights into target domains. Additionally, reconPoint also identifies misconfigured S3 buckets and find interesting subdomains and URLS, based on specific keywords to helps you identify your next target, making it a go-to tool for efficient reconnaissance.
+- Advanced scan engines
+- Data correlation
+- Continuous monitoring
+- GPT-powered Vulnerability Reports
+- Project management with role-based access control
 
-🗃️&nbsp; &nbsp; Say goodbye to recon data chaos! reconPoint seamlessly integrates with a database, providing you with unmatched data correlation and organization. Forgot the hassle of grepping through json, txt or csv files. Plus, our custom query language lets you filter reconnaissance data effortlessly using natural language like operators such as filtering all alive subdomains with `http_status=200` and also filter all subdomains that are alive and has admin in name `http_status=200&name=admin`
+🦾 reconPoint performs end-to-end reconnaissance, from subdomain discovery to vulnerability scanning. It supports WHOIS identification, WAF detection, and more, making it a go-to tool for efficient reconnaissance.
 
-🔧&nbsp;&nbsp; reconPoint offers unparalleled flexibility through its highly configurable scan engines, based on a YAML-based configuration. It offers the freedom to create and customize recon scan engines based on any kind of requirement, users can tailor them to their specific objectives and preferences, from thread management to timeout settings and rate-limit configurations, everything is customizable. Additionally, reconPoint offers a range of pre-configured scan engines right out of the box, including Full Scan, Passive Scan, Screenshot Gathering, and the OSINT Scan Engine. These ready-to-use engines eliminate the need for extensive manual setup, aligning perfectly with reconPoint's core mission of simplifying the reconnaissance process and enabling users to effortlessly access the right reconnaissance data with minimal effort.
+🗃️ reconPoint integrates with a database, providing seamless data correlation and organization, allowing you to filter reconnaissance data effortlessly.
+
+🔧 Highly configurable, reconPoint uses a YAML-based configuration system, offering customizable scan engines for all types of recon.
 
 💎&nbsp;&nbsp;Subscans: Subscan is a game-changing feature in reconPoint, setting it apart as the only open-source tool of its kind to offer this capability. With Subscan, waiting for the entire pipeline to complete is a thing of the past. Now, users can swiftly respond to newfound discoveries during reconnaissance. Whether you've stumbled upon an intriguing subdomain and wish to conduct a focused port scan or want to delve deeper with a vulnerability assessment, reconPoint has you covered.
 
@@ -338,11 +386,10 @@ When submitting issues, provide as much valuable information as possible to help
 
 3. Example Debug Output:
 
-   ```
+   ```text
    web_1          |   File "/usr/local/lib/python3.10/dist-packages/celery/app/task.py", line 411, in __call__
    web_1          |     return self.run(*args, **kwargs)
    web_1          | TypeError: run_command() got an unexpected keyword argument 'echo'
-   ```
 
 4. Submit Your Issue:
 

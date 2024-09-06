@@ -12,7 +12,6 @@ Thanks to these individuals for making reconPoint awesome by fixing bugs, resolv
 
 *If you have created a Pull request, feel free to add your name here, because we know you are awesome and deserve thanks from the community!*
 
-
 Also, Thanks to these individuals for making reconPoint awesome by providing continuous suggestions and support!
 
 * [bhavsec](https://twitter.com/bhavsec)
