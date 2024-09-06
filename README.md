@@ -338,12 +338,11 @@ When submitting issues, provide as much valuable information as possible to help
 
 3. Example Debug Output:
 
-   ```
+   ```text
    web_1          |   File "/usr/local/lib/python3.10/dist-packages/celery/app/task.py", line 411, in __call__
    web_1          |     return self.run(*args, **kwargs)
    web_1          | TypeError: run_command() got an unexpected keyword argument 'echo'
-   ```
-
+   
 4. Submit Your Issue:
 
    - Include the full stack trace in your GitHub issue
