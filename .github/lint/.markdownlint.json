@@ -1,5 +1,0 @@
-{
-  "MD033": false,
-  "MD041": true,  // Ensure the first line is a heading
-  "MD013": { "line_length": 242 }  // Set max line length to 80
-}
