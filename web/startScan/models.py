@@ -182,7 +182,8 @@ class ScanHistory(models.Model):
 	def get_elapsed_time(self):
 		return self.get_time_ago(self.start_scan_date)
 
-	def get_time_ago(self, time):
+	@staticmethod
+	def get_time_ago(time):
 		duration = timezone.now() - time
 		days, seconds = duration.days, duration.seconds
 		hours = days * 24 + seconds // 3600
