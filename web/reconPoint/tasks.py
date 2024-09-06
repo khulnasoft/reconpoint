@@ -481,13 +481,13 @@ def subdomain_discovery(
 			elif tool == 'ctfr':
 				results_file = self.results_dir + '/subdomains_ctfr.txt'
 				cmd = f'python3 /usr/src/github/ctfr/ctfr.py -d {host} -o {results_file}'
-				cmd_extract = f"cat {results_file} | sed 's/\*.//g' | tail -n +12 | uniq | sort > {results_file}"
+				cmd_extract = rf"cat {results_file} | sed 's/\*.//g' | tail -n +12 | uniq | sort > {results_file}"
 				cmd += f' && {cmd_extract}'
 
 			elif tool == 'tlsx':
 				results_file = self.results_dir + '/subdomains_tlsx.txt'
 				cmd = f'tlsx -san -cn -silent -ro -host {host}'
-				cmd += f" | sed -n '/^\([a-zA-Z0-9]\([-a-zA-Z0-9]*[a-zA-Z0-9]\)\?\.\)\+{host}$/p' | uniq | sort"
+				cmd += rf" | sed -n '/^\([a-zA-Z0-9]\([-a-zA-Z0-9]*[a-zA-Z0-9]\)\?\.\)\+{host}$/p' | uniq | sort"
 				cmd += f' > {results_file}'
 
 			elif tool == 'netlas':
@@ -495,7 +495,7 @@ def subdomain_discovery(
 				cmd = f'netlas search -d domain -i domain domain:"*.{host}" -f json'
 				netlas_key = get_netlas_key()
 				cmd += f' -a {netlas_key}' if netlas_key else ''
-				cmd_extract = f"grep -oE '([a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?\.)+{host}'"
+				cmd_extract = rf"grep -oE '([a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?\.)+{host}'"
 				cmd += f' | {cmd_extract} > {results_file}'
 
 			elif tool == 'chaos':
@@ -2041,7 +2041,7 @@ def fetch_url(self, urls=[], ctx={}, description=None):
 
 def parse_curl_output(response):
 	# TODO: Enrich from other cURL fields.
-	CURL_REGEX_HTTP_STATUS = f'HTTP\/(?:(?:\d\.?)+)\s(\d+)\s(?:\w+)'
+	CURL_REGEX_HTTP_STATUS = rf'HTTP\/(?:(?:\d\.?)+)\s(\d+)\s(?:\w+)'
 	http_status = 0
 	if response:
 		failed = False
