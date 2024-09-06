@@ -6,13 +6,13 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="reNgine is an automated reconnaissance framework meant for information gathering during penetration testing of web applications. reNgine has customizable scan engines, which can be used to scan the websites, endpoints, and gather information.">
+        <meta name="description" content="reconPoint is an automated reconnaissance framework meant for information gathering during penetration testing of web applications. reconPoint has customizable scan engines, which can be used to scan the websites, endpoints, and gather information.">
       
       
-        <meta name="author" content="Yogesh Ojha">
+        <meta name="author" content="KhulnaSoft DevSec">
       
       
-        <link rel="canonical" href="https://rengine.wiki/install/detailed/">
+        <link rel="canonical" href="https://recon.khulnasoft.com/install/detailed/">
       
       
       
@@ -22,7 +22,7 @@
     
     
       
-        <title>Installing reNgine on Linux/Windows/Mac - reNgine</title>
+        <title>Installing reconPoint on Linux/Windows/Mac - reconPoint</title>
       
     
     
@@ -70,9 +70,9 @@
 
 <!-- Open graph meta tags -->
 <meta property="og:type" content="website" />
-<meta property="og:title" content="reNgine - Installing reNgine on Linux/Windows/Mac" />
-<meta property="og:description" content="reNgine is an automated reconnaissance framework meant for information gathering during penetration testing of web applications. reNgine has customizable scan engines, which can be used to scan the websites, endpoints, and gather information." />
-<meta property="og:url" content="https://rengine.wiki/install/detailed/" />
+<meta property="og:title" content="reconPoint - Installing reconPoint on Linux/Windows/Mac" />
+<meta property="og:description" content="reconPoint is an automated reconnaissance framework meant for information gathering during penetration testing of web applications. reconPoint has customizable scan engines, which can be used to scan the websites, endpoints, and gather information." />
+<meta property="og:url" content="https://recon.khulnasoft.com/install/detailed/" />
 <meta property="og:image" content="" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1080" />
@@ -80,10 +80,10 @@
 
 <!-- Twitter meta tags -->
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:site" content="@ojhayogesh11" />
-<meta name="twitter:creator" content="@ojhayogesh11" />
-<meta name="twitter:title" content="reNgine - Installing reNgine on Linux/Windows/Mac" />
-<meta name="twitter:description" content="reNgine is an automated reconnaissance framework meant for information gathering during penetration testing of web applications. reNgine has customizable scan engines, which can be used to scan the websites, endpoints, and gather information." />
+<meta name="twitter:site" content="@khulnasoft" />
+<meta name="twitter:creator" content="@khulnasoft" />
+<meta name="twitter:title" content="reconPoint - Installing reconPoint on Linux/Windows/Mac" />
+<meta name="twitter:description" content="reconPoint is an automated reconnaissance framework meant for information gathering during penetration testing of web applications. reconPoint has customizable scan engines, which can be used to scan the websites, endpoints, and gather information." />
 <meta name="twitter:image" content="" />
 
   </head>
@@ -103,7 +103,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#installing-rengine-on-linuxwindowsmac" class="md-skip">
+        <a href="#installing-reconpoint-on-linuxwindowsmac" class="md-skip">
           Skip to content
         </a>
       
@@ -119,7 +119,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="reNgine" class="md-header__button md-logo" aria-label="reNgine" data-md-component="logo">
+    <a href="../.." title="reconPoint" class="md-header__button md-logo" aria-label="reconPoint" data-md-component="logo">
       
   <img src="../../static/logo.png" alt="logo">
 
@@ -132,13 +132,13 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            reNgine
+            reconPoint
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Installing reNgine on Linux/Windows/Mac
+              Installing reconPoint on Linux/Windows/Mac
             
           </span>
         </div>
@@ -189,13 +189,13 @@
     
     
       <div class="md-header__source">
-        <a href="https://github.com/yogeshojha/rengine" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/khulnasoft/reconpoint" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
   </div>
   <div class="md-source__repository">
-    reNgine
+    reconPoint
   </div>
 </a>
       </div>
@@ -321,22 +321,22 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="reNgine" class="md-nav__button md-logo" aria-label="reNgine" data-md-component="logo">
+    <a href="../.." title="reconPoint" class="md-nav__button md-logo" aria-label="reconPoint" data-md-component="logo">
       
   <img src="../../static/logo.png" alt="logo">
 
     </a>
-    reNgine
+    reconPoint
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/yogeshojha/rengine" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/khulnasoft/reconpoint" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
   </div>
   <div class="md-source__repository">
-    reNgine
+    reconPoint
   </div>
 </a>
     </div>
@@ -594,9 +594,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#clone-rengine" class="md-nav__link">
+  <a href="#clone-reconpoint" class="md-nav__link">
     <span class="md-ellipsis">
-      Clone reNgine
+      Clone reconPoint
     </span>
   </a>
   
@@ -645,18 +645,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#build-rengine" class="md-nav__link">
+  <a href="#build-reconpoint" class="md-nav__link">
     <span class="md-ellipsis">
-      Build reNgine
+      Build reconPoint
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#run-rengine" class="md-nav__link">
+  <a href="#run-reconpoint" class="md-nav__link">
     <span class="md-ellipsis">
-      Run reNgine
+      Run reconPoint
     </span>
   </a>
   
@@ -681,27 +681,27 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stopping-rengine" class="md-nav__link">
+  <a href="#stopping-reconpoint" class="md-nav__link">
     <span class="md-ellipsis">
-      Stopping reNgine
+      Stopping reconPoint
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#restarting-rengine" class="md-nav__link">
+  <a href="#restarting-reconpoint" class="md-nav__link">
     <span class="md-ellipsis">
-      Restarting reNgine
+      Restarting reconPoint
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#removing-all-rengine-data" class="md-nav__link">
+  <a href="#removing-all-reconpoint-data" class="md-nav__link">
     <span class="md-ellipsis">
-      Removing all reNgine Data
+      Removing all reconPoint Data
     </span>
   </a>
   
@@ -730,11 +730,11 @@
   
 
 
-<h1 id="installing-rengine-on-linuxwindowsmac">Installing reNgine on Linux/Windows/Mac<a class="headerlink" href="#installing-rengine-on-linuxwindowsmac" title="Permanent link">&para;</a></h1>
-<p>This document aims to provide detailed instructions on setting up and running the <strong>reNgine</strong>.</p>
+<h1 id="installing-reconpoint-on-linuxwindowsmac">Installing reconPoint on Linux/Windows/Mac<a class="headerlink" href="#installing-reconpoint-on-linuxwindowsmac" title="Permanent link">&para;</a></h1>
+<p>This document aims to provide detailed instructions on setting up and running the <strong>reconPoint</strong>.</p>
 <div class="admonition info">
 <p class="admonition-title">Attention</p>
-<p>If you wish to run reNgine on any debian Linux (like Ubuntu), there is a installation script that will ease your docker installation and does required setup for you. Consider using it. <a href="#quick-installation">Quick Installation</a> You can skip prerequisites <strong>if you are running Ubuntu</strong></p>
+<p>If you wish to run reconPoint on any debian Linux (like Ubuntu), there is a installation script that will ease your docker installation and does required setup for you. Consider using it. <a href="#quick-installation">Quick Installation</a> You can skip prerequisites <strong>if you are running Ubuntu</strong></p>
 </div>
 <p>This document is further divided into 3 parts:</p>
 <ol>
@@ -742,12 +742,12 @@
 <p><a href="#prerequisites">Prerequisites</a></p>
 </li>
 <li>
-<p><a href="#rengine-installation">reNgine Installation</a></p>
+<p><a href="#reconpoint-installation">reconPoint Installation</a></p>
 </li>
 </ol>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
-<p><strong>reNgine</strong> uses several scripts and tools, those tools or scripts rely on various tools to be installed like Go, Python, etc, and to avoid any dependency issues, we decided to use Docker. Using Docker will not only ease the dependency issues but will also ease the installation steps. As a penetration tester, you need not focus on solving the dependencies, installing required tools, etc. With few installation steps, you should be good to run <strong>reNgine</strong>.</p>
-<p><strong>reNgine</strong> requires <code>docker</code>, <code>docker-compose</code> and <code>make</code> to be installed before you begin installing rengine.</p>
+<p><strong>reconPoint</strong> uses several scripts and tools, those tools or scripts rely on various tools to be installed like Go, Python, etc, and to avoid any dependency issues, we decided to use Docker. Using Docker will not only ease the dependency issues but will also ease the installation steps. As a penetration tester, you need not focus on solving the dependencies, installing required tools, etc. With few installation steps, you should be good to run <strong>reconPoint</strong>.</p>
+<p><strong>reconPoint</strong> requires <code>docker</code>, <code>docker-compose</code> and <code>make</code> to be installed before you begin installing reconpoint.</p>
 <h3 id="docker">Docker<a class="headerlink" href="#docker" title="Permanent link">&para;</a></h3>
 <p>Docker provides very good documentation on how to install docker based on your Operating System. You can <a href="https://docs.docker.com/get-docker/">follow the documentation here.</a></p>
 <h4 id="docker-installation-on-ubuntulinux-distributions">Docker installation on Ubuntu/Linux Distributions<a class="headerlink" href="#docker-installation-on-ubuntulinux-distributions" title="Permanent link">&para;</a></h4>
@@ -831,25 +831,25 @@
 <div class="highlight"><pre><span></span><code>sudo apt install build-essential
 </code></pre></div>
 <p>All prerequisites are now satisfied.</p>
-<p><strong>Let's begin by cloning reNgine</strong>.</p>
+<p><strong>Let's begin by cloning reconPoint</strong>.</p>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<h3 id="clone-rengine">Clone reNgine<a class="headerlink" href="#clone-rengine" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>git clone https://github.com/yogeshojha/rengine &amp;&amp; cd rengine
+<h3 id="clone-reconpoint">Clone reconPoint<a class="headerlink" href="#clone-reconpoint" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>git clone https://github.com/khulnasoft/reconpoint &amp;&amp; cd reconpoint
 </code></pre></div>
 <h3 id="dotenv-file">dotenv file<a class="headerlink" href="#dotenv-file" title="Permanent link">&para;</a></h3>
 <p>Edit the dotenv file using <code>nano .env</code> or <code>vi .env</code> or <code>vim .env</code>.</p>
-<p>The sample <a href="https://github.com/yogeshojha/rengine/blob/master/.env">.env</a> file can be found <a href="https://github.com/yogeshojha/rengine/blob/master/.env">here</a>.</p>
+<p>The sample <a href="https://github.com/khulnasoft/reconpoint/blob/master/.env">.env</a> file can be found <a href="https://github.com/khulnasoft/reconpoint/blob/master/.env">here</a>.</p>
 <div class="highlight"><pre><span></span><code>#
 # General
 #
-COMPOSE_PROJECT_NAME=rengine
+COMPOSE_PROJECT_NAME=reconpoint
 
 #
 # SSL specific configuration
 #
-AUTHORITY_NAME=reNgine
+AUTHORITY_NAME=reconPoint
 AUTHORITY_PASSWORD=nSrmNkwT
-COMPANY=reNgine
+COMPANY=reconPoint
 DOMAIN_NAME=recon.example.com
 COUNTRY_CODE=US
 STATE=Georgia
@@ -858,8 +858,8 @@ CITY=Atlanta
 #
 # Database configurations
 #
-POSTGRES_DB=rengine
-POSTGRES_USER=rengine
+POSTGRES_DB=reconpoint
+POSTGRES_USER=reconpoint
 POSTGRES_PASSWORD=hE2a5@K&amp;9nEY1fzgA6X
 POSTGRES_PORT=5432
 POSTGRES_HOST=db
@@ -875,14 +875,14 @@ MAX_CONCURRENCY=30
 <h4 id="env-explained">.env Explained<a class="headerlink" href="#env-explained" title="Permanent link">&para;</a></h4>
 <ul>
 <li>
-<p><strong>COMPOSE_PROJECT_NAME</strong>: This will help reNgine name docker containers as rengine_web_1, rengine_celery_1 etc. <small>(Making changes is Optional)</small></p>
+<p><strong>COMPOSE_PROJECT_NAME</strong>: This will help reconPoint name docker containers as reconpoint_web_1, reconpoint_celery_1 etc. <small>(Making changes is Optional)</small></p>
 </li>
 <li>
 <p><strong>AUTHORITY_NAME</strong>: SSL Authority Name</p>
 </li>
 <li><strong>AUTHORITY_PASSWORD</strong>: SSL Authority Password</li>
 <li><strong>COMPANY</strong>: Company Name to generate SSL to</li>
-<li><strong>DOMAIN_NAME</strong>: Domain where reNgine is going to be installed</li>
+<li><strong>DOMAIN_NAME</strong>: Domain where reconPoint is going to be installed</li>
 <li>
 <p><strong>COUNTRY_CODE, STATE, CITY</strong>: SSL Speciffc</p>
 </li>
@@ -910,49 +910,49 @@ MAX_CONCURRENCY=30
 <p>This is just an ideal value which developers have tested and tried out and works! But feel free to play around with the values.</p>
 <p>Maximum number of scans is determined by various factors, your network bandwith, RAM, number of CPUs available. etc</p>
 <h3 id="generating-ssl-certificates">Generating SSL Certificates<a class="headerlink" href="#generating-ssl-certificates" title="Permanent link">&para;</a></h3>
-<p>reNgine runs on https unless otherwise used for development purpose. Using https is recommended. To generate the certificates you can use</p>
+<p>reconPoint runs on https unless otherwise used for development purpose. Using https is recommended. To generate the certificates you can use</p>
 <div class="highlight"><pre><span></span><code>sudo make certs
 </code></pre></div>
 <div class="admonition danger">
-<p>Please note, while running any <code>make</code> command, you must be inside the rengine/ directory.</p>
+<p>Please note, while running any <code>make</code> command, you must be inside the reconpoint/ directory.</p>
 </div>
-<h3 id="build-rengine">Build reNgine<a class="headerlink" href="#build-rengine" title="Permanent link">&para;</a></h3>
-<p>To build the reNgine, use the following command</p>
+<h3 id="build-reconpoint">Build reconPoint<a class="headerlink" href="#build-reconpoint" title="Permanent link">&para;</a></h3>
+<p>To build the reconPoint, use the following command</p>
 <div class="highlight"><pre><span></span><code>sudo make build
 </code></pre></div>
 <p>The build process is a lengthy process and expected to take some time.</p>
 <div class="admonition info">
 <p>Thanks to <a href="https://github.com/Creased">Baptiste MOINE</a> for sending the PR that made build process so much simpler.</p>
 </div>
-<h3 id="run-rengine">Run reNgine<a class="headerlink" href="#run-rengine" title="Permanent link">&para;</a></h3>
-<p>Once the build process is successful, we're good to run reNgine. This can be done using below command</p>
+<h3 id="run-reconpoint">Run reconPoint<a class="headerlink" href="#run-reconpoint" title="Permanent link">&para;</a></h3>
+<p>Once the build process is successful, we're good to run reconPoint. This can be done using below command</p>
 <div class="highlight"><pre><span></span><code>sudo make up
 </code></pre></div>
-<p><strong>reNgine can now be accessed from https://127.0.0.1 or if you're on the VPS https://your_vps_ip_address</strong></p>
+<p><strong>reconPoint can now be accessed from https://127.0.0.1 or if you're on the VPS https://your_vps_ip_address</strong></p>
 <h3 id="registering-an-account">Registering an account<a class="headerlink" href="#registering-an-account" title="Permanent link">&para;</a></h3>
-<p>You will need to create a username and password in order to login to the reNgine. To register reNgine, please run the following command</p>
+<p>You will need to create a username and password in order to login to the reconPoint. To register reconPoint, please run the following command</p>
 <div class="highlight"><pre><span></span><code>sudo make username
 </code></pre></div>
-<p>You will now be prompted with some personal details(optional), username and password. <strong>We highly recommend that you set a strong password for reNgine.</strong></p>
+<p>You will now be prompted with some personal details(optional), username and password. <strong>We highly recommend that you set a strong password for reconPoint.</strong></p>
 <p><img alt="" src="../../static/username.png" /></p>
-<p>You may now login to the reNgine web portal using the username and password that you just provided.</p>
+<p>You may now login to the reconPoint web portal using the username and password that you just provided.</p>
 <h3 id="checking-logs">Checking logs<a class="headerlink" href="#checking-logs" title="Permanent link">&para;</a></h3>
 <p>If you need to observe the logs, it can be done so by running the commmand</p>
 <div class="highlight"><pre><span></span><code>sudo make logs
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>If you encounter any issues while setup or scan, we advice you to <a href="https://github.com/yogeshojha/rengine/issues">raise an issue in Github</a> and attach the log. While raising any new issues on Github, it is also adviced that you to look for any open issues on Github as well.</p>
+<p>If you encounter any issues while setup or scan, we advice you to <a href="https://github.com/khulnasoft/reconpoint/issues">raise an issue in Github</a> and attach the log. While raising any new issues on Github, it is also adviced that you to look for any open issues on Github as well.</p>
 </div>
-<h3 id="stopping-rengine">Stopping reNgine<a class="headerlink" href="#stopping-rengine" title="Permanent link">&para;</a></h3>
-<p>If you wish to stop the reNgine, it can be done so by using the command</p>
+<h3 id="stopping-reconpoint">Stopping reconPoint<a class="headerlink" href="#stopping-reconpoint" title="Permanent link">&para;</a></h3>
+<p>If you wish to stop the reconPoint, it can be done so by using the command</p>
 <div class="highlight"><pre><span></span><code>sudo make stop
 </code></pre></div>
-<h3 id="restarting-rengine">Restarting reNgine<a class="headerlink" href="#restarting-rengine" title="Permanent link">&para;</a></h3>
-<p>reNgine can be restarted using the command</p>
+<h3 id="restarting-reconpoint">Restarting reconPoint<a class="headerlink" href="#restarting-reconpoint" title="Permanent link">&para;</a></h3>
+<p>reconPoint can be restarted using the command</p>
 <div class="highlight"><pre><span></span><code>sudo make restart
 </code></pre></div>
-<h3 id="removing-all-rengine-data">Removing all reNgine Data<a class="headerlink" href="#removing-all-rengine-data" title="Permanent link">&para;</a></h3>
+<h3 id="removing-all-reconpoint-data">Removing all reconPoint Data<a class="headerlink" href="#removing-all-reconpoint-data" title="Permanent link">&para;</a></h3>
 <p>If you wish to delete all your recon data, it can be done using</p>
 <div class="admonition danger">
 <p class="admonition-title">Danger</p>
@@ -996,7 +996,7 @@ Use with caution.</p>
       <div class="md-copyright">
   
     <div class="md-copyright__highlight">
-      Copyright &copy; 2023 Yogesh Ojha
+      Copyright &copy; 2023 KhulnaSoft DevSec
     </div>
   
   
@@ -1016,7 +1016,7 @@ Use with caution.</p>
       
       
     
-    <a href="https://github.com/yogeshojha/rengine" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+    <a href="https://github.com/khulnasoft/reconpoint" target="_blank" rel="noopener" title="github.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
     </a>
   
@@ -1038,7 +1038,7 @@ Use with caution.</p>
       
       
     
-    <a href="https://twitter.com/ojhayogesh11" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+    <a href="https://twitter.com/khulnasoft" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"/></svg>
     </a>
   
