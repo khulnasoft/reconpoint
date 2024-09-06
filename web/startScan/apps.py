@@ -1,5 +1,4 @@
 from django.apps import AppConfig
-from reconPoint.definitions import logger
 
 
 class StartscanConfig(AppConfig):

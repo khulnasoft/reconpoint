@@ -1,10 +1,8 @@
 import base64
-import colorsys
 
 import plotly.graph_objs as go
 from plotly.io import to_image
 from django.db.models import Count
-from reconPoint.definitions import NUCLEI_SEVERITY_MAP
 
 from startScan.models import *
 

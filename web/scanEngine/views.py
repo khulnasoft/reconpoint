@@ -14,7 +14,6 @@ from rolepermissions.decorators import has_permission_decorator
 from reconPoint.common_func import *
 from reconPoint.tasks import (run_command, send_discord_message, send_slack_message,send_lark_message, send_telegram_message)
 from scanEngine.forms import *
-from scanEngine.forms import ConfigurationForm
 from scanEngine.models import *
 
 
