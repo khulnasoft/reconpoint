@@ -1151,7 +1151,7 @@ class StopScan(APIView):
 			try:
 				scan = ScanHistory.objects.get(id=scan_id)
 				# if scan is already successful or aborted then do nothing
-				if scan.scan_status == SUCCESS_TASK or scan.scan_status == ABORTED_TASK:
+				if scan.scan_status in (SUCCESS_TASK, ABORTED_TASK):
 					continue
 				response = abort_scan(scan)
 			except Exception as e:
@@ -1161,7 +1161,7 @@ class StopScan(APIView):
 		for subscan_id in subscan_ids:
 			try:
 				subscan = SubScan.objects.get(id=subscan_id)
-				if subscan.scan_status == SUCCESS_TASK or subscan.scan_status == ABORTED_TASK:
+				if subscan.scan_status in (SUCCESS_TASK, ABORTED_TASK):
 					continue
 				response = abort_subscan(subscan)
 			except Exception as e:
