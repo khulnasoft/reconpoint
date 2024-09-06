@@ -1,0 +1,23 @@
+{
+  "name": "reconPoint Dev Container",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "web",
+  "workspaceFolder": "/usr/src/app",
+  "shutdownAction": "stopCompose",
+  "extensions": [
+    "ms-python.python",
+    "ms-azuretools.vscode-docker",
+    "ms-vscode-remote.remote-containers",
+    "golang.go",
+    "ms-python.black-formatter",
+    "esbenp.prettier-vscode"
+  ],
+  "settings": {
+    "python.pythonPath": "/usr/local/bin/python3",
+    "editor.formatOnSave": true,
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  "postCreateCommand": "pip install -r requirements.txt",
+  "remoteUser": "root",
+  "runServices": ["db", "redis", "celery", "celery-beat", "web", "proxy", "ollama"]
+}
