@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.2.0
+
+## What's Changed
+* Update Dockerfile by @gitworkflows in https://github.com/khulnasoft/reconpoint/pull/37
+
+
+**Full Changelog**: https://github.com/khulnasoft/reconpoint/compare/v2.1.1...v2.2.0
+
 ## 2.1.3
 
 **Release Date: Aug 18, 2024**
