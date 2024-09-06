@@ -595,10 +595,6 @@ def subdomain_discovery(
 		ctx['track'] = True
 		http_crawl(urls, ctx=ctx, is_ran_from_subdomain_scan=True)
 
-	# Find root subdomain endpoints
-	for subdomain in subdomains:
-		pass
-
 	# Send notifications
 	subdomains_str = '\n'.join([f'• `{subdomain.name}`' for subdomain in subdomains])
 	self.notify(fields={
