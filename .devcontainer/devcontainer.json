@@ -1,0 +1,30 @@
+{
+  "name": "ReconPoint Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "forwardPorts": [
+    5432,
+    6379,
+    8000,
+    8082,
+    443,
+    11434
+  ],
+  "remoteEnv": {
+    "POSTGRES_DB": "${localEnv:POSTGRES_DB}",
+    "POSTGRES_USER": "${localEnv:POSTGRES_USER}",
+    "POSTGRES_PASSWORD": "${localEnv:POSTGRES_PASSWORD}",
+    "REDIS_PORT": "${localEnv:REDIS_PORT}",
+    "CELERY_BROKER": "${localEnv:CELERY_BROKER}"
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-azuretools.vscode-docker",
+    "esbenp.prettier-vscode"
+  ],
+  "settings": {
+    "python.pythonPath": "/usr/bin/python3"
+  }
+}
