@@ -1,14 +1,8 @@
-<p align="center">
-<a href="https://reconpoint.wiki"><img src=".github/screenshots/banner.gif" alt=""/></a>
-</p>
+# Recon Point
 
-<p align="center">
-  <h3>reconPoint: The Ultimate Web Reconnaissance & Vulnerability Scanner 🚀</h3>
-</p>
+<p align=""><a href="https://github.com/khulnasoft/reconpoint/releases" target="_blank"><img src="https://img.shields.io/badge/version-v2.0.0-informational?&logo=none" alt="reconPoint Latest Version" /></a>&nbsp;<a href="https://www.gnu.org/licenses/gpl-3.0" target="_blank"><img src="https://img.shields.io/badge/License-GPLv3-red.svg?&logo=none" alt="License" /></a>&nbsp;<a href="#" target="_blank"><img src="https://img.shields.io/badge/first--timers--only-friendly-blue.svg?&logo=none" alt="" /></a>&nbsp;<a href="https://huntr.dev/bounties/disclose/?target=https%3A%2F%2Fgithub.com%2Fkhulnasoft%2Freconpoint" target="_blank"><img src="https://cdn.huntr.dev/huntr_security_badge_mono.svg" alt="" /></a>&nbsp;</p>
 
-<p align="center"><a href="https://github.com/khulnasoft/reconpoint/releases" target="_blank"><img src="https://img.shields.io/badge/version-v2.1.3-informational?&logo=none" alt="reconPoint Latest Version" /></a>&nbsp;<a href="https://www.gnu.org/licenses/gpl-3.0" target="_blank"><img src="https://img.shields.io/badge/License-GPLv3-red.svg?&logo=none" alt="License" /></a>&nbsp;<a href="#" target="_blank"><img src="https://img.shields.io/badge/first--timers--only-friendly-blue.svg?&logo=none" alt="" /></a></p>
-
-<p align="center">
+<p align="">
   <a href="https://www.youtube.com/watch?v=Xk_YH83IQgg" target="_blank"><img src="https://img.shields.io/badge/BlackHat--Arsenal--Asia-2023-blue.svg?logo=none" alt="" /></a>&nbsp;
   <a href="https://www.youtube.com/watch?v=Xk_YH83IQgg" target="_blank"><img src="https://img.shields.io/badge/BlackHat--Arsenal--USA-2022-blue.svg?logo=none" alt="" /></a>&nbsp;
   <a href="https://www.youtube.com/watch?v=Xk_YH83IQgg" target="_blank"><img src="https://img.shields.io/badge/Open--Source--Summit-2022-blue.svg?logo=none" alt="" /></a>&nbsp;
@@ -18,17 +12,8 @@
   <a href="https://www.youtube.com/watch?v=A1oNOIc0h5A" target="_blank"><img src="https://img.shields.io/badge/BlackHat--Arsenal--Europe-2020-blue.svg?&logo=none" alt="" /></a>&nbsp;
 </p>
 
-<p align="center">
+<p align="">
 <a href="https://github.com/khulnasoft/reconpoint/actions/workflows/codeql-analysis.yml" target="_blank"><img src="https://github.com/khulnasoft/reconpoint/actions/workflows/codeql-analysis.yml/badge.svg" alt="" /></a>&nbsp;<a href="https://github.com/khulnasoft/reconpoint/actions/workflows/build.yml" target="_blank"><img src="https://github.com/khulnasoft/reconpoint/actions/workflows/build.yml/badge.svg" alt="" /></a>&nbsp;
-</p>
-
-<p align="center">
-<a href="https://discord.gg/H6WzebwX3H" target="_blank"><img src="https://img.shields.io/discord/880363103689277461" alt="" /></a>&nbsp;
-</p>
-
-<p align="center">
-<a href="https://opensourcesecurityindex.io/" target="_blank" rel="noopener">
-<img style="width: 282px; height: 56px" src="https://opensourcesecurityindex.io/badge.svg" alt="Open Source Security Index - Fastest Growing Open Source Security Projects" width="282" height="56" /> </a>
 </p>
 
 <h4>What is reconPoint?</h4>
