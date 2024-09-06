@@ -32,7 +32,7 @@ class HackerOneProgramAttributesSerializer(serializers.Serializer):
 
 	@staticmethod
 	def to_representation(instance):
-		return {key: value for key, value in instance.items()}
+		return dict(instance.items())
 
 
 class HackerOneProgramSerializer(serializers.Serializer):
