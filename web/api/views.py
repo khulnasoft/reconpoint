@@ -965,7 +965,6 @@ class AddTarget(APIView):
 class FetchSubscanResults(APIView):
 	def get(self, request):
 		req = self.request
-		# data = req.data
 		subscan_id = req.query_params.get('subscan_id')
 		subscan = SubScan.objects.filter(id=subscan_id)
 		if not subscan.exists():
@@ -1511,7 +1510,6 @@ class CMSDetector(APIView):
 	def get(self, request):
 		req = self.request
 		url = req.query_params.get('url')
-		#save_db = True if 'save_db' in req.query_params else False
 		response = {'status': False}
 
 		if not (validators.url(url) or validators.domain(url)):
@@ -1519,7 +1517,6 @@ class CMSDetector(APIView):
 			return Response(response)
 
 		try:
-			# response = get_cms_details(url)
 			response = {}
 			cms_detector_command = f'python3 /usr/src/github/CMSeeK/cmseek.py'
 			cms_detector_command += ' --random-agent --batch --follow-redirect'
