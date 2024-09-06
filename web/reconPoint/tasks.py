@@ -10,8 +10,6 @@ import yaml
 import tldextract
 import concurrent.futures
 import base64
-
-from datetime import datetime
 from urllib.parse import urlparse
 from api.serializers import SubdomainSerializer
 from celery import chain, chord, group
@@ -20,7 +18,6 @@ from celery.utils.log import get_task_logger
 from django.db.models import Count
 from dotted_dict import DottedDict
 from django.utils import timezone
-from django.shortcuts import get_object_or_404
 from pycvesearch import CVESearch
 from metafinder.extractor import extract_metadata_from_google_search
 

@@ -1,7 +1,7 @@
 import markdown
 
 from celery import group
-from weasyprint import HTML, CSS
+from weasyprint import HTML
 from datetime import datetime
 from django.contrib import messages
 from django.db.models import Count, Case, When, IntegerField
@@ -17,7 +17,7 @@ from rolepermissions.decorators import has_permission_decorator
 from reconPoint.celery import app
 from reconPoint.charts import *
 from reconPoint.common_func import *
-from reconPoint.definitions import ABORTED_TASK, SUCCESS_TASK
+from reconPoint.definitions import ABORTED_TASK
 from reconPoint.tasks import create_scan_activity, initiate_scan, run_command
 from scanEngine.models import EngineType
 from startScan.models import *

@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import unittest
 
@@ -9,8 +8,7 @@ os.environ['CELERY_ALWAYS_EAGER'] = 'True'
 import yaml
 from celery.utils.log import get_task_logger
 from reconPoint.settings import DEBUG
-from reconPoint.tasks import (dir_file_fuzz, fetch_url, http_crawl, initiate_scan,
-                           osint, port_scan, subdomain_discovery,
+from reconPoint.tasks import (fetch_url, http_crawl, port_scan, subdomain_discovery,
                            vulnerability_scan)
 from startScan.models import *
 
