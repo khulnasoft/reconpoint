@@ -1,23 +1,30 @@
 {
-  "name": "reconPoint Dev Container",
-  "dockerComposeFile": "../docker-compose.yml",
-  "service": "web",
-  "workspaceFolder": "/usr/src/app",
-  "shutdownAction": "stopCompose",
+  "name": "ReconPoint Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "forwardPorts": [
+    5432,
+    6379,
+    8000,
+    8082,
+    443,
+    11434
+  ],
+  "remoteEnv": {
+    "POSTGRES_DB": "${localEnv:POSTGRES_DB}",
+    "POSTGRES_USER": "${localEnv:POSTGRES_USER}",
+    "POSTGRES_PASSWORD": "${localEnv:POSTGRES_PASSWORD}",
+    "REDIS_PORT": "${localEnv:REDIS_PORT}",
+    "CELERY_BROKER": "${localEnv:CELERY_BROKER}"
+  },
   "extensions": [
     "ms-python.python",
     "ms-azuretools.vscode-docker",
-    "ms-vscode-remote.remote-containers",
-    "golang.go",
-    "ms-python.black-formatter",
     "esbenp.prettier-vscode"
   ],
   "settings": {
-    "python.pythonPath": "/usr/local/bin/python3",
-    "editor.formatOnSave": true,
-    "terminal.integrated.defaultProfile.linux": "bash"
-  },
-  "postCreateCommand": "pip install -r requirements.txt",
-  "remoteUser": "root",
-  "runServices": ["db", "redis", "celery", "celery-beat", "web", "proxy", "ollama"]
+    "python.pythonPath": "/usr/bin/python3"
+  }
 }
