@@ -16,8 +16,6 @@ from startScan.models import *
 
 logger = get_task_logger(__name__)
 DOMAIN_NAME = os.environ['DOMAIN_NAME']
-# if not DEBUG:
-#     logging.disable(logging.CRITICAL)
 
 
 class TestOnlineScan(unittest.TestCase):
@@ -89,9 +87,6 @@ class TestOnlineScan(unittest.TestCase):
             print(urls)
         self.assertGreater(len(urls), 0)
 
-    # def test_dir_file_fuzz(self):
-    #     urls = dir_file_fuzz(ctx=self.ctx)
-    #     self.assertGreater(len(urls), 0)
 
     def test_vulnerability_scan(self):
         vulns = vulnerability_scan(urls=[self.url], ctx=self.ctx)
@@ -118,10 +113,3 @@ class TestOnlineScan(unittest.TestCase):
                     urls.append(final_url)
         self.assertGreater(len(urls), 0)
         vulns = vulnerability_scan(urls=urls, ctx=self.ctx)
-
-    # def test_initiate_scan(self):
-    #     scan = ScanHistory()
-    #     domain = Domain(name=DOMAIN_NAME)
-    #     domain.save()
-    #     subdomain = Subdomain(name=DOMAIN_NAME, domain=domain)
-    #     subdomain.save()

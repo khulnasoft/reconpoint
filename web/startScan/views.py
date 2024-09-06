@@ -345,7 +345,6 @@ def start_scan_ui(request, slug, domain_id):
 
 @has_permission_decorator(PERM_INITATE_SCANS_SUBSCANS, redirect_url=FOUR_OH_FOUR_URL)
 def start_multiple_scan(request, slug):
-    # domain = get_object_or_404(Domain, id=host_id)
     if request.method == "POST":
         if request.POST.get('scan_mode', 0):
             # if scan mode is available, then start the scan
@@ -370,7 +369,6 @@ def start_multiple_scan(request, slug):
                     engine_id=engine_id,
                     initiated_by_id=request.user.id
                 )
-                # domain = get_object_or_404(Domain, id=domain_id)
 
                 kwargs = {
                     'scan_history_id': scan_history_id,
@@ -1136,7 +1134,6 @@ def create_report(request, id):
 
     html = template.render(data)
     pdf = HTML(string=html).write_pdf()
-    # pdf = HTML(string=html).write_pdf(stylesheets=[CSS(string='@page { size: A4; margin: 0; }')])
 
     if 'download' in request.GET:
         response = HttpResponse(pdf, content_type='application/octet-stream')
