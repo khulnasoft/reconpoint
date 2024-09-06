@@ -1,6 +1,6 @@
 # Recon Point
 
-<p align="center">
+<p>
   <a href="https://github.com/khulnasoft/reconpoint/releases" target="_blank">
     <img src="https://img.shields.io/badge/version-v2.2.0-informational?&logo=none" alt="reconPoint Latest Version" />
   </a>
@@ -15,7 +15,7 @@
   </a>
 </p>
 
-<p align="center">
+<p>
   <a href="https://www.youtube.com/watch?v=Xk_YH83IQgg" target="_blank">
     <img src="https://img.shields.io/badge/BlackHat--Arsenal--Asia-2023-blue.svg?logo=none" alt="BlackHat Arsenal Asia 2023" />
   </a>
@@ -39,7 +39,7 @@
   </a>
 </p>
 
-<p align="center">
+<p>
   <a href="https://github.com/khulnasoft/reconpoint/actions/workflows/codeql-analysis.yml" target="_blank">
     <img src="https://github.com/khulnasoft/reconpoint/actions/workflows/codeql-analysis.yml/badge.svg" alt="CodeQL Analysis" />
   </a>
