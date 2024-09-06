@@ -62,3 +62,6 @@ get-docker.sh
 
 # Environment variables
 .env
+
+/site
+**/.DS_Store
