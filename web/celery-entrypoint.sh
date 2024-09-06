@@ -157,7 +157,7 @@ exec "$@"
 echo 'alias httpx="/go/bin/httpx"' >> ~/.bashrc
 
 # TEMPORARY FIX, httpcore is causing issues with celery, removing it as temp fix
-python3 -m pip uninstall -y httpcore
+#python3 -m pip uninstall -y httpcore
 
 # TEMPORARY FIX FOR langchain
 pip install tenacity==8.2.2
@@ -171,6 +171,7 @@ fi
 echo "Starting Workers..."
 echo "Starting Main Scan Worker with Concurrency: $MAX_CONCURRENCY,$MIN_CONCURRENCY"
 watchmedo auto-restart --recursive --pattern="*.py" --directory="/usr/src/app/reconPoint/" -- celery -A reconPoint.tasks worker --loglevel=$loglevel --autoscale=$MAX_CONCURRENCY,$MIN_CONCURRENCY -Q main_scan_queue &
+watchmedo auto-restart --recursive --pattern="*.py" --directory="/usr/src/app/api/" -- celery -A api.shared_api_tasks worker --loglevel=$loglevel --concurrency=30 -Q api_queue &
 watchmedo auto-restart --recursive --pattern="*.py" --directory="/usr/src/app/reconPoint/" -- celery -A reconPoint.tasks worker --pool=gevent --concurrency=30 --loglevel=$loglevel -Q initiate_scan_queue -n initiate_scan_worker &
 watchmedo auto-restart --recursive --pattern="*.py" --directory="/usr/src/app/reconPoint/" -- celery -A reconPoint.tasks worker --pool=gevent --concurrency=30 --loglevel=$loglevel -Q subscan_queue -n subscan_worker &
 watchmedo auto-restart --recursive --pattern="*.py" --directory="/usr/src/app/reconPoint/" -- celery -A reconPoint.tasks worker --pool=gevent --concurrency=20 --loglevel=$loglevel -Q report_queue -n report_worker &

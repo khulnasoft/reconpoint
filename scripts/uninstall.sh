@@ -5,33 +5,54 @@ echo "Uninstalling reconPoint"
 
 if [ "$EUID" -ne 0 ]
   then
-  echo "Error uninstalling reconPoint, Please run this script as root!"
-  echo "Example: sudo ./uninstall.sh"
+  echo -e "\e[31mError uninstalling reconPoint, Please run this script as root!\e[0m"
+  echo -e "\e[31mExample: sudo ./uninstall.sh\e[0m"
   exit
 fi
 
-echo "Stopping reconPoint"
-docker stop reconpoint_web_1 reconpoint_db_1 reconpoint_celery_1 reconpoint_celery-beat_1 reconpoint_redis_1 reconpoint_tor_1 reconpoint_proxy_1
+DANGER='\e[31m'
+SUCCESS='\e[32m'
+WARNING='\e[33m'
+INFO='\e[34m'
+RESET='\e[0m'
 
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-  echo "Stopping reconPoint"
-  docker stop reconpoint-web-1 reconpoint-db-1 reconpoint-celery-1 reconpoint-celery-beat-1 reconpoint-redis-1 reconpoint-tor-1 reconpoint-proxy-1
-  echo "Stopped reconPoint"
+print_status() {
+    echo -e "${INFO}--------------------------------------------------${RESET}"
+    echo -e "${INFO}$1${RESET}"
+    echo -e "${INFO}--------------------------------------------------${RESET}"
+}
 
-  echo "Removing all containers related to reconPoint"
-  docker rm reconpoint-web-1 reconpoint-db-1 reconpoint-celery-1 reconpoint-celery-beat-1 reconpoint-redis-1 reconpoint-tor-1 reconpoint-proxy-1
-  echo "Removed all containers related to reconPoint"
+print_status "WARNING: You are about to uninstall reconpoint"
+echo -e "${DANGER}This action is not reversible. All containers, volumes, networks, and scan results will be removed.${RESET}"
+echo -e "${DANGER}There is no going back after this point.${RESET}"
+read -p "$(echo -e ${WARNING}"Are you sure you want to proceed? (y/Y/yes/YES to confirm): "${RESET})" -r CONFIRM
 
-  echo "Removing all volumes related to reconPoint"
-  docker volume rm reconpoint_gf_patterns reconpoint_github_repos reconpoint_nuclei_templates reconpoint_postgres_data reconpoint_scan_results reconpoint_tool_config reconpoint_static_volume reconpoint_wordlist
-  echo "Removed all volumes related to reconPoint"
+# change answer to lowecase for comparison
+ANSWER_LC=$(echo "$CONFIRM" | tr '[:upper:]' '[:lower:]')
 
-  echo "Removing all networks related to reconPoint"
-  docker network rm reconpoint_reconpoint_network reconpoint_default
-  echo "Removed all networks related to reconPoint"
-else
-  exit 1
+if [ -z "$CONFIRM" ] || { [ "$CONFIRM" != "y" ] && [ "$CONFIRM" != "Y" ] && [ "$CONFIRM" != "yes" ] && [ "$CONFIRM" != "Yes" ] && [ "$CONFIRM" != "YES" ]; }; then
+    print_status "${WARNING}Uninstall aborted by user.${RESET}"
+    exit 0
 fi
 
-echo "Finished Uninstalling."
+print_status "${INFO}Proceeding with uninstalling reconPoint${RESET}"
+
+print_status "Stopping all containers related to reconPoint..."
+docker stop $(docker ps -a -q --filter name=reconpoint-) 2>/dev/null
+
+print_status "Removing all containers related to reconPoint..."
+docker rm $(docker ps -a -q --filter name=reconpoint-) 2>/dev/null
+
+print_status "Removing all volumes related to reconPoint..."
+docker volume rm $(docker volume ls -q --filter name=reconpoint-) 2>/dev/null
+
+print_status "Removing all networks related to reconPoint..."
+docker network rm $(docker network ls -q --filter name=reconpoint-) 2>/dev/null
+
+print_status "Removing all images related to reconPoint..."
+docker rmi $(docker images -q --filter reference=reconpoint-) 2>/dev/null
+
+print_status "Performing final cleanup"
+docker system prune -f --volumes --filter "label=com.docker.compose.project=reconpoint"
+
+print_status "${SUCCESS}reconPoint uninstall process has been completed.${RESET}"

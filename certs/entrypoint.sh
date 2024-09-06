@@ -58,3 +58,4 @@ cert ${DOMAIN_NAME} reconpoint
 
 # Print all cert files
 ls -l /certs
+

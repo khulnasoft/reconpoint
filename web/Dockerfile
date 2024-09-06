@@ -1,31 +1,27 @@
 # Base image
 FROM ubuntu:22.04
 
-# Arguments for versions
-ARG GECKOVERSION=0.35.0
+# Args and Environment Variables
+ARG GECKOVERSION=0.33.0
 ARG GOVERSION=1.21.5
-
-# Supported architectures
-ARG SUPPORTED_ARCH="amd64 arm64 armv6 armv7 armhf i386"
+ENV DEBIAN_FRONTEND="noninteractive"
+ENV DATABASE="postgres"
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV GOROOT="/usr/local/go"
+ENV GOPATH=$HOME/go
+ENV PATH="${PATH}:${GOROOT}/bin:${GOPATH}/bin"
 
 # Labels and Credits
 LABEL \
     name="reconPoint" \
-    author="KhulnaSoft DevOps <security@khulnasoft.com>" \
+    author="KhulnaSoft Ltd <security@khulnasoft.com>" \
     description="reconPoint is a automated pipeline of recon process, useful for information gathering during web application penetration testing."
-    
-# Environment variables
-ENV DEBIAN_FRONTEND="noninteractive" \
-    DATABASE="postgres" \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    HOME="/root" \
-    GOROOT="/usr/local/go" \
-    GOPATH="/root/go" \
-    PATH="$PATH:$GOROOT/bin:$GOPATH/bin" \
-    GO111MODULE=on
 
-# Install required packages and add Mozilla Team PPA
+# Supported architectures
+ARG SUPPORTED_ARCH="amd64 arm64 armv6 armv7 armhf i386 x86_64"
+
+# Install essential required packages
 RUN ARCH=$(dpkg --print-architecture) \
     && echo "$SUPPORTED_ARCH" | grep -qw "$ARCH" || { \
          echo "Unsupported architecture: $ARCH"; exit 1; \
@@ -41,45 +37,32 @@ RUN ARCH=$(dpkg --print-architecture) \
     && add-apt-repository -y ppa:mozillateam/ppa \
     && apt update -y
 
-# Install Go based on architecture
+# Install Go
 RUN ARCH=$(dpkg --print-architecture) \
-    && case "$ARCH" in \
-      arm64) GOFILE="go${GOVERSION}.linux-arm64.tar.gz" ;; \
-      amd64) GOFILE="go${GOVERSION}.linux-amd64.tar.gz" ;; \
-      armhf|armv6|armv7) GOFILE="go${GOVERSION}.linux-armv6l.tar.gz" ;; \
-      i386) GOFILE="go${GOVERSION}.linux-386.tar.gz" ;; \
-      *) echo "Unsupported architecture: $ARCH"; exit 1 ;; \
-    esac \
-    && wget https://go.dev/dl/${GOFILE} \
-    && tar -xvf ${GOFILE} -C /usr/local \
-    && rm ${GOFILE}
+     && curl -s -L -o /tmp/go.tar.gz https://go.dev/dl/go${GOVERSION}.linux-${ARCH}.tar.gz \
+     && tar -xzC /usr/local -f /tmp/go.tar.gz \
+     && rm /tmp/go.tar.gz
 
-# Install Geckodriver based on architecture
+# Install Gecko Driver
 RUN ARCH=$(dpkg --print-architecture) \
-    && case "$ARCH" in \
-      arm64) GECKOPATH="geckodriver-v${GECKOVERSION}-linux-aarch64.tar.gz" \
-             GECKOREPO="https://github.com/khulnasoft-lab/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH}" ;; \
-      armv7l) GECKOPATH="geckodriver-v${GECKOVERSION}-linux-armv7l.tar.gz" \
-             GECKOREPO="https://github.com/khulnasoft-lab/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH}" ;; \
-      amd64) GECKOPATH="geckodriver-v${GECKOVERSION}-linux64.tar.gz" \
-             GECKOREPO="https://github.com/mozilla/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH}" ;; \
-      armhf|armv6|i386) GECKOPATH="geckodriver-v${GECKOVERSION}-linux32.tar.gz" \
-             GECKOREPO="https://github.com/mozilla/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH}" ;; \
-      *) echo "Unsupported architecture: $ARCH"; exit 1 ;; \
-    esac \
-    && wget ${GECKOREPO} \
-    && tar -xvf ${GECKOPATH} -C /usr/local/bin \
-    && rm ${GECKOPATH}
+    && if [ "${ARCH}" = "arm64" ]; then \
+      GECKOPATH="geckodriver-v${GECKOVERSION}-linux-aarch64.tar.gz"; \
+    elif [ "${ARCH}" = "amd64" ]; then \
+      GECKOPATH="geckodriver-v${GECKOVERSION}-linux64.tar.gz"; \
+    fi \
+    && wget https://github.com/mozilla/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH} \
+    && tar -xvf ${GECKOPATH} \
+    && rm ${GECKOPATH} \
+    && mv geckodriver /usr/bin
 
-# Install Rust for orjson
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+# Install Rust
+RUN set -e; curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 RUN pip3 install maturin
 
-# Set working directory
+# Install Go packages
 WORKDIR /usr/src/app
-
-# Install Go tools
+ENV GO111MODULE=on
 RUN printf "\
     github.com/jaeles-project/gospider@latest\n\
     github.com/tomnomnom/gf@latest\n\
@@ -87,6 +70,7 @@ RUN printf "\
     github.com/tomnomnom/waybackurls@latest\n\
     github.com/projectdiscovery/httpx/cmd/httpx@latest\n\
     github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest\n\
+    github.com/projectdiscovery/chaos-client/cmd/chaos@latest\n\
     github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest\n\
     github.com/projectdiscovery/naabu/v2/cmd/naabu@latest\n\
     github.com/hakluke/hakrawler@latest\n\
@@ -98,20 +82,26 @@ RUN printf "\
     github.com/projectdiscovery/katana/cmd/katana@latest\n\
     github.com/dwisiswant0/crlfuzz/cmd/crlfuzz@latest\n\
     github.com/sa7mon/s3scanner@latest\n" | \
-    xargs -L1 go install -ldflags="-s -w" -v \
-    && rm -rf /go/pkg/* /root/.cache/go-build
+    xargs -L1 go install -ldflags="-s -w" -v && \
+    rm -rf /go/pkg/* && rm -rf /root/.cache/go-build
 
 # Update Nuclei and Nuclei-Templates
 RUN nuclei -update-templates
 
-# Install Python dependencies
+# update chaos
+RUN chaos -update
+
+# Copy requirements
 COPY ./requirements.txt /tmp/requirements.txt
-RUN pip3 install --upgrade setuptools==72.1.0 \
-    && pip3 install -r /tmp/requirements.txt --no-cache-dir
+RUN pip3 install --upgrade setuptools==72.1.0
+RUN pip3 install -r /tmp/requirements.txt --no-cache-dir
 
-# Install eyewitness dependencies
-RUN pip3 install --no-cache-dir \
-    fuzzywuzzy selenium==4.9.1 python-Levenshtein pyvirtualdisplay netaddr
+# install eyewitness
+RUN pip3 install --no-cache-dir fuzzywuzzy \
+    selenium==4.9.1 \
+    python-Levenshtein \
+    pyvirtualdisplay \
+    netaddr
 
-# Copy application code
+# Copy source code
 COPY . /usr/src/app/

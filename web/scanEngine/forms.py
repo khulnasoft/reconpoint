@@ -176,12 +176,33 @@ class NotificationForm(forms.ModelForm):
 
     slack_hook_url = forms.CharField(
         required=False,
-        widget=forms.TextInput(
+        widget=forms.PasswordInput(
             attrs={
-                "class": "form-control",
+                "class": "form-control h-100",
                 "id": "slack_hook_url",
                 "placeholder": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
+            },
+            render_value=True
+        ))
+
+    send_to_lark = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(
+            attrs={
+                "class": "form-check-input",
+                "id": "lark_checkbox",
             }))
+
+    lark_hook_url = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "form-control h-100",
+                "id": "lark_hook_url",
+                "placeholder": "https://open.larksuite.com/open-apis/bot/v2/hook/XXXXXXXXXXXXXXXXXXXXXXXX",
+            },
+            render_value=True
+        ))
 
     send_to_discord = forms.BooleanField(
         required=False,
@@ -193,12 +214,14 @@ class NotificationForm(forms.ModelForm):
 
     discord_hook_url = forms.CharField(
         required=False,
-        widget=forms.TextInput(
+        widget=forms.PasswordInput(
             attrs={
-                "class": "form-control",
+                "class": "form-control h-100",
                 "id": "discord_hook_url",
                 "placeholder": "https://discord.com/api/webhooks/000000000000000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-            }))
+            },
+            render_value=True
+        ))
 
     send_to_telegram = forms.BooleanField(
         required=False,
@@ -210,21 +233,25 @@ class NotificationForm(forms.ModelForm):
 
     telegram_bot_token = forms.CharField(
         required=False,
-        widget=forms.TextInput(
+        widget=forms.PasswordInput(
             attrs={
-                "class": "form-control",
+                "class": "form-control h-100",
                 "id": "telegram_bot_token",
                 "placeholder": "Bot Token",
-            }))
+            },
+            render_value=True
+        ))
 
     telegram_bot_chat_id = forms.CharField(
         required=False,
-        widget=forms.TextInput(
+        widget=forms.PasswordInput(
             attrs={
-                "class": "form-control",
+                "class": "form-control h-100",
                 "id": "telegram_bot_chat_id",
                 "placeholder": "Bot Chat ID",
-            }))
+            },
+            render_value=True
+        ))
 
     send_scan_status_notif = forms.BooleanField(
         required=False,
@@ -280,10 +307,12 @@ class NotificationForm(forms.ModelForm):
 
     def set_value(self, key):
         self.initial['send_to_slack'] = key.send_to_slack
+        self.initial['send_to_lark'] = key.send_to_lark
         self.initial['send_to_discord'] = key.send_to_discord
         self.initial['send_to_telegram'] = key.send_to_telegram
 
         self.initial['slack_hook_url'] = key.slack_hook_url
+        self.initial['lark_hook_url'] = key.lark_hook_url
         self.initial['discord_hook_url'] = key.discord_hook_url
         self.initial['telegram_bot_token'] = key.telegram_bot_token
         self.initial['telegram_bot_chat_id'] = key.telegram_bot_chat_id
@@ -298,6 +327,8 @@ class NotificationForm(forms.ModelForm):
 
         if not key.send_to_slack:
             self.fields['slack_hook_url'].widget.attrs['readonly'] = True
+        if not key.send_to_lark:
+            self.fields['lark_hook_url'].widget.attrs['readonly'] = True
         if not key.send_to_discord:
             self.fields['discord_hook_url'].widget.attrs['readonly'] = True
         if not key.send_to_telegram:
@@ -307,10 +338,12 @@ class NotificationForm(forms.ModelForm):
 
     def set_initial(self):
         self.initial['send_to_slack'] = False
+        self.initial['send_to_lark'] = False
         self.initial['send_to_discord'] = False
         self.initial['send_to_telegram'] = False
 
         self.fields['slack_hook_url'].widget.attrs['readonly'] = True
+        self.fields['lark_hook_url'].widget.attrs['readonly'] = True
         self.fields['discord_hook_url'].widget.attrs['readonly'] = True
         self.fields['telegram_bot_token'].widget.attrs['readonly'] = True
         self.fields['telegram_bot_chat_id'].widget.attrs['readonly'] = True
@@ -365,22 +398,12 @@ class HackeroneForm(forms.ModelForm):
         model = Hackerone
         fields = '__all__'
 
-    username = forms.CharField(
-        required=True,
-        widget=forms.TextInput(
+    send_report = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(
             attrs={
-                "class": "form-control form-control-lg",
-                "id": "username",
-                "placeholder": "Your Hackerone Username",
-            }))
-
-    api_key = forms.CharField(
-        required=True,
-        widget=forms.TextInput(
-            attrs={
-                "class": "form-control form-control-lg",
-                "id": "api_key",
-                "placeholder": "Hackerone API Token",
+                "class": "form-check-input",
+                "id": "send_report",
             }))
 
     send_critical = forms.BooleanField(
@@ -418,6 +441,7 @@ class HackeroneForm(forms.ModelForm):
         self.initial['username'] = key.username
         self.initial['api_key'] = key.api_key
 
+        self.initial['send_report'] = key.send_report
         self.initial['send_critical'] = key.send_critical
         self.initial['send_high'] = key.send_high
         self.initial['send_medium'] = key.send_medium
@@ -425,6 +449,7 @@ class HackeroneForm(forms.ModelForm):
         self.initial['report_template'] = key.report_template
 
     def set_initial(self):
+        self.initial['send_report'] = False
         self.initial['send_critical'] = True
         self.initial['send_high'] = True
         self.initial['send_medium'] = False

@@ -70,10 +70,12 @@ class InterestingLookupModel(models.Model):
 class Notification(models.Model):
     id = models.AutoField(primary_key=True)
     send_to_slack = models.BooleanField(default=False)
+    send_to_lark = models.BooleanField(default=False)
     send_to_discord = models.BooleanField(default=False)
     send_to_telegram = models.BooleanField(default=False)
 
     slack_hook_url = models.CharField(max_length=200, null=True, blank=True)
+    lark_hook_url = models.CharField(max_length=200, null=True, blank=True)
     discord_hook_url = models.CharField(max_length=200, null=True, blank=True)
     telegram_bot_token = models.CharField(max_length=100, null=True, blank=True)
     telegram_bot_chat_id = models.CharField(max_length=100, null=True, blank=True)
@@ -95,8 +97,10 @@ class Proxy(models.Model):
 
 class Hackerone(models.Model):
     id = models.AutoField(primary_key=True)
-    username = models.CharField(max_length=100, null=True, blank=True)
-    api_key = models.CharField(max_length=200, null=True, blank=True)
+    # TODO: username and api_key fields will be deprecated in another major release, Instead HackerOneAPIKey model from dasbhboard/models.py will be used
+    username = models.CharField(max_length=100, null=True, blank=True) # unused
+    api_key = models.CharField(max_length=200, null=True, blank=True) # unused
+    send_report = models.BooleanField(default=False, null=True, blank=True)
     send_critical = models.BooleanField(default=True)
     send_high = models.BooleanField(default=True)
     send_medium = models.BooleanField(default=False)
