@@ -10,9 +10,6 @@
   <a href="#" target="_blank">
     <img src="https://img.shields.io/badge/first--timers--only-friendly-blue.svg?&logo=none" alt="First Timers Only" />
   </a>
-  <a href="https://huntr.dev/bounties/disclose/?target=https%3A%2F%2Fgithub.com%2Fkhulnasoft%2Freconpoint" target="_blank">
-    <img src="https://cdn.huntr.dev/huntr_security_badge_mono.svg" alt="Report Vulnerabilities" />
-  </a>
 </p>
 
 <p>
