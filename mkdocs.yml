@@ -1,12 +1,12 @@
-site_name: reNgine
-site_author: Yogesh Ojha
+site_name: reconPoint
+site_author: KhulnaSoft DevSec
 site_url: https://recon.khulnasoft.com
-site_description: reNgine is an automated reconnaissance framework meant for information gathering during penetration testing of web applications. reNgine has customizable scan engines, which can be used to scan the websites, endpoints, and gather information.
+site_description: reconPoint is an automated reconnaissance framework meant for information gathering during penetration testing of web applications. reconPoint has customizable scan engines, which can be used to scan the websites, endpoints, and gather information.
 
-copyright: "Copyright &copy; 2023 Yogesh Ojha"
+copyright: "Copyright &copy; 2023 KhulnaSoft DevSec"
 
-repo_url: https://github.com/khulnasoft/rengine
-repo_name: reNgine
+repo_url: https://github.com/khulnasoft/reconpoint
+repo_name: reconPoint
 
 theme:
   name: material
@@ -44,7 +44,7 @@ markdown_extensions:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/khulnasoft/rengine
+      link: https://github.com/khulnasoft/reconpoint
     - icon: fontawesome/brands/discord
       link: https://discord.gg/H6WzebwX3H
     - icon: fontawesome/brands/twitter
