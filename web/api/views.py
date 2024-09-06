@@ -43,7 +43,8 @@ class ToggleBugBountyModeView(APIView):
 	"""
 		This class manages the user bug bounty mode
 	"""
-	def post(self, request, *args, **kwargs):
+	@staticmethod
+	def post(request, *args, **kwargs):
 		user_preferences = get_object_or_404(UserPreferences, user=request.user)
 		user_preferences.bug_bounty_mode = not user_preferences.bug_bounty_mode
 		user_preferences.save()
@@ -89,7 +90,8 @@ class HackerOneProgramViewSet(viewsets.ViewSet):
 		except Exception as e:
 			return self.handle_exception(e)
 	
-	def get_api_credentials(self):
+	@staticmethod
+	def get_api_credentials():
 		try:
 			api_key = HackerOneAPIKey.objects.first()
 			if not api_key:
@@ -258,7 +260,8 @@ class HackerOneProgramViewSet(viewsets.ViewSet):
 		except Exception as e:
 			return self.handle_exception(e)
 
-	def handle_exception(self, exc):
+	@staticmethod
+	def handle_exception(exc):
 		if isinstance(exc, ObjectDoesNotExist):
 			return Response({"error": "HackerOne API credentials not configured"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 		elif str(exc) == "Invalid API credentials":

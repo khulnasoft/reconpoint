@@ -30,7 +30,8 @@ class HackerOneProgramAttributesSerializer(serializers.Serializer):
 	fast_payments = serializers.BooleanField(allow_null=True, required=False)
 	gold_standard_safe_harbor = serializers.BooleanField(allow_null=True, required=False)
 
-	def to_representation(self, instance):
+	@staticmethod
+	def to_representation(instance):
 		return {key: value for key, value in instance.items()}
 
 
@@ -59,7 +60,8 @@ class InAppNotificationSerializer(serializers.ModelSerializer):
 		]
 		read_only_fields = ['id', 'created_at']
 
-	def get_project_name(self, obj):
+	@staticmethod
+	def get_project_name(obj):
 		return obj.project.name if obj.project else None
 
 
@@ -83,30 +85,37 @@ class DomainSerializer(serializers.ModelSerializer):
 		fields = '__all__'
 		depth = 2
 
-	def get_vuln_count(self, obj):
+	@staticmethod
+	def get_vuln_count(obj):
 		try:
 			return obj.vuln_count
 		except:
 			return None
 
-	def get_organization(self, obj):
+	@staticmethod
+	def get_organization(obj):
 		if Organization.objects.filter(domains__id=obj.id).exists():
 			return [org.name for org in Organization.objects.filter(domains__id=obj.id)]
 
-	def get_most_recent_scan(self, obj):
+	@staticmethod
+	def get_most_recent_scan(obj):
 		return obj.get_recent_scan_id()
 
-	def get_insert_date(self, obj):
+	@staticmethod
+	def get_insert_date(obj):
 		return naturalday(obj.insert_date).title()
 
-	def get_insert_date_humanized(self, obj):
+	@staticmethod
+	def get_insert_date_humanized(obj):
 		return naturaltime(obj.insert_date).title()
 
-	def get_start_scan_date(self, obj):
+	@staticmethod
+	def get_start_scan_date(obj):
 		if obj.start_scan_date:
 			return naturalday(obj.start_scan_date).title()
 
-	def get_start_scan_date_humanized(self, obj):
+	@staticmethod
+	def get_start_scan_date_humanized(obj):
 		if obj.start_scan_date:
 			return naturaltime(obj.start_scan_date).title()
 
@@ -134,13 +143,16 @@ class SubScanResultSerializer(serializers.ModelSerializer):
 			'engine'
 		]
 
-	def get_subdomain_name(self, subscan):
+	@staticmethod
+	def get_subdomain_name(subscan):
 		return subscan.subdomain.name
 
-	def get_task_name(self, subscan):
+	@staticmethod
+	def get_task_name(subscan):
 		return subscan.type
 
-	def get_engine_name(self, subscan):
+	@staticmethod
+	def get_engine_name(subscan):
 		if subscan.engine:
 			return subscan.engine.engine_name
 		return ''
@@ -156,15 +168,18 @@ class ReconNoteSerializer(serializers.ModelSerializer):
 		model = TodoNote
 		fields = '__all__'
 
-	def get_domain_name(self, note):
+	@staticmethod
+	def get_domain_name(note):
 		if note.scan_history:
 			return note.scan_history.domain.name
 
-	def get_subdomain_name(self, note):
+	@staticmethod
+	def get_subdomain_name(note):
 		if note.subdomain:
 			return note.subdomain.name
 
-	def get_scan_started_time(self, note):
+	@staticmethod
+	def get_scan_started_time(note):
 		if note.scan_history:
 			return note.scan_history.start_scan_date
 
@@ -187,19 +202,24 @@ class SubScanSerializer(serializers.ModelSerializer):
 		model = SubScan
 		fields = '__all__'
 
-	def get_subdomain_name(self, subscan):
+	@staticmethod
+	def get_subdomain_name(subscan):
 		return subscan.subdomain.name
 
-	def get_total_time_taken(self, subscan):
+	@staticmethod
+	def get_total_time_taken(subscan):
 		return subscan.get_total_time_taken()
 
-	def get_elapsed_time(self, subscan):
+	@staticmethod
+	def get_elapsed_time(subscan):
 		return subscan.get_elapsed_time()
 
-	def get_completed_ago(self, subscan):
+	@staticmethod
+	def get_completed_ago(subscan):
 		return subscan.get_completed_ago()
 
-	def get_engine_name(self, subscan):
+	@staticmethod
+	def get_engine_name(subscan):
 		if subscan.engine:
 			return subscan.engine.engine_name
 		return ''
@@ -247,31 +267,39 @@ class ScanHistorySerializer(serializers.ModelSerializer):
 		]
 		depth = 1
 
-	def get_subdomain_count(self, scan_history):
+	@staticmethod
+	def get_subdomain_count(scan_history):
 		if scan_history.get_subdomain_count:
 			return scan_history.get_subdomain_count()
 
-	def get_endpoint_count(self, scan_history):
+	@staticmethod
+	def get_endpoint_count(scan_history):
 		if scan_history.get_endpoint_count:
 			return scan_history.get_endpoint_count()
 
-	def get_vulnerability_count(self, scan_history):
+	@staticmethod
+	def get_vulnerability_count(scan_history):
 		if scan_history.get_vulnerability_count:
 			return scan_history.get_vulnerability_count()
 
-	def get_progress(self, scan_history):
+	@staticmethod
+	def get_progress(scan_history):
 		return scan_history.get_progress()
 
-	def get_total_scan_time_in_sec(self, scan_history):
+	@staticmethod
+	def get_total_scan_time_in_sec(scan_history):
 		return scan_history.get_total_scan_time_in_sec()
 
-	def get_elapsed_time(self, scan_history):
+	@staticmethod
+	def get_elapsed_time(scan_history):
 		return scan_history.get_elapsed_time()
 
-	def get_completed_ago(self, scan_history):
+	@staticmethod
+	def get_completed_ago(scan_history):
 		return scan_history.get_completed_ago()
 
-	def get_organizations(self, scan_history):
+	@staticmethod
+	def get_organizations(scan_history):
 		return [org.name for org in scan_history.domain.get_organization()]
 
 
@@ -286,7 +314,8 @@ class EngineSerializer(serializers.ModelSerializer):
 
 	tasks = serializers.SerializerMethodField('get_tasks')
 
-	def get_tasks(self, instance):
+	@staticmethod
+	def get_tasks(instance):
 		return instance.tasks
 
 	class Meta:
@@ -320,7 +349,8 @@ class VisualiseVulnerabilitySerializer(serializers.ModelSerializer):
 			'http_url'
 		]
 
-	def get_description(self, vulnerability):
+	@staticmethod
+	def get_description(vulnerability):
 		return vulnerability.name
 
 
@@ -337,10 +367,12 @@ class VisualisePortSerializer(serializers.ModelSerializer):
 			'title',
 		]
 
-	def get_description(self, port):
+	@staticmethod
+	def get_description(port):
 		return str(port.number) + "/" + str(port.service_name)
 
-	def get_title(self, port):
+	@staticmethod
+	def get_title(port):
 		if port.is_uncommon:
 			return "Uncommon Port"
 
@@ -355,7 +387,8 @@ class VisualiseTechnologySerializer(serializers.ModelSerializer):
 			'description'
 		]
 
-	def get_description(self, tech):
+	@staticmethod
+	def get_description(tech):
 		return tech.name
 
 
@@ -371,10 +404,12 @@ class VisualiseIpSerializer(serializers.ModelSerializer):
 			'children'
 		]
 
-	def get_description(self, Ip):
+	@staticmethod
+	def get_description(Ip):
 		return Ip.address
 
-	def get_children(self, ip):
+	@staticmethod
+	def get_children(ip):
 		port = Port.objects.filter(
 			ports__in=IpAddress.objects.filter(
 				address=ip))
@@ -393,7 +428,8 @@ class VisualiseEndpointSerializer(serializers.ModelSerializer):
 			'http_url'
 		]
 
-	def get_description(self, endpoint):
+	@staticmethod
+	def get_description(endpoint):
 		return endpoint.http_url
 
 
@@ -412,10 +448,12 @@ class VisualiseSubdomainSerializer(serializers.ModelSerializer):
 			'title',
 		]
 
-	def get_description(self, subdomain):
+	@staticmethod
+	def get_description(subdomain):
 		return subdomain.name
 
-	def get_title(self, subdomain):
+	@staticmethod
+	def get_title(subdomain):
 		if get_interesting_subdomains(subdomain.scan_history.id).filter(name=subdomain.name).exists():
 			return "Interesting"
 
@@ -550,12 +588,14 @@ class VisualiseEmailSerializer(serializers.ModelSerializer):
 			'title'
 		]
 
-	def get_description(self, email):
+	@staticmethod
+	def get_description(email):
 		if email.password:
 			return email.address + " > " + email.password
 		return email.address
 
-	def get_title(self, email):
+	@staticmethod
+	def get_title(email):
 		if email.password:
 			return "Exposed Creds"
 
@@ -574,13 +614,16 @@ class VisualiseDorkSerializer(serializers.ModelSerializer):
 			'http_url'
 		]
 
-	def get_title(self, dork):
+	@staticmethod
+	def get_title(dork):
 		return dork.type
 
-	def get_description(self, dork):
+	@staticmethod
+	def get_description(dork):
 		return dork.type
 
-	def get_http_url(self, dork):
+	@staticmethod
+	def get_http_url(dork):
 		return dork.url
 
 
@@ -594,7 +637,8 @@ class VisualiseEmployeeSerializer(serializers.ModelSerializer):
 			'description'
 		]
 
-	def get_description(self, employee):
+	@staticmethod
+	def get_description(employee):
 		if employee.designation:
 			return employee.name + '--' + employee.designation
 		return employee.name
@@ -614,10 +658,12 @@ class VisualiseDataSerializer(serializers.ModelSerializer):
 			'children',
 		]
 
-	def get_description(self, scan_history):
+	@staticmethod
+	def get_description(scan_history):
 		return scan_history.domain.name
 
-	def get_children(self, history):
+	@staticmethod
+	def get_children(history):
 		scan_history = ScanHistory.objects.filter(id=history.id)
 
 		subdomain = Subdomain.objects.filter(scan_history=history)
@@ -725,10 +771,12 @@ class SubdomainChangesSerializer(serializers.ModelSerializer):
 		model = Subdomain
 		fields = '__all__'
 
-	def get_change(self, Subdomain):
+	@staticmethod
+	def get_change(Subdomain):
 		return Subdomain.change
 
-	def get_is_interesting(self, Subdomain):
+	@staticmethod
+	def get_is_interesting(Subdomain):
 		return (
 			get_interesting_subdomains(Subdomain.scan_history.id)
 			.filter(name=Subdomain.name)
@@ -744,7 +792,8 @@ class EndPointChangesSerializer(serializers.ModelSerializer):
 		model = EndPoint
 		fields = '__all__'
 
-	def get_change(self, EndPoint):
+	@staticmethod
+	def get_change(EndPoint):
 		return EndPoint.change
 
 
@@ -844,10 +893,12 @@ class DirectoryScanSerializer(serializers.ModelSerializer):
 		model = DirectoryScan
 		fields = '__all__'
 
-	def get_scanned_date(self, DirectoryScan):
+	@staticmethod
+	def get_scanned_date(DirectoryScan):
 		return DirectoryScan.scanned_date.strftime("%b %d, %Y %H:%M")
 
-	def get_formatted_date_for_id(self, DirectoryScan):
+	@staticmethod
+	def get_formatted_date_for_id(DirectoryScan):
 		return DirectoryScan.scanned_date.strftime("%b_%d_%Y_%H_%M")
 
 
@@ -890,7 +941,8 @@ class SubdomainSerializer(serializers.ModelSerializer):
 		model = Subdomain
 		fields = '__all__'
 
-	def get_is_interesting(self, subdomain):
+	@staticmethod
+	def get_is_interesting(subdomain):
 		scan_id = subdomain.scan_history.id if subdomain.scan_history else None
 		return (
 			get_interesting_subdomains(scan_id)
@@ -898,34 +950,44 @@ class SubdomainSerializer(serializers.ModelSerializer):
 			.exists()
 		)
 
-	def get_endpoint_count(self, subdomain):
+	@staticmethod
+	def get_endpoint_count(subdomain):
 		return subdomain.get_endpoint_count
 
-	def get_info_count(self, subdomain):
+	@staticmethod
+	def get_info_count(subdomain):
 		return subdomain.get_info_count
 
-	def get_low_count(self, subdomain):
+	@staticmethod
+	def get_low_count(subdomain):
 		return subdomain.get_low_count
 
-	def get_medium_count(self, subdomain):
+	@staticmethod
+	def get_medium_count(subdomain):
 		return subdomain.get_medium_count
 
-	def get_high_count(self, subdomain):
+	@staticmethod
+	def get_high_count(subdomain):
 		return subdomain.get_high_count
 
-	def get_critical_count(self, subdomain):
+	@staticmethod
+	def get_critical_count(subdomain):
 		return subdomain.get_critical_count
 
-	def get_directories_count(self, subdomain):
+	@staticmethod
+	def get_directories_count(subdomain):
 		return subdomain.get_directories_count
 
-	def get_subscan_count(self, subdomain):
+	@staticmethod
+	def get_subscan_count(subdomain):
 		return subdomain.get_subscan_count
 
-	def get_todos_count(self, subdomain):
+	@staticmethod
+	def get_todos_count(subdomain):
 		return len(subdomain.get_todos.filter(is_done=False))
 
-	def get_vuln_count(self, obj):
+	@staticmethod
+	def get_vuln_count(obj):
 		try:
 			return obj.vuln_count
 		except:
@@ -953,10 +1015,12 @@ class VulnerabilitySerializer(serializers.ModelSerializer):
 	discovered_date = serializers.SerializerMethodField()
 	severity = serializers.SerializerMethodField()
 
-	def get_discovered_date(self, Vulnerability):
+	@staticmethod
+	def get_discovered_date(Vulnerability):
 		return Vulnerability.discovered_date.strftime("%b %d, %Y %H:%M")
 
-	def get_severity(self, Vulnerability):
+	@staticmethod
+	def get_severity(Vulnerability):
 		if Vulnerability.severity == 0:
 			return "Info"
 		elif Vulnerability.severity == 1:

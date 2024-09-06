@@ -48,7 +48,7 @@ reconPoint is your ultimate web application reconnaissance suite, designed to su
 <p><a href="https://youtu.be/VwkOWqiWW5g">Watch reconPoint 2.0-jasper release trailer here!</a></p>
 <p><img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png" alt="-----------------------------------------------------"></p>
 <h2>Documentation</h2>
-<p>Detailed documentation available at <a href="https://reconpoint.wiki">https://reconpoint.wiki</a> </p>
+<p>Detailed documentation available at <a href="https://recon.khulnasoft.com">https://recon.khulnasoft.com</a></p>
 <p><img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png" alt="-----------------------------------------------------"></p>
 <h2>Table of Contents</h2>
 <ul>
@@ -157,14 +157,14 @@ reconPoint is your ultimate web application reconnaissance suite, designed to su
 <li><p>Configure the environment</p>
 <pre><code class="language-bash">nano .env
 </code></pre>
-<p> <strong>Ensure you change the <code>POSTGRES_PASSWORD</code> for security.</strong></p>
+<p><strong>Ensure you change the <code>POSTGRES_PASSWORD</code> for security.</strong></p>
 </li>
 <li><p>(Optional) For non-interactive install, set admin credentials in <code>.env</code></p>
 <pre><code class="language-bash">DJANGO_SUPERUSER_USERNAME=yourUsername
 DJANGO_SUPERUSER_EMAIL=YourMail@example.com
 DJANGO_SUPERUSER_PASSWORD=yourStrongPassword
 </code></pre>
-<p> If you need to carry out a non-interactive installation, you can setup the login, email and password of the web interface admin directly from the .env file (instead of manually setting them from prompts during the installation process). This option can be interesting for automated installation (via ansible, vagrant, etc.).</p>
+<p>If you need to carry out a non-interactive installation, you can setup the login, email and password of the web interface admin directly from the .env file (instead of manually setting them from prompts during the installation process). This option can be interesting for automated installation (via ansible, vagrant, etc.).</p>
 <ul>
 <li><p><code>DJANGO_SUPERUSER_USERNAME</code>: web interface admin username (used to login to the web interface).</p>
 </li>
@@ -178,29 +178,29 @@ DJANGO_SUPERUSER_PASSWORD=yourStrongPassword
 <pre><code class="language-bash">MAX_CONCURRENCY=80
 MIN_CONCURRENCY=10
 </code></pre>
-<p> <code>MAX_CONCURRENCY</code>: This parameter specifies the maximum number of reconPoint&#39;s concurrent Celery worker processes that can be spawned. In this case, it&#39;s set to 80, meaning that the application can utilize up to 80 concurrent worker processes to execute tasks concurrently. This is useful for handling a high volume of scans or when you want to scale up processing power during periods of high demand. If you have more CPU cores, you will need to increase this for maximised performance.</p>
-<p> <code>MIN_CONCURRENCY</code>: On the other hand, MIN_CONCURRENCY specifies the minimum number of concurrent worker processes that should be maintained, even during periods of lower demand. In this example, it&#39;s set to 10, which means that even when there are fewer tasks to process, at least 10 worker processes will be kept running. This helps ensure that the application can respond promptly to incoming tasks without the overhead of repeatedly starting and stopping worker processes.</p>
-<p> These settings allow for dynamic scaling of Celery workers, ensuring that the application efficiently manages its workload by adjusting the number of concurrent workers based on the workload&#39;s size and complexity.</p>
-<p> Here is the ideal value for <code>MIN_CONCURRENCY</code> and <code>MAX_CONCURRENCY</code> depending on the number of RAM your machine has:</p>
+<p><code>MAX_CONCURRENCY</code>: This parameter specifies the maximum number of reconPoint&#39;s concurrent Celery worker processes that can be spawned. In this case, it&#39;s set to 80, meaning that the application can utilize up to 80 concurrent worker processes to execute tasks concurrently. This is useful for handling a high volume of scans or when you want to scale up processing power during periods of high demand. If you have more CPU cores, you will need to increase this for maximised performance.</p>
+<p><code>MIN_CONCURRENCY</code>: On the other hand, MIN_CONCURRENCY specifies the minimum number of concurrent worker processes that should be maintained, even during periods of lower demand. In this example, it&#39;s set to 10, which means that even when there are fewer tasks to process, at least 10 worker processes will be kept running. This helps ensure that the application can respond promptly to incoming tasks without the overhead of repeatedly starting and stopping worker processes.</p>
+<p>These settings allow for dynamic scaling of Celery workers, ensuring that the application efficiently manages its workload by adjusting the number of concurrent workers based on the workload&#39;s size and complexity.</p>
+<p>Here is the ideal value for <code>MIN_CONCURRENCY</code> and <code>MAX_CONCURRENCY</code> depending on the number of RAM your machine has:</p>
 <ul>
 <li>4GB: <code>MAX_CONCURRENCY=10</code></li>
 <li>8GB: <code>MAX_CONCURRENCY=30</code></li>
 <li>16GB: <code>MAX_CONCURRENCY=50</code></li>
 </ul>
-<p> This is just an ideal value which developers have tested and tried out and works! But feel free to play around with the values.
- Maximum number of scans is determined by various factors, your network bandwidth, RAM, number of CPUs available. etc</p>
+<p>This is just an ideal value which developers have tested and tried out and works! But feel free to play around with the values.
+Maximum number of scans is determined by various factors, your network bandwidth, RAM, number of CPUs available. etc</p>
 </li>
 <li><p>Run the installation script:</p>
 <pre><code class="language-bash">sudo ./install.sh
 </code></pre>
-<p> For non-interactive install: <code>sudo ./install.sh -n</code></p>
-<p> <em>Note: If needed, run <code>chmod +x install.sh</code> to grant execution permissions.</em></p>
+<p>For non-interactive install: <code>sudo ./install.sh -n</code></p>
+<p><em>Note: If needed, run <code>chmod +x install.sh</code> to grant execution permissions.</em></p>
 </li>
 </ol>
 <p><strong>reconPoint can now be accessed from <a href="https://127.0.0.1">https://127.0.0.1</a> or if you&#39;re on the VPS <a href="https://your_vps_ip_address">https://your_vps_ip_address</a></strong></p>
 <p><strong>Unless you are on development branch, please do not access reconPoint via any ports</strong></p>
 <h3>Installation on Other Platforms</h3>
-<p>For Mac, Windows, or other systems, refer to our detailed installation guide <a href="https://reconPoint.wiki/install/detailed/">https://reconPoint.wiki/install/detailed/</a></p>
+<p>For Mac, Windows, or other systems, refer to our detailed installation guide <a href="https://recon.khulnasoft.com/install/detailed/">https://recon.khulnasoft.com/install/detailed/</a></p>
 <h3>Installation Video Tutorial</h3>
 <p>If you encounter any issues during installation or prefer a visual guide, one of our community members has created an excellent installation video for Kali Linux installation. You can find it here: <a href="https://www.youtube.com/watch?v=7OFfrU6VrWw">https://www.youtube.com/watch?v=7OFfrU6VrWw</a></p>
 <p>Please note: This is community-curated content and is not owned by reconPoint. The installation process may change, so please refer to the official documentation for the most up-to-date instructions.</p>
@@ -209,7 +209,7 @@ MIN_CONCURRENCY=10
 <li><p>To update reconPoint, run:</p>
 <pre><code class="language-bash">cd reconpoint &amp;&amp;  sudo ./update.sh
 </code></pre>
-<p> If <code>update.sh</code> lacks execution permissions, use:</p>
+<p>If <code>update.sh</code> lacks execution permissions, use:</p>
 <pre><code class="language-bash">sudo chmod +x update.sh
 </code></pre>
 </li>
@@ -298,8 +298,10 @@ MIN_CONCURRENCY=10
 <ol>
 <li><p>Enable Debug Mode:</p>
 <ul>
-<li>Edit <code>web/entrypoint.sh</code> in the project root</li>
-<li>Add <code>export DEBUG=1</code> at the top of the file:<pre><code class="language-bash">#!/bin/bash
+<li><p>Edit <code>web/entrypoint.sh</code> in the project root</p>
+</li>
+<li><p>Add <code>export DEBUG=1</code> at the top of the file:</p>
+<pre><code class="language-bash">#!/bin/bash
 
 export DEBUG=1
 
@@ -309,7 +311,8 @@ python3 manage.py runserver 0.0.0.0:8000
 exec &quot;$@&quot;
 </code></pre>
 </li>
-<li>Restart the web container: <code>docker-compose restart web</code></li>
+<li><p>Restart the web container: <code>docker-compose restart web</code></p>
+</li>
 </ul>
 </li>
 <li><p>View Debug Output:</p>
@@ -352,7 +355,7 @@ web_1          | TypeError: run_command() got an unexpected keyword argument &#3
 <h2>reconPoint Support</h2>
 <p>Before seeking support:</p>
 <ul>
-<li>Please carefully read the README and documentation at <a href="https://reconpoint.wiki">reconpoint.wiki</a>.</li>
+<li>Please carefully read the README and documentation at <a href="https://recon.khulnasoft.com">recon.khulnasoft.com</a>.</li>
 <li>Most common questions and issues are addressed there.</li>
 </ul>
 <p>If you still need assistance:</p>
