@@ -10,8 +10,6 @@ import yaml
 import tldextract
 import concurrent.futures
 import base64
-
-from datetime import datetime
 from urllib.parse import urlparse
 from api.serializers import SubdomainSerializer
 from celery import chain, chord, group
@@ -20,7 +18,6 @@ from celery.utils.log import get_task_logger
 from django.db.models import Count
 from dotted_dict import DottedDict
 from django.utils import timezone
-from django.shortcuts import get_object_or_404
 from pycvesearch import CVESearch
 from metafinder.extractor import extract_metadata_from_google_search
 
@@ -481,13 +478,13 @@ def subdomain_discovery(
 			elif tool == 'ctfr':
 				results_file = self.results_dir + '/subdomains_ctfr.txt'
 				cmd = f'python3 /usr/src/github/ctfr/ctfr.py -d {host} -o {results_file}'
-				cmd_extract = f"cat {results_file} | sed 's/\*.//g' | tail -n +12 | uniq | sort > {results_file}"
+				cmd_extract = rf"cat {results_file} | sed 's/\*.//g' | tail -n +12 | uniq | sort > {results_file}"
 				cmd += f' && {cmd_extract}'
 
 			elif tool == 'tlsx':
 				results_file = self.results_dir + '/subdomains_tlsx.txt'
 				cmd = f'tlsx -san -cn -silent -ro -host {host}'
-				cmd += f" | sed -n '/^\([a-zA-Z0-9]\([-a-zA-Z0-9]*[a-zA-Z0-9]\)\?\.\)\+{host}$/p' | uniq | sort"
+				cmd += rf" | sed -n '/^\([a-zA-Z0-9]\([-a-zA-Z0-9]*[a-zA-Z0-9]\)\?\.\)\+{host}$/p' | uniq | sort"
 				cmd += f' > {results_file}'
 
 			elif tool == 'netlas':
@@ -495,7 +492,7 @@ def subdomain_discovery(
 				cmd = f'netlas search -d domain -i domain domain:"*.{host}" -f json'
 				netlas_key = get_netlas_key()
 				cmd += f' -a {netlas_key}' if netlas_key else ''
-				cmd_extract = f"grep -oE '([a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?\.)+{host}'"
+				cmd_extract = rf"grep -oE '([a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?\.)+{host}'"
 				cmd += f' | {cmd_extract} > {results_file}'
 
 			elif tool == 'chaos':
@@ -646,7 +643,6 @@ def osint(self, host=None, ctx={}, description=None):
 
 	if 'discover' in config:
 		ctx['track'] = False
-		# results = osint_discovery(host=host, ctx=ctx)
 		_task = osint_discovery.si(
 			config=config,
 			host=self.scan.domain.name,
@@ -758,9 +754,6 @@ def osint_discovery(config, host, scan_history_id, activity_id, results_dir, ctx
 		# wait for all jobs to complete
 		time.sleep(5)
 
-	# results['emails'] = results.get('emails', []) + emails
-	# results['creds'] = creds
-	# results['meta_info'] = meta_info
 	return results
 
 
@@ -1090,8 +1083,6 @@ def theHarvester(config, host, scan_history_id, activity_id, results_dir, ctx={}
 	emails = data.get('emails', [])
 	for email_address in emails:
 		email, _ = save_email(email_address, scan_history=scan_history)
-		# if email:
-		# 	self.notify(fields={'Emails': f'• `{email.address}`'})
 
 	linkedin_people = data.get('linkedin_people', [])
 	for people in linkedin_people:
@@ -1099,8 +1090,6 @@ def theHarvester(config, host, scan_history_id, activity_id, results_dir, ctx={}
 			people,
 			designation='linkedin',
 			scan_history=scan_history)
-		# if employee:
-		# 	self.notify(fields={'LinkedIn people': f'• {employee.name}'})
 
 	twitter_people = data.get('twitter_people', [])
 	for people in twitter_people:
@@ -1108,8 +1097,6 @@ def theHarvester(config, host, scan_history_id, activity_id, results_dir, ctx={}
 			people,
 			designation='twitter',
 			scan_history=scan_history)
-		# if employee:
-		# 	self.notify(fields={'Twitter people': f'• {employee.name}'})
 
 	hosts = data.get('hosts', [])
 	urls = []
@@ -1123,13 +1110,7 @@ def theHarvester(config, host, scan_history_id, activity_id, results_dir, ctx={}
 			crawl=False,
 			ctx=ctx,
 			subdomain=subdomain)
-		# if endpoint:
-		# 	urls.append(endpoint.http_url)
-			# self.notify(fields={'Hosts': f'• {endpoint.http_url}'})
 
-	# if enable_http_crawl:
-	# 	ctx['track'] = False
-	# 	http_crawl(urls, ctx=ctx)
 
 	# TODO: Lots of ips unrelated with our domain are found, disabling
 	# this for now.
@@ -1188,8 +1169,6 @@ def h8mail(config, host, scan_history_id, activity_id, results_dir, ctx={}):
 		pwn_num = cred['pwn_num']
 		pwn_data = cred.get('data', [])
 		email, created = save_email(email_address, scan_history=scan)
-		# if email:
-		# 	self.notify(fields={'Emails': f'• `{email.address}`'})
 	return creds
 
 
@@ -1826,7 +1805,6 @@ def fetch_url(self, urls=[], ctx={}, description=None):
 	ignore_file_extension = config.get(IGNORE_FILE_EXTENSION, DEFAULT_IGNORE_FILE_EXTENSIONS)
 	tools = config.get(USES_TOOLS, ENDPOINT_SCAN_DEFAULT_TOOLS)
 	threads = config.get(THREADS) or self.yaml_configuration.get(THREADS, DEFAULT_THREADS)
-	# domain_request_headers = self.domain.request_headers if self.domain else None
 	custom_headers = self.yaml_configuration.get(CUSTOM_HEADERS, [])
 	'''
 	# TODO: Remove custom_header in next major release
@@ -2041,7 +2019,7 @@ def fetch_url(self, urls=[], ctx={}, description=None):
 
 def parse_curl_output(response):
 	# TODO: Enrich from other cURL fields.
-	CURL_REGEX_HTTP_STATUS = f'HTTP\/(?:(?:\d\.?)+)\s(\d+)\s(?:\w+)'
+	CURL_REGEX_HTTP_STATUS = rf'HTTP\/(?:(?:\d\.?)+)\s(\d+)\s(?:\w+)'
 	http_status = 0
 	if response:
 		failed = False
@@ -2109,7 +2087,6 @@ def vulnerability_scan(self, urls=[], ctx={}, description=None):
 
 	logger.info('Vulnerability scan completed...')
 
-	# return results
 	return None
 
 @app.task(name='nuclei_individual_severity_module', queue='main_scan_queue', base=ReconpointTask, bind=True)
@@ -2420,7 +2397,6 @@ def nuclei_scan(self, urls=[], ctx={}, description=None):
 	tags = ','.join(tags)
 	nuclei_templates = nuclei_specific_config.get(NUCLEI_TEMPLATE)
 	custom_nuclei_templates = nuclei_specific_config.get(NUCLEI_CUSTOM_TEMPLATE)
-	# severities_str = ','.join(severities)
 
 	# Get alive endpoints
 	if urls:
@@ -2485,7 +2461,6 @@ def nuclei_scan(self, urls=[], ctx={}, description=None):
 	cmd += f' -proxy {proxy} ' if proxy else ''
 	cmd += f' -retries {retries}' if retries > 0 else ''
 	cmd += f' -rl {rate_limit}' if rate_limit > 0 else ''
-	# cmd += f' -severity {severities_str}'
 	cmd += f' -timeout {str(timeout)}' if timeout and timeout > 0 else ''
 	cmd += f' -tags {tags}' if tags else ''
 	cmd += f' -silent'
@@ -3961,11 +3936,6 @@ def fetch_whois_data_using_netlas(target):
 				'status': False, 
 				'message': 'No data available for the given domain or IP.'
 			}
-		# if 'whois' not in data:
-		# 	return {
-		# 		'status': False, 
-		# 		'message': 'Invalid domain or no WHOIS data available.'
-		# 	}
 
 		return {
 			'status': True, 
@@ -4314,7 +4284,7 @@ def save_metadata_info(meta_dict):
 		subdomain = Subdomain.objects.get(
 			scan_history=meta_dict.scan_id,
 			name=meta_dict.osint_target)
-		metadata = DottedDict({k: v for k, v in data.items()})
+		metadata = DottedDict(dict(data.items()))
 		meta_finder_document = MetaFinderDocument(
 			subdomain=subdomain,
 			target_domain=meta_dict.domain,
@@ -4535,7 +4505,6 @@ def save_subdomain(subdomain_name, ctx={}):
 		target_domain=domain,
 		name=subdomain_name)
 	if created:
-		# logger.warning(f'Found new subdomain {subdomain_name}')
 		subdomain.discovered_date = timezone.now()
 		if subscan_id:
 			subdomain.subdomain_subscan_ids.add(subscan_id)
@@ -4548,8 +4517,6 @@ def save_email(email_address, scan_history=None):
 		logger.info(f'Email {email_address} is invalid. Skipping.')
 		return None, False
 	email, created = Email.objects.get_or_create(address=email_address)
-	# if created:
-	# 	logger.warning(f'Found new email address {email_address}')
 
 	# Add email to ScanHistory
 	if scan_history:
@@ -4563,8 +4530,6 @@ def save_employee(name, designation, scan_history=None):
 	employee, created = Employee.objects.get_or_create(
 		name=name,
 		designation=designation)
-	# if created:
-	# 	logger.warning(f'Found new employee {name}')
 
 	# Add employee to ScanHistory
 	if scan_history:
@@ -4579,8 +4544,6 @@ def save_ip_address(ip_address, subdomain=None, subscan=None, **kwargs):
 		logger.info(f'IP {ip_address} is not a valid IP. Skipping.')
 		return None, False
 	ip, created = IpAddress.objects.get_or_create(address=ip_address)
-	# if created:
-	# 	logger.warning(f'Found new IP {ip_address}')
 
 	# Set extra attributes
 	for key, value in kwargs.items():

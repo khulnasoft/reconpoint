@@ -9,7 +9,6 @@ from django.utils import timezone
 from dashboard.models import Project
 from targetApp.models import Organization, Domain
 from startScan.models import EndPoint, IpAddress
-from reconPoint.settings import LOGGING
 from reconPoint.common_func import *
 
 logger = logging.getLogger(__name__)

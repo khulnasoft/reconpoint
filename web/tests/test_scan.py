@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import unittest
 
@@ -9,15 +8,12 @@ os.environ['CELERY_ALWAYS_EAGER'] = 'True'
 import yaml
 from celery.utils.log import get_task_logger
 from reconPoint.settings import DEBUG
-from reconPoint.tasks import (dir_file_fuzz, fetch_url, http_crawl, initiate_scan,
-                           osint, port_scan, subdomain_discovery,
+from reconPoint.tasks import (fetch_url, http_crawl, port_scan, subdomain_discovery,
                            vulnerability_scan)
 from startScan.models import *
 
 logger = get_task_logger(__name__)
 DOMAIN_NAME = os.environ['DOMAIN_NAME']
-# if not DEBUG:
-#     logging.disable(logging.CRITICAL)
 
 
 class TestOnlineScan(unittest.TestCase):
@@ -89,9 +85,6 @@ class TestOnlineScan(unittest.TestCase):
             print(urls)
         self.assertGreater(len(urls), 0)
 
-    # def test_dir_file_fuzz(self):
-    #     urls = dir_file_fuzz(ctx=self.ctx)
-    #     self.assertGreater(len(urls), 0)
 
     def test_vulnerability_scan(self):
         vulns = vulnerability_scan(urls=[self.url], ctx=self.ctx)
@@ -118,10 +111,3 @@ class TestOnlineScan(unittest.TestCase):
                     urls.append(final_url)
         self.assertGreater(len(urls), 0)
         vulns = vulnerability_scan(urls=urls, ctx=self.ctx)
-
-    # def test_initiate_scan(self):
-    #     scan = ScanHistory()
-    #     domain = Domain(name=DOMAIN_NAME)
-    #     domain.save()
-    #     subdomain = Subdomain(name=DOMAIN_NAME, domain=domain)
-    #     subdomain.save()

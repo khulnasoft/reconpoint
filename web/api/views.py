@@ -14,7 +14,7 @@ from datetime import datetime
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_204_NO_CONTENT, HTTP_202_ACCEPTED
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_204_NO_CONTENT
 from rest_framework.decorators import action
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.cache import cache
@@ -728,7 +728,7 @@ class FetchMostCommonVulnerability(APIView):
 					)
 
 
-			most_common_vulnerabilities = [vuln for vuln in most_common_vulnerabilities]
+			most_common_vulnerabilities = list(most_common_vulnerabilities)
 
 			if most_common_vulnerabilities:
 				response['status'] = True
@@ -965,7 +965,6 @@ class AddTarget(APIView):
 class FetchSubscanResults(APIView):
 	def get(self, request):
 		req = self.request
-		# data = req.data
 		subscan_id = req.query_params.get('subscan_id')
 		subscan = SubScan.objects.filter(id=subscan_id)
 		if not subscan.exists():
@@ -1151,7 +1150,7 @@ class StopScan(APIView):
 			try:
 				scan = ScanHistory.objects.get(id=scan_id)
 				# if scan is already successful or aborted then do nothing
-				if scan.scan_status == SUCCESS_TASK or scan.scan_status == ABORTED_TASK:
+				if scan.scan_status in (SUCCESS_TASK, ABORTED_TASK):
 					continue
 				response = abort_scan(scan)
 			except Exception as e:
@@ -1161,7 +1160,7 @@ class StopScan(APIView):
 		for subscan_id in subscan_ids:
 			try:
 				subscan = SubScan.objects.get(id=subscan_id)
-				if subscan.scan_status == SUCCESS_TASK or subscan.scan_status == ABORTED_TASK:
+				if subscan.scan_status in (SUCCESS_TASK, ABORTED_TASK):
 					continue
 				response = abort_subscan(subscan)
 			except Exception as e:
@@ -1511,7 +1510,6 @@ class CMSDetector(APIView):
 	def get(self, request):
 		req = self.request
 		url = req.query_params.get('url')
-		#save_db = True if 'save_db' in req.query_params else False
 		response = {'status': False}
 
 		if not (validators.url(url) or validators.domain(url)):
@@ -1519,7 +1517,6 @@ class CMSDetector(APIView):
 			return Response(response)
 
 		try:
-			# response = get_cms_details(url)
 			response = {}
 			cms_detector_command = f'python3 /usr/src/github/CMSeeK/cmseek.py'
 			cms_detector_command += ' --random-agent --batch --follow-redirect'
