@@ -47,7 +47,7 @@ jobs:
             type=schedule,pattern=${{ matrix.platform }}-{{date 'YYYYMMDD'}}
 
       - name: 🏗️ Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: web/
           platforms: ${{ matrix.platform }}
