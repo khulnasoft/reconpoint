@@ -1534,7 +1534,7 @@ class CMSDetector(APIView):
 			find_dir = domain_name
 
 			if port:
-				find_dir += '_{}'.format(port)
+				find_dir += f'_{port}'  # Using an f-string for formatting
 			# look for result path in output
 			path_regex = r"Result: (\/usr\/src[^\"\s]*)"
 			match = re.search(path_regex, output)
