@@ -1201,7 +1201,7 @@ def exclude_urls_by_patterns(exclude_paths, urls):
 	for path in exclude_paths:
 		# treat each path as either regex or plain path
 		try:
-			raw_pattern = r"{}".format(path)
+			raw_pattern = rf"{path}"  # Using an f-string inside the raw string
 			compiled_patterns.append(re.compile(raw_pattern))
 		except re.error:
 			compiled_patterns.append(path)
