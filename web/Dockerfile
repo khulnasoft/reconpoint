@@ -58,7 +58,7 @@ RUN ARCH=$(dpkg --print-architecture) \
 # Install Rust
 RUN set -e; curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
-RUN pip3 install maturin
+RUN pip install --no-cache-dir maturin
 
 # Install Go packages
 WORKDIR /usr/src/app
@@ -92,11 +92,12 @@ RUN nuclei -update-templates
 RUN chaos -update
 
 # Copy requirements
+# Copy requirements
 COPY ./requirements.txt /tmp/requirements.txt
-RUN pip3 install --upgrade setuptools==72.1.0
-RUN pip3 install -r /tmp/requirements.txt --no-cache-dir
-
-# install eyewitness
+RUN pip3 install --no-cache-dir --upgrade setuptools==72.1.0
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+# Install eyewitness (assuming this is a separate step)
+RUN pip3 install --no-cache-dir eyewitness
 RUN pip3 install --no-cache-dir fuzzywuzzy \
     selenium==4.9.1 \
     python-Levenshtein \
