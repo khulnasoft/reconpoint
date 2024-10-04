@@ -180,7 +180,10 @@ function showAfterUpdatePopup() {
     }).then((result) => {
       if (result.isConfirmed) {
         window.open(
-          `https://recon.khulnasoft.com/whatisnew/${currentVersion}`,
+          `https://recon.khulnasoft.com/whats-new/${currentVersion.replace(
+            /\./g,
+            "_"
+          )}`,
           "_blank"
         );
       }

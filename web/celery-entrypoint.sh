@@ -202,8 +202,8 @@ generate_worker_command() {
     local queue=$1
     local concurrency=$2
     local worker_name=$3
-    local app=${4:-"reconPoint.tasks"}
-    local directory=${5:-"/usr/src/app/reconPoint/"}
+    local app=${4:-"reconPointint.tasks"}
+    local directory=${5:-"/usr/src/app/reconPointint/"}
 
     local base_command="celery -A $app worker --pool=gevent --optimization=fair --autoscale=$concurrency,1 --loglevel=$loglevel -Q $queue -n $worker_name"
 
@@ -220,9 +220,9 @@ commands=""
 
 # Main scan worker
 if [ "$DEBUG" == "1" ]; then
-    commands+="watchmedo auto-restart --recursive --pattern=\"*.py\" --directory=\"/usr/src/app/reconPoint/\" -- celery -A reconPoint.tasks worker --loglevel=$loglevel --optimization=fair --autoscale=$MAX_CONCURRENCY,$MIN_CONCURRENCY -Q main_scan_queue &"$'\n'
+    commands+="watchmedo auto-restart --recursive --pattern=\"*.py\" --directory=\"/usr/src/app/reconPointint/\" -- celery reconPointnPoint.tasks worker --loglevel=$loglevel --optimization=fair --autoscale=$MAX_CONCURRENCY,$MIN_CONCURRENCY -Q main_scan_queue &"$'\n'
 else
-    commands+="celery -A reconPoint.tasks worker --loglevel=$loglevel --optimization=fair --autoscale=$MAX_CONCURRENCY,$MIN_CONCURRENCY -Q main_scan_queue &"$'\n'
+    commands+="celery -A reconPointint.tasks worker --loglevel=$loglevel --optimization=fair --autoscale=$MAX_CONCURRENCY,$MIN_CONCURRENCY -Q main_scan_queue &"$'\n'
 fi
 
 # API shared task worker

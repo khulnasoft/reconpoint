@@ -30,8 +30,7 @@ class HackerOneProgramAttributesSerializer(serializers.Serializer):
 	fast_payments = serializers.BooleanField(allow_null=True, required=False)
 	gold_standard_safe_harbor = serializers.BooleanField(allow_null=True, required=False)
 
-	@staticmethod
-	def to_representation(instance):
+	def to_representation(self, instance):
 		return {key: value for key, value in instance.items()}
 
 
@@ -60,8 +59,7 @@ class InAppNotificationSerializer(serializers.ModelSerializer):
 		]
 		read_only_fields = ['id', 'created_at']
 
-	@staticmethod
-	def get_project_name(obj):
+	def get_project_name(self, obj):
 		return obj.project.name if obj.project else None
 
 
@@ -85,37 +83,30 @@ class DomainSerializer(serializers.ModelSerializer):
 		fields = '__all__'
 		depth = 2
 
-	@staticmethod
-	def get_vuln_count(obj):
+	def get_vuln_count(self, obj):
 		try:
 			return obj.vuln_count
 		except:
 			return None
 
-	@staticmethod
-	def get_organization(obj):
+	def get_organization(self, obj):
 		if Organization.objects.filter(domains__id=obj.id).exists():
 			return [org.name for org in Organization.objects.filter(domains__id=obj.id)]
 
-	@staticmethod
-	def get_most_recent_scan(obj):
+	def get_most_recent_scan(self, obj):
 		return obj.get_recent_scan_id()
 
-	@staticmethod
-	def get_insert_date(obj):
+	def get_insert_date(self, obj):
 		return naturalday(obj.insert_date).title()
 
-	@staticmethod
-	def get_insert_date_humanized(obj):
+	def get_insert_date_humanized(self, obj):
 		return naturaltime(obj.insert_date).title()
 
-	@staticmethod
-	def get_start_scan_date(obj):
+	def get_start_scan_date(self, obj):
 		if obj.start_scan_date:
 			return naturalday(obj.start_scan_date).title()
 
-	@staticmethod
-	def get_start_scan_date_humanized(obj):
+	def get_start_scan_date_humanized(self, obj):
 		if obj.start_scan_date:
 			return naturaltime(obj.start_scan_date).title()
 
@@ -143,16 +134,13 @@ class SubScanResultSerializer(serializers.ModelSerializer):
 			'engine'
 		]
 
-	@staticmethod
-	def get_subdomain_name(subscan):
+	def get_subdomain_name(self, subscan):
 		return subscan.subdomain.name
 
-	@staticmethod
-	def get_task_name(subscan):
+	def get_task_name(self, subscan):
 		return subscan.type
 
-	@staticmethod
-	def get_engine_name(subscan):
+	def get_engine_name(self, subscan):
 		if subscan.engine:
 			return subscan.engine.engine_name
 		return ''
@@ -168,18 +156,15 @@ class ReconNoteSerializer(serializers.ModelSerializer):
 		model = TodoNote
 		fields = '__all__'
 
-	@staticmethod
-	def get_domain_name(note):
+	def get_domain_name(self, note):
 		if note.scan_history:
 			return note.scan_history.domain.name
 
-	@staticmethod
-	def get_subdomain_name(note):
+	def get_subdomain_name(self, note):
 		if note.subdomain:
 			return note.subdomain.name
 
-	@staticmethod
-	def get_scan_started_time(note):
+	def get_scan_started_time(self, note):
 		if note.scan_history:
 			return note.scan_history.start_scan_date
 
@@ -202,24 +187,19 @@ class SubScanSerializer(serializers.ModelSerializer):
 		model = SubScan
 		fields = '__all__'
 
-	@staticmethod
-	def get_subdomain_name(subscan):
+	def get_subdomain_name(self, subscan):
 		return subscan.subdomain.name
 
-	@staticmethod
-	def get_total_time_taken(subscan):
+	def get_total_time_taken(self, subscan):
 		return subscan.get_total_time_taken()
 
-	@staticmethod
-	def get_elapsed_time(subscan):
+	def get_elapsed_time(self, subscan):
 		return subscan.get_elapsed_time()
 
-	@staticmethod
-	def get_completed_ago(subscan):
+	def get_completed_ago(self, subscan):
 		return subscan.get_completed_ago()
 
-	@staticmethod
-	def get_engine_name(subscan):
+	def get_engine_name(self, subscan):
 		if subscan.engine:
 			return subscan.engine.engine_name
 		return ''
@@ -267,39 +247,31 @@ class ScanHistorySerializer(serializers.ModelSerializer):
 		]
 		depth = 1
 
-	@staticmethod
-	def get_subdomain_count(scan_history):
+	def get_subdomain_count(self, scan_history):
 		if scan_history.get_subdomain_count:
 			return scan_history.get_subdomain_count()
 
-	@staticmethod
-	def get_endpoint_count(scan_history):
+	def get_endpoint_count(self, scan_history):
 		if scan_history.get_endpoint_count:
 			return scan_history.get_endpoint_count()
 
-	@staticmethod
-	def get_vulnerability_count(scan_history):
+	def get_vulnerability_count(self, scan_history):
 		if scan_history.get_vulnerability_count:
 			return scan_history.get_vulnerability_count()
 
-	@staticmethod
-	def get_progress(scan_history):
+	def get_progress(self, scan_history):
 		return scan_history.get_progress()
 
-	@staticmethod
-	def get_total_scan_time_in_sec(scan_history):
+	def get_total_scan_time_in_sec(self, scan_history):
 		return scan_history.get_total_scan_time_in_sec()
 
-	@staticmethod
-	def get_elapsed_time(scan_history):
+	def get_elapsed_time(self, scan_history):
 		return scan_history.get_elapsed_time()
 
-	@staticmethod
-	def get_completed_ago(scan_history):
+	def get_completed_ago(self, scan_history):
 		return scan_history.get_completed_ago()
 
-	@staticmethod
-	def get_organizations(scan_history):
+	def get_organizations(self, scan_history):
 		return [org.name for org in scan_history.domain.get_organization()]
 
 
@@ -314,8 +286,7 @@ class EngineSerializer(serializers.ModelSerializer):
 
 	tasks = serializers.SerializerMethodField('get_tasks')
 
-	@staticmethod
-	def get_tasks(instance):
+	def get_tasks(self, instance):
 		return instance.tasks
 
 	class Meta:
@@ -349,8 +320,7 @@ class VisualiseVulnerabilitySerializer(serializers.ModelSerializer):
 			'http_url'
 		]
 
-	@staticmethod
-	def get_description(vulnerability):
+	def get_description(self, vulnerability):
 		return vulnerability.name
 
 
@@ -367,12 +337,10 @@ class VisualisePortSerializer(serializers.ModelSerializer):
 			'title',
 		]
 
-	@staticmethod
-	def get_description(port):
+	def get_description(self, port):
 		return str(port.number) + "/" + str(port.service_name)
 
-	@staticmethod
-	def get_title(port):
+	def get_title(self, port):
 		if port.is_uncommon:
 			return "Uncommon Port"
 
@@ -387,8 +355,7 @@ class VisualiseTechnologySerializer(serializers.ModelSerializer):
 			'description'
 		]
 
-	@staticmethod
-	def get_description(tech):
+	def get_description(self, tech):
 		return tech.name
 
 
@@ -404,12 +371,10 @@ class VisualiseIpSerializer(serializers.ModelSerializer):
 			'children'
 		]
 
-	@staticmethod
-	def get_description(Ip):
+	def get_description(self, Ip):
 		return Ip.address
 
-	@staticmethod
-	def get_children(ip):
+	def get_children(self, ip):
 		port = Port.objects.filter(
 			ports__in=IpAddress.objects.filter(
 				address=ip))
@@ -428,8 +393,7 @@ class VisualiseEndpointSerializer(serializers.ModelSerializer):
 			'http_url'
 		]
 
-	@staticmethod
-	def get_description(endpoint):
+	def get_description(self, endpoint):
 		return endpoint.http_url
 
 
@@ -448,12 +412,10 @@ class VisualiseSubdomainSerializer(serializers.ModelSerializer):
 			'title',
 		]
 
-	@staticmethod
-	def get_description(subdomain):
+	def get_description(self, subdomain):
 		return subdomain.name
 
-	@staticmethod
-	def get_title(subdomain):
+	def get_title(self, subdomain):
 		if get_interesting_subdomains(subdomain.scan_history.id).filter(name=subdomain.name).exists():
 			return "Interesting"
 
@@ -468,6 +430,10 @@ class VisualiseSubdomainSerializer(serializers.ModelSerializer):
 		ips = IpAddress.objects.filter(ip_addresses__in=subdomains)
 		ip_serializer = VisualiseIpSerializer(ips, many=True)
 
+		# endpoint = EndPoint.objects.filter(
+		#     scan_history=self.context.get('scan_history')).filter(
+		#     subdomain__name=subdomain_name)
+		# endpoint_serializer = VisualiseEndpointSerializer(endpoint, many=True)
 
 		technologies = Technology.objects.filter(technologies__in=subdomains)
 		tech_serializer = VisualiseTechnologySerializer(technologies, many=True)
@@ -484,6 +450,11 @@ class VisualiseSubdomainSerializer(serializers.ModelSerializer):
 				'description': 'IPs',
 				'children': ip_serializer.data
 			})
+		# if endpoint_serializer.data:
+		#     return_data.append({
+		#         'description': 'Endpoints',
+		#         'children': endpoint_serializer.data
+		#     })
 		if tech_serializer.data:
 			return_data.append({
 				'description': 'Technologies',
@@ -579,14 +550,12 @@ class VisualiseEmailSerializer(serializers.ModelSerializer):
 			'title'
 		]
 
-	@staticmethod
-	def get_description(email):
+	def get_description(self, email):
 		if email.password:
 			return email.address + " > " + email.password
 		return email.address
 
-	@staticmethod
-	def get_title(email):
+	def get_title(self, email):
 		if email.password:
 			return "Exposed Creds"
 
@@ -605,16 +574,13 @@ class VisualiseDorkSerializer(serializers.ModelSerializer):
 			'http_url'
 		]
 
-	@staticmethod
-	def get_title(dork):
+	def get_title(self, dork):
 		return dork.type
 
-	@staticmethod
-	def get_description(dork):
+	def get_description(self, dork):
 		return dork.type
 
-	@staticmethod
-	def get_http_url(dork):
+	def get_http_url(self, dork):
 		return dork.url
 
 
@@ -628,8 +594,7 @@ class VisualiseEmployeeSerializer(serializers.ModelSerializer):
 			'description'
 		]
 
-	@staticmethod
-	def get_description(employee):
+	def get_description(self, employee):
 		if employee.designation:
 			return employee.name + '--' + employee.designation
 		return employee.name
@@ -649,12 +614,10 @@ class VisualiseDataSerializer(serializers.ModelSerializer):
 			'children',
 		]
 
-	@staticmethod
-	def get_description(scan_history):
+	def get_description(self, scan_history):
 		return scan_history.domain.name
 
-	@staticmethod
-	def get_children(history):
+	def get_children(self, history):
 		scan_history = ScanHistory.objects.filter(id=history.id)
 
 		subdomain = Subdomain.objects.filter(scan_history=history)
@@ -762,12 +725,10 @@ class SubdomainChangesSerializer(serializers.ModelSerializer):
 		model = Subdomain
 		fields = '__all__'
 
-	@staticmethod
-	def get_change(Subdomain):
+	def get_change(self, Subdomain):
 		return Subdomain.change
 
-	@staticmethod
-	def get_is_interesting(Subdomain):
+	def get_is_interesting(self, Subdomain):
 		return (
 			get_interesting_subdomains(Subdomain.scan_history.id)
 			.filter(name=Subdomain.name)
@@ -783,8 +744,7 @@ class EndPointChangesSerializer(serializers.ModelSerializer):
 		model = EndPoint
 		fields = '__all__'
 
-	@staticmethod
-	def get_change(EndPoint):
+	def get_change(self, EndPoint):
 		return EndPoint.change
 
 
@@ -884,12 +844,10 @@ class DirectoryScanSerializer(serializers.ModelSerializer):
 		model = DirectoryScan
 		fields = '__all__'
 
-	@staticmethod
-	def get_scanned_date(DirectoryScan):
+	def get_scanned_date(self, DirectoryScan):
 		return DirectoryScan.scanned_date.strftime("%b %d, %Y %H:%M")
 
-	@staticmethod
-	def get_formatted_date_for_id(DirectoryScan):
+	def get_formatted_date_for_id(self, DirectoryScan):
 		return DirectoryScan.scanned_date.strftime("%b_%d_%Y_%H_%M")
 
 
@@ -932,8 +890,7 @@ class SubdomainSerializer(serializers.ModelSerializer):
 		model = Subdomain
 		fields = '__all__'
 
-	@staticmethod
-	def get_is_interesting(subdomain):
+	def get_is_interesting(self, subdomain):
 		scan_id = subdomain.scan_history.id if subdomain.scan_history else None
 		return (
 			get_interesting_subdomains(scan_id)
@@ -941,44 +898,34 @@ class SubdomainSerializer(serializers.ModelSerializer):
 			.exists()
 		)
 
-	@staticmethod
-	def get_endpoint_count(subdomain):
+	def get_endpoint_count(self, subdomain):
 		return subdomain.get_endpoint_count
 
-	@staticmethod
-	def get_info_count(subdomain):
+	def get_info_count(self, subdomain):
 		return subdomain.get_info_count
 
-	@staticmethod
-	def get_low_count(subdomain):
+	def get_low_count(self, subdomain):
 		return subdomain.get_low_count
 
-	@staticmethod
-	def get_medium_count(subdomain):
+	def get_medium_count(self, subdomain):
 		return subdomain.get_medium_count
 
-	@staticmethod
-	def get_high_count(subdomain):
+	def get_high_count(self, subdomain):
 		return subdomain.get_high_count
 
-	@staticmethod
-	def get_critical_count(subdomain):
+	def get_critical_count(self, subdomain):
 		return subdomain.get_critical_count
 
-	@staticmethod
-	def get_directories_count(subdomain):
+	def get_directories_count(self, subdomain):
 		return subdomain.get_directories_count
 
-	@staticmethod
-	def get_subscan_count(subdomain):
+	def get_subscan_count(self, subdomain):
 		return subdomain.get_subscan_count
 
-	@staticmethod
-	def get_todos_count(subdomain):
+	def get_todos_count(self, subdomain):
 		return len(subdomain.get_todos.filter(is_done=False))
 
-	@staticmethod
-	def get_vuln_count(obj):
+	def get_vuln_count(self, obj):
 		try:
 			return obj.vuln_count
 		except:
@@ -1006,12 +953,10 @@ class VulnerabilitySerializer(serializers.ModelSerializer):
 	discovered_date = serializers.SerializerMethodField()
 	severity = serializers.SerializerMethodField()
 
-	@staticmethod
-	def get_discovered_date(Vulnerability):
+	def get_discovered_date(self, Vulnerability):
 		return Vulnerability.discovered_date.strftime("%b %d, %Y %H:%M")
 
-	@staticmethod
-	def get_severity(Vulnerability):
+	def get_severity(self, Vulnerability):
 		if Vulnerability.severity == 0:
 			return "Info"
 		elif Vulnerability.severity == 1:

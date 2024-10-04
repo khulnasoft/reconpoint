@@ -14,6 +14,7 @@ from rolepermissions.decorators import has_permission_decorator
 from reconPoint.common_func import *
 from reconPoint.tasks import (run_command, send_discord_message, send_slack_message,send_lark_message, send_telegram_message)
 from scanEngine.forms import *
+from scanEngine.forms import ConfigurationForm
 from scanEngine.models import *
 
 
@@ -266,7 +267,7 @@ def tool_specific_settings(request, slug):
     context['tool_settings_li'] = 'active'
     context['settings_ul_show'] = 'show'
     gf_list = (subprocess.check_output(['gf', '-list'])).decode("utf-8")
-    nuclei_custom_pattern = list(glob.glob("/root/nuclei-templates/*.yaml"))
+    nuclei_custom_pattern = [f for f in glob.glob("/root/nuclei-templates/*.yaml")]
     context['nuclei_templates'] = nuclei_custom_pattern
     context['gf_patterns'] = sorted(gf_list.split('\n'))
     return render(request, 'scanEngine/settings/tool.html', context)

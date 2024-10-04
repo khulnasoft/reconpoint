@@ -166,7 +166,7 @@ class ReconpointTask(Task):
 	def write_results(self):
 		if not self.result:
 			return False
-		is_json_results = isinstance(self.result, (dict, list))
+		is_json_results = isinstance(self.result, dict) or isinstance(self.result, list)
 		if not self.output_path:
 			return False
 		if not os.path.exists(self.output_path):

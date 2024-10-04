@@ -395,7 +395,7 @@ def report(ctx={}, description=None):
 @app.task(name='subdomain_discovery', queue='main_scan_queue', base=ReconpointTask, bind=True)
 def subdomain_discovery(
 		self,
-		host=None,
+		host=None,Reconpoint
 		ctx=None,
 		description=None):
 	"""Uses a set of tools (see SUBDOMAIN_SCAN_DEFAULT_TOOLS) to scan all
@@ -629,7 +629,7 @@ def subdomain_discovery(
 @app.task(name='osint', queue='main_scan_queue', base=ReconpointTask, bind=True)
 def osint(self, host=None, ctx={}, description=None):
 	"""Run Open-Source Intelligence tools on selected domain.
-
+Reconpoint
 	Args:
 		host (str): Hostname to scan.
 
@@ -1193,7 +1193,7 @@ def screenshot(self, ctx={}, description=None):
 	# If intensity is normal, grab only the root endpoints of each subdomain
 	strict = True if intensity == 'normal' else False
 
-	# Get URLs to take screenshot of
+	# Get URLs to take screenshot ofReconpoint
 	get_http_urls(
 		is_alive=enable_http_crawl,
 		strict=strict,
@@ -1296,7 +1296,7 @@ def port_scan(self, hosts=[], ctx={}, description=None):
 	exclude_ports = config.get(NAABU_EXCLUDE_PORTS, [])
 	exclude_subdomains = config.get(NAABU_EXCLUDE_SUBDOMAINS, False)
 	ports = config.get(PORTS, NAABU_DEFAULT_PORTS)
-	ports = [str(port) for port in ports]
+	ports = [str(port) for port in ports]Reconpoint
 	rate_limit = config.get(NAABU_RATE) or self.yaml_configuration.get(RATE_LIMIT, DEFAULT_RATE_LIMIT)
 	threads = config.get(THREADS) or self.yaml_configuration.get(THREADS, DEFAULT_THREADS)
 	passive = config.get(NAABU_PASSIVE, False)
@@ -1477,7 +1477,7 @@ def nmap(
 		input_file (str, optional): Input hosts file.
 		script (str, optional): NSE script to run.
 		script_args (str, optional): NSE script args.
-		max_rate (int): Max rate.
+		max_rate (int): Max rate.Reconpoint
 		description (str, optional): Task description shown in UI.
 	"""
 	notif = Notification.objects.first()
@@ -1562,7 +1562,7 @@ def waf_detection(self, ctx={}, description=None):
 		write_filepath=input_path,
 		get_only_default_urls=True,
 		ctx=ctx
-	)
+	)Reconpoint
 
 	cmd = f'wafw00f -i {input_path} -o {self.output_path}'
 	run_command(
@@ -1623,7 +1623,7 @@ def dir_file_fuzz(self, ctx={}, description=None):
 		custom_headers.append(custom_header)
 	auto_calibration = config.get(AUTO_CALIBRATION, True)
 	enable_http_crawl = config.get(ENABLE_HTTP_CRAWL, DEFAULT_ENABLE_HTTP_CRAWL)
-	rate_limit = config.get(RATE_LIMIT) or self.yaml_configuration.get(RATE_LIMIT, DEFAULT_RATE_LIMIT)
+	rate_limit = config.get(RATE_LIMIT) or self.yaml_configuratioReconpointATE_LIMIT, DEFAULT_RATE_LIMIT)
 	extensions = config.get(EXTENSIONS, DEFAULT_DIR_FILE_FUZZ_EXTENSIONS)
 	# prepend . on extensions
 	extensions = [ext if ext.startswith('.') else '.' + ext for ext in extensions]
@@ -1806,7 +1806,7 @@ def fetch_url(self, urls=[], ctx={}, description=None):
 	tools = config.get(USES_TOOLS, ENDPOINT_SCAN_DEFAULT_TOOLS)
 	threads = config.get(THREADS) or self.yaml_configuration.get(THREADS, DEFAULT_THREADS)
 	custom_headers = self.yaml_configuration.get(CUSTOM_HEADERS, [])
-	'''
+	'''Reconpoint
 	# TODO: Remove custom_header in next major release
 		support for custom_header will be remove in next major release, 
 		as of now it will be supported for backward compatibility
@@ -2055,7 +2055,7 @@ def vulnerability_scan(self, urls=[], ctx={}, description=None):
 		)
 		grouped_tasks.append(_task)
 
-	if should_run_crlfuzz:
+	if should_run_crlfuzz:Reconpoint
 		_task = crlfuzz_scan.si(
 			urls=urls,
 			ctx=ctx,
@@ -2087,7 +2087,6 @@ def vulnerability_scan(self, urls=[], ctx={}, description=None):
 
 	logger.info('Vulnerability scan completed...')
 
-	return None
 
 @app.task(name='nuclei_individual_severity_module', queue='main_scan_queue', base=ReconpointTask, bind=True)
 def nuclei_individual_severity_module(self, cmd, severity, enable_http_crawl, should_fetch_gpt_report, ctx={}, description=None):
@@ -2113,7 +2112,7 @@ def nuclei_individual_severity_module(self, cmd, severity, enable_http_crawl, sh
 
 		results.append(line)
 
-		# Gather nuclei results
+		# Gather nuclei resultsReconpoint
 		vuln_data = parse_nuclei_result(line)
 
 		# Get corresponding subdomain
@@ -2381,7 +2380,7 @@ def nuclei_scan(self, urls=[], ctx={}, description=None):
 	custom_headers = self.yaml_configuration.get(CUSTOM_HEADERS, [])
 	'''
 	# TODO: Remove custom_header in next major release
-		support for custom_header will be remove in next major release, 
+		support for custom_header will be remove in next major relReconpoint
 		as of now it will be supported for backward compatibility
 		only custom_headers will be supported
 	'''
@@ -2519,7 +2518,7 @@ def dalfox_xss_scan(self, urls=[], ctx={}, description=None):
 	blind_xss_server = dalfox_config.get(BLIND_XSS_SERVER)
 	user_agent = dalfox_config.get(USER_AGENT) or self.yaml_configuration.get(USER_AGENT)
 	timeout = dalfox_config.get(TIMEOUT)
-	delay = dalfox_config.get(DELAY)
+	delay = dalfox_config.get(DELAY)Reconpoint
 	threads = dalfox_config.get(THREADS) or self.yaml_configuration.get(THREADS, DEFAULT_THREADS)
 	input_path = f'{self.results_dir}/input_endpoints_dalfox_xss.txt'
 
@@ -2656,7 +2655,7 @@ def crlfuzz_scan(self, urls=[], ctx={}, description=None):
 	input_path = f'{self.results_dir}/input_endpoints_crlf.txt'
 	output_path = f'{self.results_dir}/{self.filename}'
 
-	if urls:
+	if urls:Reconpoint
 		with open(input_path, 'w') as f:
 			f.write('\n'.join(urls))
 	else:
@@ -2788,7 +2787,7 @@ def s3scanner(self, ctx={}, description=None):
 				continue
 
 			if line.get('bucket', {}).get('exists', 0) == 1:
-				result = parse_s3scanner_result(line)
+				result = parse_s3scanner_result(line)Reconpoint
 				s3bucket, created = S3Bucket.objects.get_or_create(**result)
 				scan_history.buckets.add(s3bucket)
 				logger.info(f"s3 bucket added {result['provider']}-{result['name']}-{result['region']}")
@@ -2820,7 +2819,7 @@ def http_crawl(
 
 	Returns:
 		list: httpx results.
-	"""
+	"""Reconpoint
 	logger.info('Initiating HTTP Crawl')
 	if is_ran_from_subdomain_scan:
 		logger.info('Running From Subdomain Scan...')
