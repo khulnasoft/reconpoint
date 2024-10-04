@@ -10,6 +10,8 @@ import yaml
 import tldextract
 import concurrent.futures
 import base64
+
+from datetime import datetime
 from urllib.parse import urlparse
 from api.serializers import SubdomainSerializer
 from celery import chain, chord, group
@@ -18,6 +20,7 @@ from celery.utils.log import get_task_logger
 from django.db.models import Count
 from dotted_dict import DottedDict
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 from pycvesearch import CVESearch
 from metafinder.extractor import extract_metadata_from_google_search
 
@@ -395,7 +398,7 @@ def report(ctx={}, description=None):
 @app.task(name='subdomain_discovery', queue='main_scan_queue', base=ReconpointTask, bind=True)
 def subdomain_discovery(
 		self,
-		host=None,Reconpoint
+		host=None,
 		ctx=None,
 		description=None):
 	"""Uses a set of tools (see SUBDOMAIN_SCAN_DEFAULT_TOOLS) to scan all
@@ -478,13 +481,13 @@ def subdomain_discovery(
 			elif tool == 'ctfr':
 				results_file = self.results_dir + '/subdomains_ctfr.txt'
 				cmd = f'python3 /usr/src/github/ctfr/ctfr.py -d {host} -o {results_file}'
-				cmd_extract = rf"cat {results_file} | sed 's/\*.//g' | tail -n +12 | uniq | sort > {results_file}"
+				cmd_extract = f"cat {results_file} | sed 's/\*.//g' | tail -n +12 | uniq | sort > {results_file}"
 				cmd += f' && {cmd_extract}'
 
 			elif tool == 'tlsx':
 				results_file = self.results_dir + '/subdomains_tlsx.txt'
 				cmd = f'tlsx -san -cn -silent -ro -host {host}'
-				cmd += rf" | sed -n '/^\([a-zA-Z0-9]\([-a-zA-Z0-9]*[a-zA-Z0-9]\)\?\.\)\+{host}$/p' | uniq | sort"
+				cmd += f" | sed -n '/^\([a-zA-Z0-9]\([-a-zA-Z0-9]*[a-zA-Z0-9]\)\?\.\)\+{host}$/p' | uniq | sort"
 				cmd += f' > {results_file}'
 
 			elif tool == 'netlas':
@@ -492,7 +495,7 @@ def subdomain_discovery(
 				cmd = f'netlas search -d domain -i domain domain:"*.{host}" -f json'
 				netlas_key = get_netlas_key()
 				cmd += f' -a {netlas_key}' if netlas_key else ''
-				cmd_extract = rf"grep -oE '([a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?\.)+{host}'"
+				cmd_extract = f"grep -oE '([a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?\.)+{host}'"
 				cmd += f' | {cmd_extract} > {results_file}'
 
 			elif tool == 'chaos':
@@ -629,7 +632,7 @@ def subdomain_discovery(
 @app.task(name='osint', queue='main_scan_queue', base=ReconpointTask, bind=True)
 def osint(self, host=None, ctx={}, description=None):
 	"""Run Open-Source Intelligence tools on selected domain.
-Reconpoint
+
 	Args:
 		host (str): Hostname to scan.
 
@@ -643,6 +646,7 @@ Reconpoint
 
 	if 'discover' in config:
 		ctx['track'] = False
+		# results = osint_discovery(host=host, ctx=ctx)
 		_task = osint_discovery.si(
 			config=config,
 			host=self.scan.domain.name,
@@ -754,6 +758,9 @@ def osint_discovery(config, host, scan_history_id, activity_id, results_dir, ctx
 		# wait for all jobs to complete
 		time.sleep(5)
 
+	# results['emails'] = results.get('emails', []) + emails
+	# results['creds'] = creds
+	# results['meta_info'] = meta_info
 	return results
 
 
@@ -1083,6 +1090,8 @@ def theHarvester(config, host, scan_history_id, activity_id, results_dir, ctx={}
 	emails = data.get('emails', [])
 	for email_address in emails:
 		email, _ = save_email(email_address, scan_history=scan_history)
+		# if email:
+		# 	self.notify(fields={'Emails': f'• `{email.address}`'})
 
 	linkedin_people = data.get('linkedin_people', [])
 	for people in linkedin_people:
@@ -1090,6 +1099,8 @@ def theHarvester(config, host, scan_history_id, activity_id, results_dir, ctx={}
 			people,
 			designation='linkedin',
 			scan_history=scan_history)
+		# if employee:
+		# 	self.notify(fields={'LinkedIn people': f'• {employee.name}'})
 
 	twitter_people = data.get('twitter_people', [])
 	for people in twitter_people:
@@ -1097,6 +1108,8 @@ def theHarvester(config, host, scan_history_id, activity_id, results_dir, ctx={}
 			people,
 			designation='twitter',
 			scan_history=scan_history)
+		# if employee:
+		# 	self.notify(fields={'Twitter people': f'• {employee.name}'})
 
 	hosts = data.get('hosts', [])
 	urls = []
@@ -1110,7 +1123,13 @@ def theHarvester(config, host, scan_history_id, activity_id, results_dir, ctx={}
 			crawl=False,
 			ctx=ctx,
 			subdomain=subdomain)
+		# if endpoint:
+		# 	urls.append(endpoint.http_url)
+			# self.notify(fields={'Hosts': f'• {endpoint.http_url}'})
 
+	# if enable_http_crawl:
+	# 	ctx['track'] = False
+	# 	http_crawl(urls, ctx=ctx)
 
 	# TODO: Lots of ips unrelated with our domain are found, disabling
 	# this for now.
@@ -1169,6 +1188,8 @@ def h8mail(config, host, scan_history_id, activity_id, results_dir, ctx={}):
 		pwn_num = cred['pwn_num']
 		pwn_data = cred.get('data', [])
 		email, created = save_email(email_address, scan_history=scan)
+		# if email:
+		# 	self.notify(fields={'Emails': f'• `{email.address}`'})
 	return creds
 
 
@@ -1193,7 +1214,7 @@ def screenshot(self, ctx={}, description=None):
 	# If intensity is normal, grab only the root endpoints of each subdomain
 	strict = True if intensity == 'normal' else False
 
-	# Get URLs to take screenshot ofReconpoint
+	# Get URLs to take screenshot of
 	get_http_urls(
 		is_alive=enable_http_crawl,
 		strict=strict,
@@ -1296,7 +1317,7 @@ def port_scan(self, hosts=[], ctx={}, description=None):
 	exclude_ports = config.get(NAABU_EXCLUDE_PORTS, [])
 	exclude_subdomains = config.get(NAABU_EXCLUDE_SUBDOMAINS, False)
 	ports = config.get(PORTS, NAABU_DEFAULT_PORTS)
-	ports = [str(port) for port in ports]Reconpoint
+	ports = [str(port) for port in ports]
 	rate_limit = config.get(NAABU_RATE) or self.yaml_configuration.get(RATE_LIMIT, DEFAULT_RATE_LIMIT)
 	threads = config.get(THREADS) or self.yaml_configuration.get(THREADS, DEFAULT_THREADS)
 	passive = config.get(NAABU_PASSIVE, False)
@@ -1477,7 +1498,7 @@ def nmap(
 		input_file (str, optional): Input hosts file.
 		script (str, optional): NSE script to run.
 		script_args (str, optional): NSE script args.
-		max_rate (int): Max rate.Reconpoint
+		max_rate (int): Max rate.
 		description (str, optional): Task description shown in UI.
 	"""
 	notif = Notification.objects.first()
@@ -1562,7 +1583,7 @@ def waf_detection(self, ctx={}, description=None):
 		write_filepath=input_path,
 		get_only_default_urls=True,
 		ctx=ctx
-	)Reconpoint
+	)
 
 	cmd = f'wafw00f -i {input_path} -o {self.output_path}'
 	run_command(
@@ -1623,7 +1644,7 @@ def dir_file_fuzz(self, ctx={}, description=None):
 		custom_headers.append(custom_header)
 	auto_calibration = config.get(AUTO_CALIBRATION, True)
 	enable_http_crawl = config.get(ENABLE_HTTP_CRAWL, DEFAULT_ENABLE_HTTP_CRAWL)
-	rate_limit = config.get(RATE_LIMIT) or self.yaml_configuratioReconpointATE_LIMIT, DEFAULT_RATE_LIMIT)
+	rate_limit = config.get(RATE_LIMIT) or self.yaml_configuration.get(RATE_LIMIT, DEFAULT_RATE_LIMIT)
 	extensions = config.get(EXTENSIONS, DEFAULT_DIR_FILE_FUZZ_EXTENSIONS)
 	# prepend . on extensions
 	extensions = [ext if ext.startswith('.') else '.' + ext for ext in extensions]
@@ -1805,8 +1826,9 @@ def fetch_url(self, urls=[], ctx={}, description=None):
 	ignore_file_extension = config.get(IGNORE_FILE_EXTENSION, DEFAULT_IGNORE_FILE_EXTENSIONS)
 	tools = config.get(USES_TOOLS, ENDPOINT_SCAN_DEFAULT_TOOLS)
 	threads = config.get(THREADS) or self.yaml_configuration.get(THREADS, DEFAULT_THREADS)
+	# domain_request_headers = self.domain.request_headers if self.domain else None
 	custom_headers = self.yaml_configuration.get(CUSTOM_HEADERS, [])
-	'''Reconpoint
+	'''
 	# TODO: Remove custom_header in next major release
 		support for custom_header will be remove in next major release, 
 		as of now it will be supported for backward compatibility
@@ -2019,7 +2041,7 @@ def fetch_url(self, urls=[], ctx={}, description=None):
 
 def parse_curl_output(response):
 	# TODO: Enrich from other cURL fields.
-	CURL_REGEX_HTTP_STATUS = rf'HTTP\/(?:(?:\d\.?)+)\s(\d+)\s(?:\w+)'
+	CURL_REGEX_HTTP_STATUS = f'HTTP\/(?:(?:\d\.?)+)\s(\d+)\s(?:\w+)'
 	http_status = 0
 	if response:
 		failed = False
@@ -2055,7 +2077,7 @@ def vulnerability_scan(self, urls=[], ctx={}, description=None):
 		)
 		grouped_tasks.append(_task)
 
-	if should_run_crlfuzz:Reconpoint
+	if should_run_crlfuzz:
 		_task = crlfuzz_scan.si(
 			urls=urls,
 			ctx=ctx,
@@ -2087,6 +2109,8 @@ def vulnerability_scan(self, urls=[], ctx={}, description=None):
 
 	logger.info('Vulnerability scan completed...')
 
+	# return results
+	return None
 
 @app.task(name='nuclei_individual_severity_module', queue='main_scan_queue', base=ReconpointTask, bind=True)
 def nuclei_individual_severity_module(self, cmd, severity, enable_http_crawl, should_fetch_gpt_report, ctx={}, description=None):
@@ -2112,7 +2136,7 @@ def nuclei_individual_severity_module(self, cmd, severity, enable_http_crawl, sh
 
 		results.append(line)
 
-		# Gather nuclei resultsReconpoint
+		# Gather nuclei results
 		vuln_data = parse_nuclei_result(line)
 
 		# Get corresponding subdomain
@@ -2380,7 +2404,7 @@ def nuclei_scan(self, urls=[], ctx={}, description=None):
 	custom_headers = self.yaml_configuration.get(CUSTOM_HEADERS, [])
 	'''
 	# TODO: Remove custom_header in next major release
-		support for custom_header will be remove in next major relReconpoint
+		support for custom_header will be remove in next major release, 
 		as of now it will be supported for backward compatibility
 		only custom_headers will be supported
 	'''
@@ -2396,6 +2420,7 @@ def nuclei_scan(self, urls=[], ctx={}, description=None):
 	tags = ','.join(tags)
 	nuclei_templates = nuclei_specific_config.get(NUCLEI_TEMPLATE)
 	custom_nuclei_templates = nuclei_specific_config.get(NUCLEI_CUSTOM_TEMPLATE)
+	# severities_str = ','.join(severities)
 
 	# Get alive endpoints
 	if urls:
@@ -2460,6 +2485,7 @@ def nuclei_scan(self, urls=[], ctx={}, description=None):
 	cmd += f' -proxy {proxy} ' if proxy else ''
 	cmd += f' -retries {retries}' if retries > 0 else ''
 	cmd += f' -rl {rate_limit}' if rate_limit > 0 else ''
+	# cmd += f' -severity {severities_str}'
 	cmd += f' -timeout {str(timeout)}' if timeout and timeout > 0 else ''
 	cmd += f' -tags {tags}' if tags else ''
 	cmd += f' -silent'
@@ -2518,7 +2544,7 @@ def dalfox_xss_scan(self, urls=[], ctx={}, description=None):
 	blind_xss_server = dalfox_config.get(BLIND_XSS_SERVER)
 	user_agent = dalfox_config.get(USER_AGENT) or self.yaml_configuration.get(USER_AGENT)
 	timeout = dalfox_config.get(TIMEOUT)
-	delay = dalfox_config.get(DELAY)Reconpoint
+	delay = dalfox_config.get(DELAY)
 	threads = dalfox_config.get(THREADS) or self.yaml_configuration.get(THREADS, DEFAULT_THREADS)
 	input_path = f'{self.results_dir}/input_endpoints_dalfox_xss.txt'
 
@@ -2655,7 +2681,7 @@ def crlfuzz_scan(self, urls=[], ctx={}, description=None):
 	input_path = f'{self.results_dir}/input_endpoints_crlf.txt'
 	output_path = f'{self.results_dir}/{self.filename}'
 
-	if urls:Reconpoint
+	if urls:
 		with open(input_path, 'w') as f:
 			f.write('\n'.join(urls))
 	else:
@@ -2787,7 +2813,7 @@ def s3scanner(self, ctx={}, description=None):
 				continue
 
 			if line.get('bucket', {}).get('exists', 0) == 1:
-				result = parse_s3scanner_result(line)Reconpoint
+				result = parse_s3scanner_result(line)
 				s3bucket, created = S3Bucket.objects.get_or_create(**result)
 				scan_history.buckets.add(s3bucket)
 				logger.info(f"s3 bucket added {result['provider']}-{result['name']}-{result['region']}")
@@ -2819,7 +2845,7 @@ def http_crawl(
 
 	Returns:
 		list: httpx results.
-	"""Reconpoint
+	"""
 	logger.info('Initiating HTTP Crawl')
 	if is_ran_from_subdomain_scan:
 		logger.info('Running From Subdomain Scan...')
@@ -3064,12 +3090,6 @@ def send_scan_notif(
 		subscan_id (int, optional): SuScan id.
 		engine_id (int, optional): EngineType id.
 	"""
-
-	# Skip send if notification settings are not configured
-	notif = Notification.objects.first()
-	if not (notif and notif.send_scan_status_notif):
-		return
-
 	# Get domain, engine, scan_history objects
 	engine = EngineType.objects.filter(pk=engine_id).first()
 	scan = ScanHistory.objects.filter(pk=scan_history_id).first()
@@ -3094,14 +3114,18 @@ def send_scan_notif(
 	}
 	logger.warning(f'Sending notification "{title}" [{severity}]')
 
+	# inapp notification has to be sent eitherways
 	generate_inapp_notification(scan, subscan, status, engine, fields)
 
-	# Send notification
-	send_notif(
-		msg,
-		scan_history_id,
-		subscan_id,
-		**opts)
+	notif = Notification.objects.first()
+
+	if notif and notif.send_scan_status_notif:
+		# Send notification
+		send_notif(
+			msg,
+			scan_history_id,
+			subscan_id,
+			**opts)
 	
 def generate_inapp_notification(scan, subscan, status, engine, fields):
 	scan_type = "Subscan" if subscan else "Scan"
@@ -3935,6 +3959,11 @@ def fetch_whois_data_using_netlas(target):
 				'status': False, 
 				'message': 'No data available for the given domain or IP.'
 			}
+		# if 'whois' not in data:
+		# 	return {
+		# 		'status': False, 
+		# 		'message': 'Invalid domain or no WHOIS data available.'
+		# 	}
 
 		return {
 			'status': True, 
@@ -4283,7 +4312,7 @@ def save_metadata_info(meta_dict):
 		subdomain = Subdomain.objects.get(
 			scan_history=meta_dict.scan_id,
 			name=meta_dict.osint_target)
-		metadata = DottedDict(dict(data.items()))
+		metadata = DottedDict({k: v for k, v in data.items()})
 		meta_finder_document = MetaFinderDocument(
 			subdomain=subdomain,
 			target_domain=meta_dict.domain,
@@ -4504,6 +4533,7 @@ def save_subdomain(subdomain_name, ctx={}):
 		target_domain=domain,
 		name=subdomain_name)
 	if created:
+		# logger.warning(f'Found new subdomain {subdomain_name}')
 		subdomain.discovered_date = timezone.now()
 		if subscan_id:
 			subdomain.subdomain_subscan_ids.add(subscan_id)
@@ -4516,6 +4546,8 @@ def save_email(email_address, scan_history=None):
 		logger.info(f'Email {email_address} is invalid. Skipping.')
 		return None, False
 	email, created = Email.objects.get_or_create(address=email_address)
+	# if created:
+	# 	logger.warning(f'Found new email address {email_address}')
 
 	# Add email to ScanHistory
 	if scan_history:
@@ -4529,6 +4561,8 @@ def save_employee(name, designation, scan_history=None):
 	employee, created = Employee.objects.get_or_create(
 		name=name,
 		designation=designation)
+	# if created:
+	# 	logger.warning(f'Found new employee {name}')
 
 	# Add employee to ScanHistory
 	if scan_history:
@@ -4543,6 +4577,8 @@ def save_ip_address(ip_address, subdomain=None, subscan=None, **kwargs):
 		logger.info(f'IP {ip_address} is not a valid IP. Skipping.')
 		return None, False
 	ip, created = IpAddress.objects.get_or_create(address=ip_address)
+	# if created:
+	# 	logger.warning(f'Found new IP {ip_address}')
 
 	# Set extra attributes
 	for key, value in kwargs.items():
@@ -4606,7 +4642,7 @@ def query_reverse_whois(lookup_keyword):
 		dict: Reverse WHOIS information.
 	"""
 
-	return get_associated_domains(lookup_keyword)
+	return reverse_whois(lookup_keyword)
 
 
 @app.task(name='query_ip_history', bind=False, queue='query_ip_history_queue')
