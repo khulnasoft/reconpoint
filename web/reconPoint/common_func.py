@@ -513,6 +513,8 @@ def get_random_proxy():
 		return ''
 	proxy_name = random.choice(proxy.proxies.splitlines())
 	logger.warning('Using proxy: ' + proxy_name)
+	# os.environ['HTTP_PROXY'] = proxy_name
+	# os.environ['HTTPS_PROXY'] = proxy_name
 	return proxy_name
 
 def remove_ansi_escape_sequences(text):

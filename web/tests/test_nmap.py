@@ -7,7 +7,7 @@ os.environ['CELERY_ALWAYS_EAGER'] = 'True'
 
 from celery.utils.log import get_task_logger
 from reconPoint.settings import DEBUG
-from reconPoint.tasks import parse_nmap_results
+from reconPoint.tasks import parse_nmap_results, parse_nmap_vuln_output, parse_nmap_vulscan_output
 import pathlib
 
 logger = get_task_logger(__name__)

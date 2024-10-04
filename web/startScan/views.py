@@ -1,7 +1,7 @@
 import markdown
 
 from celery import group
-from weasyprint import HTML
+from weasyprint import HTML, CSS
 from datetime import datetime
 from django.contrib import messages
 from django.db.models import Count, Case, When, IntegerField
@@ -17,7 +17,7 @@ from rolepermissions.decorators import has_permission_decorator
 from reconPoint.celery import app
 from reconPoint.charts import *
 from reconPoint.common_func import *
-from reconPoint.definitions import ABORTED_TASK
+from reconPoint.definitions import ABORTED_TASK, SUCCESS_TASK
 from reconPoint.tasks import create_scan_activity, initiate_scan, run_command
 from scanEngine.models import EngineType
 from startScan.models import *
@@ -345,6 +345,7 @@ def start_scan_ui(request, slug, domain_id):
 
 @has_permission_decorator(PERM_INITATE_SCANS_SUBSCANS, redirect_url=FOUR_OH_FOUR_URL)
 def start_multiple_scan(request, slug):
+    # domain = get_object_or_404(Domain, id=host_id)
     if request.method == "POST":
         if request.POST.get('scan_mode', 0):
             # if scan mode is available, then start the scan
@@ -369,6 +370,7 @@ def start_multiple_scan(request, slug):
                     engine_id=engine_id,
                     initiated_by_id=request.user.id
                 )
+                # domain = get_object_or_404(Domain, id=domain_id)
 
                 kwargs = {
                     'scan_history_id': scan_history_id,
@@ -403,7 +405,7 @@ def start_multiple_scan(request, slug):
             list_of_domain_name = []
             list_of_domain_id = []
             for key, value in request.POST.items():
-                if key not in ("list_target_table_length", "csrfmiddlewaretoken"):
+                if key != "list_target_table_length" and key != "csrfmiddlewaretoken":
                     domain = get_object_or_404(Domain, id=value)
                     list_of_domain_name.append(domain.name)
                     list_of_domain_id.append(value)
@@ -541,7 +543,7 @@ def stop_scan(request, id):
 def stop_scans(request, slug):
     if request.method == "POST":
         for key, value in request.POST.items():
-            if key in ('scan_history_table_length', 'csrfmiddlewaretoken'):
+            if key == 'scan_history_table_length' or key == 'csrfmiddlewaretoken':
                 continue
             scan = get_object_or_404(ScanHistory, id=value)
             try:
@@ -957,7 +959,7 @@ def schedule_organization_scan(request, slug, id):
 def delete_scans(request, slug):
     if request.method == "POST":
         for key, value in request.POST.items():
-            if key in ('scan_history_table_length', 'csrfmiddlewaretoken'):
+            if key == 'scan_history_table_length' or key == 'csrfmiddlewaretoken':
                 continue
             scan = get_object_or_404(ScanHistory, id=value)
             delete_dir = scan.results_dir
@@ -1134,6 +1136,7 @@ def create_report(request, id):
 
     html = template.render(data)
     pdf = HTML(string=html).write_pdf()
+    # pdf = HTML(string=html).write_pdf(stylesheets=[CSS(string='@page { size: A4; margin: 0; }')])
 
     if 'download' in request.GET:
         response = HttpResponse(pdf, content_type='application/octet-stream')
