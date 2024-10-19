@@ -6,7 +6,9 @@ from django.conf import settings
 
 @login_required
 def serve_protected_media(request, path):
-    file_path = os.path.join(settings.MEDIA_ROOT, path)
+    file_path = os.path.normpath(os.path.join(settings.MEDIA_ROOT, path))
+    if not file_path.startswith(settings.MEDIA_ROOT):
+        raise Http404("File not found")
     if os.path.isdir(file_path):
         raise Http404("File not found")
     if os.path.exists(file_path):
