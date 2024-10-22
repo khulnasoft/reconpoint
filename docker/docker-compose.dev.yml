@@ -7,15 +7,14 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_PORT=${POSTGRES_PORT}
-    ports:
-      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     networks:
       - reconpoint_network
+    ports:
+      - "5432:5432"
 
   redis:
-    restart: always
     image: "redis:alpine"
     hostname: redis
     networks:
@@ -23,21 +22,20 @@ services:
 
   celery:
     build:
-      context: ./web
+      context: .
     restart: always
     entrypoint: /usr/src/app/celery-entrypoint.sh
-    # command: celery -A reconPoint worker --autoscale=${MAX_CONCURRENCY},${MIN_CONCURRENCY} -l INFO
+    # command: watchmedo auto-restart --recursive --pattern="*.py" --directory="/usr/src/app/reconPoint/" -- celery -A reconPoint.tasks worker --autoscale=10,0 -l INFO
     volumes:
-      - ./web:/usr/src/app
+      - ./web:/usr/src/app/web
       - github_repos:/usr/src/github
       - wordlist:/usr/src/wordlist
       - scan_results:/usr/src/scan_results
       - gf_patterns:/root/.gf
       - nuclei_templates:/root/nuclei-templates
       - tool_config:/root/.config
-      - static_volume:/usr/src/app/staticfiles/
     environment:
-      - DEBUG=0
+      - DEBUG=1
       - CELERY_BROKER=redis://redis:6379/0
       - CELERY_BACKEND=redis://redis:6379/0
       - DOMAIN_NAME=${DOMAIN_NAME}
@@ -55,10 +53,14 @@ services:
       - reconpoint_network
 
   celery-beat:
-    build: ./web
+    build: .
     entrypoint: /usr/src/app/beat-entrypoint.sh
     command: celery -A reconPoint beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    depends_on:
+      - celery
+      - db
     environment:
+      - DEBUG=1
       - CELERY_BROKER=redis://redis:6379/0
       - CELERY_BACKEND=redis://redis:6379/0
       - POSTGRES_DB=${POSTGRES_DB}
@@ -66,11 +68,8 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_HOST=${POSTGRES_HOST}
-    depends_on:
-      - celery
-      - db
     volumes:
-      - ./web:/usr/src/app
+      - ./web:/usr/src/app/web
       - github_repos:/usr/src/github
       - wordlist:/usr/src/wordlist
       - scan_results:/usr/src/scan_results
@@ -82,12 +81,12 @@ services:
 
   web:
     build:
-      context: ./web
+      context: .
     entrypoint: /usr/src/app/entrypoint.sh
     restart: always
     image: khulnasoft/reconpoint:latest
     environment:
-      - DEBUG=0
+      - DEBUG=1
       - CELERY_BROKER=redis://redis:6379/0
       - CELERY_BACKEND=redis://redis:6379/0
       - DOMAIN_NAME=${DOMAIN_NAME}
@@ -96,63 +95,32 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_HOST=${POSTGRES_HOST}
-      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
     volumes:
-      - ./web:/usr/src/app
+      - ./web:/usr/src/app/web
       - github_repos:/usr/src/github
       - wordlist:/usr/src/wordlist
       - scan_results:/usr/src/scan_results
       - gf_patterns:/root/.gf
       - nuclei_templates:/root/nuclei-templates
       - tool_config:/root/.config
-      - static_volume:/usr/src/app/staticfiles/
     ports:
-      - "127.0.0.1:8000:8000"
+      - "8000:8000"
     depends_on:
       - db
       - celery
       - celery-beat
     networks:
-      reconpoint_network:
-        aliases:
-          - reconpoint
-
-  proxy:
-    restart: always
-    image: nginx:alpine
-    ports:
-      - 8082:8082/tcp
-      - 443:443/tcp
-    depends_on:
-      - web
-      - db
-      - redis
-    secrets:
-      - source: proxy.ca
-        target: /etc/nginx/certs/reconpoint_chain.pem
-      - source: proxy.cert
-        target: /etc/nginx/certs/reconpoint.pem
-      - source: proxy.key
-        target: /etc/nginx/certs/reconpoint_rsa.key
-    volumes:
-      - ./config/nginx/reconpoint.conf:/etc/nginx/conf.d/reconpoint.conf:ro
-      - static_volume:/usr/src/app/staticfiles/
-      - scan_results:/usr/src/scan_results
-    networks:
       - reconpoint_network
   ollama:
     image: ollama/ollama
-    container_name: ollama
     volumes:
       - ollama_data:/root/.ollama
-    ports:
-      - "11434:11434"
     networks:
       - reconpoint_network
+    restart: always
 
 networks:
   reconpoint_network:
-
 volumes:
   tool_config:
   postgres_data:
@@ -161,13 +129,5 @@ volumes:
   github_repos:
   wordlist:
   scan_results:
-  static_volume:
   ollama_data:
-
-secrets:
-  proxy.ca:
-    file: ./secrets/certs/reconpoint_chain.pem
-  proxy.key:
-    file: ./secrets/certs/reconpoint_rsa.key
-  proxy.cert:
-    file: ./secrets/certs/reconpoint.pem
+  

@@ -1,7 +1,8 @@
 version = 1
 
 test_patterns = [
-  "web/**",
+  "tests/**",
+  "test_*.py"
 ]
 
 [[analyzers]]
@@ -17,6 +18,5 @@ enabled = true
 
   [analyzers.meta]
   dockerfile_paths = [
-    "web/Dockerfile",
-    "certs/Dockerfile"
+    "docker/Dockerfile"
   ]

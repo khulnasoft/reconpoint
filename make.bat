@@ -2,7 +2,7 @@
 
 :: Credits: https://github.com/ninjhacks
 
-set COMPOSE_ALL_FILES  = -f docker-compose.yml
+set COMPOSE_ALL_FILES  = -f docker/docker-compose.yml
 set SERVICES           = db web proxy redis celery celery-beat ollama
 
 :: Check if 'docker compose' command is available
@@ -15,9 +15,9 @@ if %errorlevel% == 0 (
 
 
 :: Generate certificates.
-if "%1" == "certs" %DOCKER_COMPOSE% -f docker-compose.setup.yml run --rm certs
+if "%1" == "certs" %DOCKER_COMPOSE% -f docker/docker-compose.setup.yml run --rm certs
 :: Generate certificates.
-if "%1" == "setup" %DOCKER_COMPOSE% -f docker-compose.setup.yml run --rm certs
+if "%1" == "setup" %DOCKER_COMPOSE% -f docker/docker-compose.setup.yml run --rm certs
 :: Build and start all services.
 if "%1" == "up" %DOCKER_COMPOSE% %COMPOSE_ALL_FILES% up -d --build %SERVICES%
 :: Build all services.

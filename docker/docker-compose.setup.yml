@@ -10,4 +10,4 @@ services:
       - STATE=${STATE:-State}
       - CITY=${CITY:-City}
     volumes:
-      - ./secrets/certs:/certs:rw
+      - ../secrets/certs:/certs:rw

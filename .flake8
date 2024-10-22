@@ -1,0 +1,4 @@
+[flake8]
+max-line-length = 88  # Match black's default
+extend-ignore = E203  # See black documentation
+exclude = .git,__pycache__,build,dist

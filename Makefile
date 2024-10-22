@@ -1,4 +1,4 @@
-include .env
+include docker/.env
 .DEFAULT_GOAL:=help
 
 # Credits: https://github.com/sherifabdlnaby/elastdocker/
@@ -6,7 +6,7 @@ include .env
 # This for future release of Compose that will use Docker Buildkit, which is much efficient.
 COMPOSE_PREFIX_CMD := COMPOSE_DOCKER_CLI_BUILD=1
 
-COMPOSE_ALL_FILES := -f docker-compose.yml
+COMPOSE_ALL_FILES := -f docker/docker-compose.yml
 SERVICES          := db web proxy redis celery celery-beat ollama
 
 # Check if 'docker compose' command is available, otherwise use 'docker-compose'
@@ -18,7 +18,7 @@ $(info Using: $(shell echo "$(DOCKER_COMPOSE)"))
 .PHONY: setup certs up build username pull down stop restart rm logs
 
 certs:		    ## Generate certificates.
-	@${COMPOSE_PREFIX_CMD} ${DOCKER_COMPOSE} -f docker-compose.setup.yml run --rm certs
+	@${COMPOSE_PREFIX_CMD} ${DOCKER_COMPOSE} -f docker/docker-compose.setup.yml run --rm certs
 
 setup:			## Generate certificates.
 	@make certs

@@ -1,4 +1,4 @@
-web/custom_engines*
+custom_engines*
 Pipfile*
 resume.cfg
 *.txt

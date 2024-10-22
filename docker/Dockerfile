@@ -1,13 +1,15 @@
 # Base image
 FROM ubuntu:22.04
 
+WORKDIR /
+
 # Args and Environment Variables
 ARG GECKOVERSION=0.33.0
 ARG GOVERSION=1.21.5
 ENV DEBIAN_FRONTEND="noninteractive"
 ENV DATABASE="postgres"
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 ENV GOROOT="/usr/local/go"
 ENV GOPATH=$HOME/go
 ENV PATH="${PATH}:${GOROOT}/bin:${GOPATH}/bin"
@@ -16,7 +18,7 @@ ENV PATH="${PATH}:${GOROOT}/bin:${GOPATH}/bin"
 LABEL \
     name="reconPoint" \
     author="KhulnaSoft Ltd <security@khulnasoft.com>" \
-    description="reconPoint is a automated pipeline of recon process, useful for information gathering during web application penetration testing."
+    description="reconPoint is an automated pipeline of recon process, useful for information gathering during web application penetration testing."
 
 # Supported architectures
 ARG SUPPORTED_ARCH="amd64 arm64 armv6 armv7 armhf i386 x86_64"
@@ -35,7 +37,8 @@ RUN ARCH=$(dpkg --print-architecture) \
         python3-netaddr software-properties-common \
         gpg-agent \
     && add-apt-repository -y ppa:mozillateam/ppa \
-    && apt update -y
+    && apt update -y \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Go
 RUN ARCH=$(dpkg --print-architecture) \
@@ -49,6 +52,12 @@ RUN ARCH=$(dpkg --print-architecture) \
       GECKOPATH="geckodriver-v${GECKOVERSION}-linux-aarch64.tar.gz"; \
     elif [ "${ARCH}" = "amd64" ]; then \
       GECKOPATH="geckodriver-v${GECKOVERSION}-linux64.tar.gz"; \
+    elif [ "${ARCH}" = "i386" ]; then \
+      GECKOPATH="geckodriver-v${GECKOVERSION}-linux32.tar.gz"; \
+    elif [ "${ARCH}" = "ppc64le" ]; then \
+      GECKOPATH="geckodriver-v${GECKOVERSION}-linux-ppc64le.tar.gz"; \
+    else \
+      echo "Unsupported architecture: ${ARCH}"; exit 1; \
     fi \
     && wget https://github.com/mozilla/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH} \
     && tar -xvf ${GECKOPATH} \
@@ -82,26 +91,7 @@ RUN printf "\
     github.com/projectdiscovery/katana/cmd/katana@latest\n\
     github.com/dwisiswant0/crlfuzz/cmd/crlfuzz@latest\n\
     github.com/sa7mon/s3scanner@latest\n" | \
-    xargs -L1 go install -ldflags="-s -w" -v && \
-    rm -rf /go/pkg/* && rm -rf /root/.cache/go-build
+    xargs -L1 go install -ldflags="-s -w"
 
-# Update Nuclei and Nuclei-Templates
-RUN nuclei -update-templates
-
-# update chaos
-RUN chaos -update
-
-# Copy requirements
-COPY ./requirements.txt /tmp/requirements.txt
-RUN pip3 install --upgrade setuptools==72.1.0
-RUN pip3 install -r /tmp/requirements.txt --no-cache-dir
-
-# install eyewitness
-RUN pip3 install --no-cache-dir fuzzywuzzy \
-    selenium==4.9.1 \
-    python-Levenshtein \
-    pyvirtualdisplay \
-    netaddr
-
-# Copy source code
-COPY . /usr/src/app/
+# Final Cleanup
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*

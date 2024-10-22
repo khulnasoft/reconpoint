@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cat ../web/art/reconPoint.txt
+cat ../art/reconPoint.txt
 echo "Uninstalling reconPoint"
 
 if [ "$EUID" -ne 0 ]
