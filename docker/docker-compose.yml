@@ -6,7 +6,6 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_PORT=${POSTGRES_PORT}
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
@@ -17,7 +16,6 @@ services:
   redis:
     restart: always
     image: "redis:alpine"
-    hostname: redis
     networks:
       - reconpoint_network
 
@@ -26,9 +24,9 @@ services:
       context: .
     restart: always
     entrypoint: /usr/src/app/celery-entrypoint.sh
-    # command: celery -A reconPoint worker --autoscale=${MAX_CONCURRENCY},${MIN_CONCURRENCY} -l INFO
+    command: celery -A reconPoint worker --autoscale=${MAX_CONCURRENCY},${MIN_CONCURRENCY} -l INFO
     volumes:
-      - ./web:/usr/src/app
+      - ./web:/usr/src/app/web
       - github_repos:/usr/src/github
       - wordlist:/usr/src/wordlist
       - scan_results:/usr/src/scan_results
@@ -44,7 +42,6 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_HOST=${POSTGRES_HOST}
       - MAX_CONCURRENCY=${MAX_CONCURRENCY}
       - MIN_CONCURRENCY=${MIN_CONCURRENCY}
@@ -64,13 +61,12 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_HOST=${POSTGRES_HOST}
     depends_on:
       - celery
       - db
     volumes:
-      - ./web:/usr/src/app
+      - ./web:/usr/src/app/web
       - github_repos:/usr/src/github
       - wordlist:/usr/src/wordlist
       - scan_results:/usr/src/scan_results
@@ -83,7 +79,8 @@ services:
   web:
     build:
       context: .
-    entrypoint: /usr/src/app/entrypoint.sh
+      dockerfile: ./Dockerfile
+    entrypoint: /usr/src/app/docker/entrypoint.sh
     restart: always
     image: khulnasoft/reconpoint:latest
     environment:
@@ -94,11 +91,10 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_HOST=${POSTGRES_HOST}
       - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
     volumes:
-      - ./web:/usr/src/app
+      - ./web:/usr/src/app/web
       - github_repos:/usr/src/github
       - wordlist:/usr/src/wordlist
       - scan_results:/usr/src/scan_results
@@ -140,6 +136,7 @@ services:
       - scan_results:/usr/src/scan_results
     networks:
       - reconpoint_network
+
   ollama:
     image: ollama/ollama
     container_name: ollama
