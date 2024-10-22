@@ -11,7 +11,7 @@ usageFunction()
 }
 
 tput setaf 2;
-cat web/art/reconPoint.txt
+cat ./art/reconPoint.txt
 
 tput setaf 1; echo "Before running this script, please make sure Docker is running and you have made changes to .env file."
 tput setaf 2; echo "Changing the postgres username & password from .env is highly recommended."

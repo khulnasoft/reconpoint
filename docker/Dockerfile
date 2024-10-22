@@ -6,8 +6,8 @@ ARG GECKOVERSION=0.33.0
 ARG GOVERSION=1.21.5
 ENV DEBIAN_FRONTEND="noninteractive"
 ENV DATABASE="postgres"
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 ENV GOROOT="/usr/local/go"
 ENV GOPATH=$HOME/go
 ENV PATH="${PATH}:${GOROOT}/bin:${GOPATH}/bin"
@@ -92,9 +92,9 @@ RUN nuclei -update-templates
 RUN chaos -update
 
 # Copy requirements
-COPY ./requirements.txt /tmp/requirements.txt
+COPY ./requirements/project-requirements.txt /tmp/project-requirements.txt
 RUN pip3 install --upgrade setuptools==72.1.0
-RUN pip3 install -r /tmp/requirements.txt --no-cache-dir
+RUN pip3 install -r /tmp/project-requirements.txt --no-cache-dir
 
 # install eyewitness
 RUN pip3 install --no-cache-dir fuzzywuzzy \
