@@ -40,7 +40,7 @@ jobs:
       - name: 🏗️ Build Docker image
         uses: docker/build-push-action@v5
         with:
-          context: web/
+          context: docker/
           platforms: ${{ matrix.platform }}
           push: false
           tags: ${{ steps.meta.outputs.tags }}
