@@ -94,11 +94,11 @@ RUN nuclei -update-templates
 RUN chaos -update
 
 # Copy requirements
-COPY ./requirements /requirements
-WORKDIR /
-RUN pip3 install --no-cache-dir --compile -r /requirements/project-requirements.txt
-RUN pip3 install --upgrade setuptools==72.1.0
-RUN pip3 install -r /tmp/project-requirements.txt --no-cache-dir
+ COPY ./requirements /requirements
+ WORKDIR /
+ RUN pip3 install --no-cache-dir --compile -r /requirements/project-requirements.txt
+ RUN pip3 install --upgrade setuptools==72.1.0
+ RUN pip3 install -r /tmp/project-requirements.txt --no-cache-dir
 
 # install eyewitness
 RUN pip3 install --no-cache-dir fuzzywuzzy \
