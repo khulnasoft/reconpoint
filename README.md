@@ -363,7 +363,7 @@ When submitting issues, provide as much valuable information as possible to help
 
 1. Enable Debug Mode:
 
-   - Edit `web/entrypoint.sh` in the project root
+   - Edit `docker/entrypoint.sh` in the project root
    - Add `export DEBUG=1` at the top of the file:
 
      ```bash
@@ -398,7 +398,7 @@ When submitting issues, provide as much valuable information as possible to help
    - Mention any relevant system information
 
 5. Disable Debug Mode:
-   - Set `DEBUG=0` in `web/entrypoint.sh`
+   - Set `DEBUG=0` in `docker/entrypoint.sh`
    - Restart the web container
 
 By providing this detailed information, you significantly help developers identify and fix issues more efficiently.
