@@ -131,7 +131,7 @@ function update_available(latest_version_number, changelog) {
       },
     }).then((result) => {
       if (result.isConfirmed) {
-        window.open("https://www.reconpoint.wiki/update", "_blank");
+        window.open("https://www.recon.khulnasoft.com/update", "_blank");
       }
     });
   });
@@ -166,7 +166,7 @@ function showAfterUpdatePopup() {
     //   cancelButtonText: "No, thanks",
     // }).then((result) => {
     //   if (result.isConfirmed) {
-    //     window.open("https://reconpoint.wiki/changelog/latest", "_blank");
+    //     window.open("https://recon.khulnasoft.com/changelog/latest", "_blank");
     //   }
     //   localStorage.setItem("lastShownUpdateVersion", currentVersion);
     // });
@@ -179,7 +179,7 @@ function showAfterUpdatePopup() {
       cancelButtonText: "No, thanks",
     }).then((result) => {
       if (result.isConfirmed) {
-        window.open(`https://reconpoint.wiki/whats-new/${currentVersion.replace(/\./g, "_")}`, "_blank");
+        window.open(`https://recon.khulnasoft.com/whats-new/${currentVersion.replace(/\./g, "_")}`, "_blank");
       }
       localStorage.setItem("lastShownUpdateVersion", currentVersion);
     });
