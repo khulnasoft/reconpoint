@@ -1,16 +1,14 @@
 # Base image
 FROM ubuntu:22.04
 
-# Args and Environment Variables
 ARG GECKOVERSION=0.33.0
 ARG GOVERSION=1.21.5
-ENV DEBIAN_FRONTEND="noninteractive"
-ENV DATABASE="postgres"
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV GOROOT="/usr/local/go"
-ENV GOPATH=$HOME/go
-ENV PATH="${PATH}:${GOROOT}/bin:${GOPATH}/bin"
+
+RUN ARCH=$(dpkg --print-architecture) \ 
+    && if [ "${ARCH}" ! "arm64" ] || [ "${ARCH}" ! "amd64" ]; then \
+      echo "reconPoint not supported, encountered unknown architecture: ${TARGETPLATFORM}" \
+      && exit 1; \
+    fi
 
 # Labels and Credits
 LABEL \
@@ -18,33 +16,49 @@ LABEL \
     author="KhulnaSoft Ltd <security@khulnasoft.com>" \
     description="reconPoint is a automated pipeline of recon process, useful for information gathering during web application penetration testing."
 
-# Supported architectures
-ARG SUPPORTED_ARCH="amd64 arm64 armv6 armv7 armhf i386 x86_64"
+# Environment Variables
+ENV DEBIAN_FRONTEND="noninteractive" \
+    DATABASE="postgres"
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV GOROOT="/usr/local/go"
+ENV GOPATH=$HOME/go
+ENV PATH="${PATH}:${GOROOT}/bin:${GOPATH}/bin"
 
-# Install essential required packages
-RUN ARCH=$(dpkg --print-architecture) \
-    && echo "$SUPPORTED_ARCH" | grep -qw "$ARCH" || { \
-         echo "Unsupported architecture: $ARCH"; exit 1; \
-    } \
-    && apt update -y \
-    && apt install -y --no-install-recommends \
-        python3.10 python3-dev python3-pip \
-        build-essential cmake geoip-bin geoip-database \
-        gcc git libpq-dev libpango-1.0-0 libpangoft2-1.0-0 \
-        libpcap-dev netcat nmap x11-utils xvfb wget curl \
-        python3-netaddr software-properties-common \
-        gpg-agent \
-    && add-apt-repository -y ppa:mozillateam/ppa \
-    && apt update -y
+# Install Python
+RUN apt update -y && \
+    apt install -y \
+    python3.10 \
+    python3-dev \
+    python3-pip 
 
-# Install Go
-RUN ARCH=$(dpkg --print-architecture) \
-     && curl -s -L -o /tmp/go.tar.gz https://go.dev/dl/go${GOVERSION}.linux-${ARCH}.tar.gz \
-     && tar -xzC /usr/local -f /tmp/go.tar.gz \
-     && rm /tmp/go.tar.gz
+# Install essential packages
+RUN apt install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    geoip-bin \
+    geoip-database \
+    gcc \
+    git \
+    libpq-dev \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libpcap-dev \
+    netcat \
+    nmap \
+    x11-utils \
+    xvfb \
+    wget \
+    curl \
+    python3-netaddr \
+    software-properties-common
 
-# Install Gecko Driver
-RUN ARCH=$(dpkg --print-architecture) \
+RUN add-apt-repository ppa:mozillateam/ppa
+
+RUN ARCH=$(dpkg --print-architecture) \ 
+    && curl -L https://go.dev/dl/go${GOVERSION}.linux-${ARCH}.tar.gz | tar -xzC /usr/local
+
+RUN ARCH=$(dpkg --print-architecture) \ 
     && if [ "${ARCH}" = "arm64" ]; then \
       GECKOPATH="geckodriver-v${GECKOVERSION}-linux-aarch64.tar.gz"; \
     elif [ "${ARCH}" = "amd64" ]; then \
@@ -55,14 +69,15 @@ RUN ARCH=$(dpkg --print-architecture) \
     && rm ${GECKOPATH} \
     && mv geckodriver /usr/bin
 
-# Install Rust
+# Install Rust for orjson
 RUN set -e; curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 RUN pip3 install maturin
 
-# Install Go packages
+# Make directory for app
 WORKDIR /usr/src/app
-ENV GO111MODULE=on
+
+ENV GO111MODULE=on 
 RUN printf "\
     github.com/jaeles-project/gospider@latest\n\
     github.com/tomnomnom/gf@latest\n\
@@ -84,6 +99,7 @@ RUN printf "\
     github.com/sa7mon/s3scanner@latest\n" | \
     xargs -L1 go install -ldflags="-s -w" -v && \
     rm -rf /go/pkg/* && rm -rf /root/.cache/go-build
+
 
 # Update Nuclei and Nuclei-Templates
 RUN nuclei -update-templates

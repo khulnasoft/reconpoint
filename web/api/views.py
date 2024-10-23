@@ -14,7 +14,7 @@ from datetime import datetime
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_204_NO_CONTENT
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_204_NO_CONTENT, HTTP_202_ACCEPTED
 from rest_framework.decorators import action
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.cache import cache
@@ -24,6 +24,7 @@ from dashboard.models import *
 from recon_note.models import *
 from reconPoint.celery import app
 from reconPoint.common_func import *
+from reconPoint.database_utils import *
 from reconPoint.definitions import ABORTED_TASK
 from reconPoint.tasks import *
 from reconPoint.llm import *
@@ -43,8 +44,7 @@ class ToggleBugBountyModeView(APIView):
 	"""
 		This class manages the user bug bounty mode
 	"""
-	@staticmethod
-	def post(request, *args, **kwargs):
+	def post(self, request, *args, **kwargs):
 		user_preferences = get_object_or_404(UserPreferences, user=request.user)
 		user_preferences.bug_bounty_mode = not user_preferences.bug_bounty_mode
 		user_preferences.save()
@@ -90,8 +90,7 @@ class HackerOneProgramViewSet(viewsets.ViewSet):
 		except Exception as e:
 			return self.handle_exception(e)
 	
-	@staticmethod
-	def get_api_credentials():
+	def get_api_credentials(self):
 		try:
 			api_key = HackerOneAPIKey.objects.first()
 			if not api_key:
@@ -260,8 +259,7 @@ class HackerOneProgramViewSet(viewsets.ViewSet):
 		except Exception as e:
 			return self.handle_exception(e)
 
-	@staticmethod
-	def handle_exception(exc):
+	def handle_exception(self, exc):
 		if isinstance(exc, ObjectDoesNotExist):
 			return Response({"error": "HackerOne API credentials not configured"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 		elif str(exc) == "Invalid API credentials":
@@ -728,7 +726,7 @@ class FetchMostCommonVulnerability(APIView):
 					)
 
 
-			most_common_vulnerabilities = list(most_common_vulnerabilities)
+			most_common_vulnerabilities = [vuln for vuln in most_common_vulnerabilities]
 
 			if most_common_vulnerabilities:
 				response['status'] = True
@@ -923,6 +921,11 @@ class AddTarget(APIView):
 		h1_team_handle = data.get('h1_team_handle')
 		description = data.get('description')
 		domain_name = data.get('domain_name')
+		# remove wild card from domain
+		domain_name = domain_name.replace('*', '')
+		# if domain_name begins with . remove that
+		if domain_name.startswith('.'):
+			domain_name = domain_name[1:]
 		organization_name = data.get('organization')
 		slug = data.get('slug')
 
@@ -930,41 +933,33 @@ class AddTarget(APIView):
 		if not validators.domain(domain_name):
 			return Response({'status': False, 'message': 'Invalid domain or IP'})
 
-		project = Project.objects.get(slug=slug)
+		status = bulk_import_targets(
+			targets=[{
+				'name': domain_name,
+				'description': description,
+			}],
+			organization_name=organization_name,
+			h1_team_handle=h1_team_handle,
+			project_slug=slug
+		)
 
-		# Create domain object in DB
-		domain, _ = Domain.objects.get_or_create(name=domain_name)
-		domain.project = project
-		domain.h1_team_handle = h1_team_handle
-		domain.description = description
-		if not domain.insert_date:
-			domain.insert_date = timezone.now()
-		domain.save()
-
-		# Create org object in DB
-		if organization_name:
-			organization_obj = None
-			organization_query = Organization.objects.filter(name=organization_name)
-			if organization_query.exists():
-				organization_obj = organization_query[0]
-			else:
-				organization_obj = Organization.objects.create(
-					name=organization_name,
-					project=project,
-					insert_date=timezone.now())
-			organization_obj.domains.add(domain)
-
+		if status:
+			return Response({
+				'status': True,
+				'message': 'Domain successfully added as target !',
+				'domain_name': domain_name,
+				# 'domain_id': domain.id
+			})
 		return Response({
-			'status': True,
-			'message': 'Domain successfully added as target !',
-			'domain_name': domain_name,
-			'domain_id': domain.id
+			'status': False,
+			'message': 'Failed to add as target !'
 		})
 
 
 class FetchSubscanResults(APIView):
 	def get(self, request):
 		req = self.request
+		# data = req.data
 		subscan_id = req.query_params.get('subscan_id')
 		subscan = SubScan.objects.filter(id=subscan_id)
 		if not subscan.exists():
@@ -1150,7 +1145,7 @@ class StopScan(APIView):
 			try:
 				scan = ScanHistory.objects.get(id=scan_id)
 				# if scan is already successful or aborted then do nothing
-				if scan.scan_status in (SUCCESS_TASK, ABORTED_TASK):
+				if scan.scan_status == SUCCESS_TASK or scan.scan_status == ABORTED_TASK:
 					continue
 				response = abort_scan(scan)
 			except Exception as e:
@@ -1160,7 +1155,7 @@ class StopScan(APIView):
 		for subscan_id in subscan_ids:
 			try:
 				subscan = SubScan.objects.get(id=subscan_id)
-				if subscan.scan_status in (SUCCESS_TASK, ABORTED_TASK):
+				if subscan.scan_status == SUCCESS_TASK or subscan.scan_status == ABORTED_TASK:
 					continue
 				response = abort_subscan(subscan)
 			except Exception as e:
@@ -1510,6 +1505,7 @@ class CMSDetector(APIView):
 	def get(self, request):
 		req = self.request
 		url = req.query_params.get('url')
+		#save_db = True if 'save_db' in req.query_params else False
 		response = {'status': False}
 
 		if not (validators.url(url) or validators.domain(url)):
@@ -1517,6 +1513,7 @@ class CMSDetector(APIView):
 			return Response(response)
 
 		try:
+			# response = get_cms_details(url)
 			response = {}
 			cms_detector_command = f'python3 /usr/src/github/CMSeeK/cmseek.py'
 			cms_detector_command += ' --random-agent --batch --follow-redirect'

@@ -179,10 +179,7 @@ function showAfterUpdatePopup() {
       cancelButtonText: "No, thanks",
     }).then((result) => {
       if (result.isConfirmed) {
-        window.open(
-          `https://recon.khulnasoft.com/whatisnew/${currentVersion}`,
-          "_blank"
-        );
+        window.open(`https://recon.khulnasoft.com/whats-new/${currentVersion.replace(/\./g, "_")}`, "_blank");
       }
       localStorage.setItem("lastShownUpdateVersion", currentVersion);
     });
@@ -190,8 +187,8 @@ function showAfterUpdatePopup() {
 }
 
 $(document).ready(function () {
-  // show popup after update
-  showAfterUpdatePopup();
+    // show popup after update
+    showAfterUpdatePopup();
   // hide badge if update does not exists
   if (
     window.localStorage.getItem("update_available") &&

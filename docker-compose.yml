@@ -68,7 +68,6 @@ services:
       - POSTGRES_HOST=${POSTGRES_HOST}
     depends_on:
       - celery
-      - db
     volumes:
       - ./web:/usr/src/app
       - github_repos:/usr/src/github
@@ -85,7 +84,7 @@ services:
       context: ./web
     entrypoint: /usr/src/app/entrypoint.sh
     restart: always
-    image: khulnasoft/reconpoint:latest
+    image: docker.pkg.github.com/khulnasoft/reconpoint/reconpoint:latest
     environment:
       - DEBUG=0
       - CELERY_BROKER=redis://redis:6379/0
