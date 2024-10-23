@@ -182,8 +182,7 @@ class ScanHistory(models.Model):
 	def get_elapsed_time(self):
 		return self.get_time_ago(self.start_scan_date)
 
-	@staticmethod
-	def get_time_ago(time):
+	def get_time_ago(self, time):
 		duration = timezone.now() - time
 		days, seconds = duration.days, duration.seconds
 		hours = days * 24 + seconds // 3600
@@ -388,7 +387,7 @@ class EndPoint(models.Model):
 	webserver = models.CharField(max_length=1000, blank=True, null=True)
 	is_default = models.BooleanField(null=True, blank=True, default=False)
 	matched_gf_patterns = models.CharField(max_length=10000, null=True, blank=True)
-	techs = models.ManyToManyField('Technology', related_name='techs', blank=True)
+	techs = models.ManyToManyField('Technology', related_name='techs', null=True, blank=True)
 	# used for subscans
 	endpoint_subscan_ids = models.ManyToManyField('SubScan', related_name='endpoint_subscan_ids', blank=True)
 

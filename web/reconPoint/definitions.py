@@ -436,7 +436,7 @@ DEFAULT_EXCLUDED_PATHS = [
     '/fonts/.*',
 
     # File types (using regex patterns)
-    r'.*\.ico',
+    '.*\.ico',
 ]
 
 # Roles and Permissions
