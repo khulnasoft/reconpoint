@@ -38,19 +38,19 @@ fi
 print_status "${INFO}Proceeding with uninstalling reconPoint${RESET}"
 
 print_status "Stopping all containers related to reconPoint..."
-docker stop $(docker ps -a -q --filter name=reconpoint) 2>/dev/null
+docker stop $(docker ps -a -q --filter name=reconpoint-) 2>/dev/null
 
 print_status "Removing all containers related to reconPoint..."
-docker rm $(docker ps -a -q --filter name=reconpoint) 2>/dev/null
+docker rm $(docker ps -a -q --filter name=reconpoint-) 2>/dev/null
 
 print_status "Removing all volumes related to reconPoint..."
-docker volume rm $(docker volume ls -q --filter name=reconpoint) 2>/dev/null
+docker volume rm $(docker volume ls -q --filter name=reconpoint-) 2>/dev/null
 
 print_status "Removing all networks related to reconPoint..."
-docker network rm $(docker network ls -q --filter name=reconpoint) 2>/dev/null
+docker network rm $(docker network ls -q --filter name=reconpoint-) 2>/dev/null
 
 print_status "Removing all images related to reconPoint..."
-docker rmi $(docker images -q --filter reference=reconpoint) 2>/dev/null
+docker rmi $(docker images -q --filter reference=reconpoint-) 2>/dev/null
 
 print_status "Performing final cleanup"
 docker system prune -f --volumes --filter "label=com.docker.compose.project=reconpoint"
