@@ -14,6 +14,7 @@ def serve_protected_media(request, path):
     if os.path.exists(file_path):
         content_type, _ = mimetypes.guess_type(file_path)
         response = HttpResponse()
+        # response['Content-Disposition'] = f'attachment; filename={os.path.basename(file_path)}'
         response['Content-Type'] = content_type
         response['X-Accel-Redirect'] = f'/protected_media/{path}'
         return response

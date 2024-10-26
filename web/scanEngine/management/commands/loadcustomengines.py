@@ -5,8 +5,7 @@ from reconPoint.common_func import load_custom_scan_engines
 class Command(BaseCommand):
     help = 'Loads custom engines from YAMLs in custom_engines/ folder into database'
 
-    @staticmethod
-    def handle(*args, **kwargs):
+    def handle(self, *args, **kwargs):
         return load_custom_scan_engines('/usr/src/app/custom_engines')
 
 

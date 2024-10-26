@@ -683,7 +683,7 @@ class ExternalToolForm(forms.ModelForm):
             attrs={
                 "class": "form-control",
                 "id": "version_match_regex",
-                "value": r"[vV]*(\d+\.)?(\d+\.)?(\*|\d+)"
+                "value": "[vV]*(\d+\.)?(\d+\.)?(\*|\d+)"
                 }))
 
     version_lookup_command = forms.CharField(
