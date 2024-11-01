@@ -33,7 +33,7 @@ scapy==2.4.3
 sqlalchemy==1.4.52
 tldextract==3.5.0
 uro==1.0.0
-validators==0.18.2
+validators==0.34.0
 watchdog==4.0.0
 whatportis
 weasyprint==53.3
