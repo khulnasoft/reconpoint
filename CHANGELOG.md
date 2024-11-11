@@ -605,7 +605,7 @@ And more...
 
 - Out of scope options: Many of you have been asking for out of scope option. Thanks to Valerio Brussani for his pull request which made it possible for out of scope options. Please check the documentation on how to define out of scope options.
 
-- Official Documentation(WIP): We often get asked on how to use reconPoint. For long, we had no official documentation. Finally, I've worked on it and we have the official documentation at reconpoint.wiki
+- Official Documentation(WIP): We often get asked on how to use reconPoint. For long, we had no official documentation. Finally, I've worked on it and we have the official documentation at recon.khulnasoft.com
 
 - The documentation is divided into two parts, for Developers and for Penetration Testers. For developers, it's a work in progress. I will keep you all updated throughout the process.
 
