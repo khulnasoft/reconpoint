@@ -25,7 +25,7 @@ netlas==0.5.1
 openai==0.28.0
 PyYAML==6.0.1
 PySocks==1.7.1
-psycopg2==2.9.7
+psycopg2==2.9.10
 pycvesearch==1.0
 redis==5.0.3
 requests==2.32.2
