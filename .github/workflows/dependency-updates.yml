@@ -1,0 +1,14 @@
+name: 'Dependency Updates'
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  call-e2e-merge:
+    uses: khulnasoft/actions/.github/workflows/e2e-merge.yml@auto-merge
+    with:
+      branch: 'master'
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
