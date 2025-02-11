@@ -1203,9 +1203,14 @@ class DeleteSubdomain(APIView):
 	permission_classes = [HasPermission]
 	permission_required = PERM_MODIFY_SCAN_RESULTS
 
-	def post(self, request):
-		req = self.request
-		for id in req.data['subdomain_ids']:
+ def post(self, request):
+     req = self.request
+     try:
+         for id in req.data['subdomain_ids']:
+             Subdomain.objects.get(id=id).delete()
+         return Response({'status': True})
+     except Subdomain.DoesNotExist:
+         return Response({'status': False, 'error': 'One or more subdomains not found'}, status=404)
 			Subdomain.objects.get(id=id).delete()
 		return Response({'status': True})
 
