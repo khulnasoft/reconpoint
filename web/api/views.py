@@ -921,9 +921,12 @@ class AddTarget(APIView):
 	permission_classes = [HasPermission]
 	permission_required = PERM_MODIFY_TARGETS
 	
-	def post(self, request):
-		req = self.request
-		data = req.data
+ def post(self, request):
+     req = self.request
+     data = req.data
+     if not data:
+         return Response({'status': False, 'error': 'No data provided'}, status=400)
+     h1_team_handle = data.get('h1_team_handle')
 		h1_team_handle = data.get('h1_team_handle')
 		description = data.get('description')
 		domain_name = data.get('domain_name')
