@@ -333,6 +333,9 @@ class InAppNotificationManagerViewSet(viewsets.ModelViewSet):
 
 
 class OllamaManager(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_SYSTEM_CONFIGURATIONS
+	
 	def get(self, request):
 		"""
 		API to download Ollama Models
@@ -915,9 +918,15 @@ class ToggleSubdomainImportantStatus(APIView):
 
 
 class AddTarget(APIView):
-	def post(self, request):
-		req = self.request
-		data = req.data
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_TARGETS
+	
+ def post(self, request):
+     req = self.request
+     data = req.data
+     if not data:
+         return Response({'status': False, 'error': 'No data provided'}, status=400)
+     h1_team_handle = data.get('h1_team_handle')
 		h1_team_handle = data.get('h1_team_handle')
 		description = data.get('description')
 		domain_name = data.get('domain_name')
@@ -1050,6 +1059,9 @@ class ListSubScans(APIView):
 
 
 class DeleteMultipleRows(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_TARGETS
+
 	def post(self, request):
 		req = self.request
 		data = req.data
@@ -1069,6 +1081,9 @@ class DeleteMultipleRows(APIView):
 
 
 class StopScan(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_INITATE_SCANS_SUBSCANS
+	
 	def post(self, request):
 		req = self.request
 		data = req.data
@@ -1166,6 +1181,9 @@ class StopScan(APIView):
 
 
 class InitiateSubTask(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_INITATE_SCANS_SUBSCANS
+	
 	def post(self, request):
 		req = self.request
 		data = req.data
@@ -1185,14 +1203,25 @@ class InitiateSubTask(APIView):
 
 
 class DeleteSubdomain(APIView):
-	def post(self, request):
-		req = self.request
-		for id in req.data['subdomain_ids']:
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_SCAN_RESULTS
+
+ def post(self, request):
+     req = self.request
+     try:
+         for id in req.data['subdomain_ids']:
+             Subdomain.objects.get(id=id).delete()
+         return Response({'status': True})
+     except Subdomain.DoesNotExist:
+         return Response({'status': False, 'error': 'One or more subdomains not found'}, status=404)
 			Subdomain.objects.get(id=id).delete()
 		return Response({'status': True})
 
 
 class DeleteVulnerability(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_SCAN_RESULTS
+	
 	def post(self, request):
 		req = self.request
 		for id in req.data['vulnerability_ids']:
@@ -1201,6 +1230,9 @@ class DeleteVulnerability(APIView):
 
 
 class ListInterestingKeywords(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_SCAN_RESULTS
+	
 	def get(self, request, format=None):
 		req = self.request
 		keywords = get_lookup_keywords()
@@ -1208,6 +1240,9 @@ class ListInterestingKeywords(APIView):
 
 
 class ReconpointUpdateCheck(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_SCAN_RESULTS
+	
 	def get(self, request):
 		req = self.request
 		github_api = \
@@ -1368,6 +1403,9 @@ class GetExternalToolCurrentVersion(APIView):
 
 
 class GithubToolCheckGetLatestRelease(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_SYSTEM_CONFIGURATIONS
+	
 	def get(self, request):
 		req = self.request
 
