@@ -333,10 +333,24 @@ class InAppNotificationManagerViewSet(viewsets.ModelViewSet):
 
 
 class OllamaManager(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_SYSTEM_CONFIGURATIONS
+	
 	def get(self, request):
 		"""
-		API to download Ollama Models
-		sends a POST request to download the model
+		Download a specified Ollama model.
+		
+		This method extracts the model name from the query parameter "model" in the request
+		and sends a POST request to the Ollama API pull endpoint to download the model.
+		It returns a JSON response indicating whether the download was successful or if an error occurred.
+		
+		Parameters:
+		    request (Request): The HTTP request object containing the query parameters.
+		
+		Returns:
+		    Response: A Django REST framework Response object with a JSON payload containing:
+		        - status (bool): True if the model download was initiated successfully, otherwise False.
+		        - error (str, optional): An error message if the download failed.
 		"""
 		req = self.request
 		model_name = req.query_params.get('model')
@@ -915,7 +929,31 @@ class ToggleSubdomainImportantStatus(APIView):
 
 
 class AddTarget(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_TARGETS
+	
 	def post(self, request):
+		"""
+		Handle POST request to add a new target domain.
+		
+		Extracts and sanitizes the domain name from the request data, validates it using an external validator, and attempts to
+		import the domain as a new target via the 'bulk_import_targets' function. Returns a success response if the domain is
+		successfully added, or an error response if validation or import fails.
+		
+		Parameters:
+		    request (Request): The HTTP POST request containing the following data:
+		        - h1_team_handle (str, optional): The HackerOne team handle.
+		        - description (str): A descriptive text for the domain.
+		        - domain_name (str): The target domain name. Any '*' characters are removed, and a leading '.' is stripped.
+		        - organization (str, optional): The organization name associated with the domain.
+		        - slug (str, optional): The project slug identifier.
+		
+		Returns:
+		    Response: A Django REST framework Response object with a JSON payload containing:
+		        - status (bool): True if the domain was added successfully; otherwise, False.
+		        - message (str): A message indicating the result of the operation.
+		        - domain_name (str, optional): The cleaned domain name if the operation was successful.
+		"""
 		req = self.request
 		data = req.data
 		h1_team_handle = data.get('h1_team_handle')
@@ -1050,7 +1088,32 @@ class ListSubScans(APIView):
 
 
 class DeleteMultipleRows(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_TARGETS
+
 	def post(self, request):
+		"""
+		Handle POST request to delete multiple rows based on the specified type.
+		
+		This method processes deletion requests for either 'subscan' or 'organization' records.
+		It expects the request data to contain a 'type' key, which should be either 'subscan' or 'organization',
+		and a 'rows' key, which is a list of record IDs to delete. For each ID provided, the corresponding record
+		is retrieved and deleted from the database. If all deletions complete without errors, the method returns a
+		success status; otherwise, it returns a failure status.
+		
+		Parameters:
+		    request (Request): The HTTP POST request object containing JSON data with the following structure:
+		        {
+		            "type": str,         # Must be 'subscan' or 'organization'
+		            "rows": list[int]    # A list of record IDs to delete
+		        }
+		
+		Returns:
+		    Response: A Django REST Framework Response object with a JSON payload:
+		        {
+		            "status": bool  # True if deletions were successful, False if any error occurred
+		        }
+		"""
 		req = self.request
 		data = req.data
 
@@ -1069,7 +1132,31 @@ class DeleteMultipleRows(APIView):
 
 
 class StopScan(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_INITATE_SCANS_SUBSCANS
+	
 	def post(self, request):
+		"""
+		Handle a POST request to abort scans and subscans by revoking their tasks and updating their statuses.
+		
+		This method extracts lists of scan IDs and subscan IDs from the request payload. For each provided
+		scan or subscan, if its status is not already SUCCESS_TASK or ABORTED_TASK, it attempts to abort the task:
+		- For scans, it sets the scan status to ABORTED_TASK, records the abort timestamp, assigns the aborting user,
+		  revokes associated Celery tasks, updates related scan activities, and logs the action.
+		- For subscans, it revokes associated Celery tasks, updates the subscan status and stop time, and logs the activity.
+		
+		Any exceptions during these operations are caught and logged, and an error message is returned in the response.
+		
+		Parameters:
+		    request (Request): The HTTP request containing a JSON body with optional keys:
+		        - scan_ids (list): A list of scan history IDs to abort.
+		        - subscan_ids (list): A list of subscan IDs to abort.
+		
+		Returns:
+		    Response: A Django REST framework Response object containing a dictionary with:
+		        - status (bool): True if the abort operation was successful, False otherwise.
+		        - message (str, optional): An error message in case of a failure.
+		"""
 		req = self.request
 		data = req.data
 		scan_ids = data.get('scan_ids', [])
@@ -1166,7 +1253,34 @@ class StopScan(APIView):
 
 
 class InitiateSubTask(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_INITATE_SCANS_SUBSCANS
+	
 	def post(self, request):
+		"""
+		Handle POST request to initiate asynchronous subscans on multiple subdomains.
+		
+		Extracts necessary parameters from the incoming request and schedules an asynchronous task for each
+		combination of subdomain and scan type. The expected keys in the request data are:
+		  - engine_id (optional): Identifier for the scanning engine used for the subscan.
+		  - tasks (list): List of scan types to execute.
+		  - subdomain_ids (list): List of subdomain IDs to perform scans on.
+		
+		For every subdomain ID in 'subdomain_ids', and for each scan type in 'tasks', an asynchronous
+		subscan task is initiated via the initiate_subscan task. Each task is given a context dictionary
+		with the following keys:
+		  - 'scan_history_id': Always set to None.
+		  - 'subdomain_id': The ID of the current subdomain.
+		  - 'scan_type': The current scan type.
+		  - 'engine_id': The provided engine identifier.
+		
+		Returns:
+		  Response: A DRF Response containing a JSON object with a status key set to True, indicating that
+		  the subscans have been successfully scheduled.
+		
+		Raises:
+		  KeyError: If 'tasks' or 'subdomain_ids' keys are missing from the request data.
+		"""
 		req = self.request
 		data = req.data
 		engine_id = data.get('engine_id')
@@ -1185,7 +1299,25 @@ class InitiateSubTask(APIView):
 
 
 class DeleteSubdomain(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_SCAN_RESULTS
+
 	def post(self, request):
+		"""
+		Handle a POST request to delete multiple subdomains.
+		
+		This method retrieves the list of subdomain IDs from the request data under the key
+		'subdomain_ids'. For each ID, it fetches the corresponding Subdomain object from the database
+		and deletes it. If a Subdomain with a provided ID does not exist, a Subdomain.DoesNotExist exception will be raised.
+		
+		Parameters:
+		    request (Request): The HTTP request containing a JSON payload with a list of subdomain IDs
+		                       under the 'subdomain_ids' key.
+		
+		Returns:
+		    Response: A Django REST framework Response object with a JSON dictionary indicating success,
+		              e.g., {"status": True}.
+		"""
 		req = self.request
 		for id in req.data['subdomain_ids']:
 			Subdomain.objects.get(id=id).delete()
@@ -1193,7 +1325,26 @@ class DeleteSubdomain(APIView):
 
 
 class DeleteVulnerability(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_SCAN_RESULTS
+	
 	def post(self, request):
+		"""
+		Handle POST request to delete vulnerabilities by their IDs.
+		
+		The request must include a JSON payload with a key 'vulnerability_ids'
+		mapping to a list of vulnerability identifiers. For each ID in this list,
+		the corresponding Vulnerability object is retrieved and deleted from the database.
+		
+		Parameters:
+		    request (Request): The Django REST framework request object containing the 'vulnerability_ids' in its data.
+		
+		Returns:
+		    Response: A DRF Response object with a JSON payload indicating success (e.g., {'status': True}).
+		
+		Raises:
+		    Vulnerability.DoesNotExist: If a provided vulnerability ID does not correspond to an existing Vulnerability.
+		"""
 		req = self.request
 		for id in req.data['vulnerability_ids']:
 			Vulnerability.objects.get(id=id).delete()
@@ -1201,14 +1352,66 @@ class DeleteVulnerability(APIView):
 
 
 class ListInterestingKeywords(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_SCAN_RESULTS
+	
 	def get(self, request, format=None):
+		"""
+		Retrieve a list of lookup keywords.
+		
+		This GET handler retrieves interesting lookup keywords used for OSINT purposes by calling the
+		utility function `get_lookup_keywords` and returns them wrapped in a Django REST framework
+		Response object.
+		
+		Parameters:
+		    request (Request): The HTTP request object.
+		    format (str, optional): An optional format specifier for the response. Defaults to None.
+		
+		Returns:
+		    Response: A DRF Response object containing a list of lookup keywords.
+		"""
 		req = self.request
 		keywords = get_lookup_keywords()
 		return Response(keywords)
 
 
 class ReconpointUpdateCheck(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_SCAN_RESULTS
+	
 	def get(self, request):
+		"""
+		Handles a GET request to check for available updates of ReconPoint from GitHub releases.
+		
+		This method queries the GitHub API for the latest release of the ReconPoint repository.
+		It extracts the version information from the release data and compares it with the locally
+		installed version (RECONPOINT_CURRENT_VERSION). If a newer version is found, an in-app notification
+		is created to inform the user, and the response includes the latest version, current version, and
+		a changelog (if an update is available). If the GitHub API response indicates rate limiting, the
+		method returns an appropriate message.
+		
+		Parameters:
+		    request (Request): The incoming HTTP request object.
+		
+		Returns:
+		    Response: A Django REST framework Response containing a JSON object with the following keys:
+		        - status (bool): Indicates the success of the request. Returns False if rate limited.
+		        - latest_version (str): The latest release version retrieved from GitHub.
+		        - current_version (str): The current installed version of ReconPoint.
+		        - update_available (bool): True if an update is available, otherwise False.
+		        - changelog (str, optional): The release notes from the latest GitHub release, included only when an update is available.
+		
+		Example:
+		    >>> response = view.get(request)
+		    >>> response.data
+		    {
+		        "status": True,
+		        "latest_version": "1.2.3",
+		        "current_version": "1.0.0",
+		        "update_available": True,
+		        "changelog": "Bug fixes and performance improvements..."
+		    }
+		"""
 		req = self.request
 		github_api = \
 			'https://api.github.com/repos/khulnasoft/reconpoint/releases'
@@ -1368,7 +1571,33 @@ class GetExternalToolCurrentVersion(APIView):
 
 
 class GithubToolCheckGetLatestRelease(APIView):
+	permission_classes = [HasPermission]
+	permission_required = PERM_MODIFY_SYSTEM_CONFIGURATIONS
+	
 	def get(self, request):
+		"""
+		Handles GET requests to check and retrieve the latest GitHub release for an installed external tool.
+		
+		This endpoint extracts either a tool ID or a tool name from the query parameters. It verifies that the tool exists and has a valid GitHub URL before querying the GitHub API for release data. The GitHub URL is sanitized by removing the protocol and any trailing slashes prior to constructing the API endpoint.
+		
+		Query Parameters:
+		    tool_id (str): Optional. The identifier of the installed external tool.
+		    name (str): Optional. The name of the installed external tool. Used if tool_id is not provided.
+		
+		Returns:
+		    Response: A JSON response containing:
+		        - status (bool): True if the latest release data is successfully retrieved; False otherwise.
+		        - message (str): An error message when the tool is not found, the GitHub URL is missing, API rate limits are exceeded, or the tool is not found on GitHub.
+		        - url (str): The URL of the latest release (provided on success).
+		        - id (int): The unique ID of the latest release (provided on success).
+		        - name (str): The name of the release (provided on success).
+		        - changelog (str): The release notes or changelog (provided on success).
+		
+		Notes:
+		    - If the tool does not exist (when identified by tool_id), an error response is returned.
+		    - If the tool exists but does not provide a GitHub URL, an error message is returned.
+		    - Special handling is implemented for GitHub API responses that indicate rate limits or missing resources.
+		"""
 		req = self.request
 
 		tool_id = req.query_params.get('tool_id')
