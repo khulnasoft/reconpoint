@@ -4123,6 +4123,14 @@ def stream_command(cmd, cwd=None, shell=False, history_file=None, encoding='utf-
 		scan_history_id=scan_id,
 		activity_id=activity_id)
 
+	# Define an allowlist of allowed commands
+	ALLOWED_COMMANDS = ["allowed_command1", "allowed_command2", "allowed_command3"]
+
+	# Validate the cmd against the allowlist
+	if not any(cmd.startswith(allowed_cmd) for allowed_cmd in ALLOWED_COMMANDS):
+		logger.error(f"Command '{cmd}' is not allowed.")
+		return
+
 	# Sanitize the cmd
 	command = cmd if shell else cmd.split()
 
