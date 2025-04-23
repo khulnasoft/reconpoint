@@ -1,3 +1,12 @@
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 function show_whois_lookup_modal(){
 	$('#modal_title').html('WHOIS Lookup');
 	$('#modal-content').empty();
@@ -73,7 +82,7 @@ function cms_detector_api_call(url){
 	}).then(response => response.json()).then(function(response) {
 		if (response.status) {
 			swal.close();
-			$('#modal_title').html('CMS Details for ' + url);
+			$('#modal_title').html('CMS Details for ' + escapeHtml(url));
 			$('#modal-content').empty();
 
 			content = `
