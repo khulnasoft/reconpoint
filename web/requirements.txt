@@ -26,7 +26,7 @@ openai==0.28.0
 PyYAML==6.0.1
 PySocks==1.7.1
 psycopg2==2.9.10
-pycvesearch==1.0
+pycvesearch==1.2
 redis==5.0.3
 requests==2.32.2
 scapy==2.6.1
