@@ -18,7 +18,7 @@ gunicorn==22.0.0
 gevent==24.2.1
 humanize==4.3.0
 langchain-community==0.3.20
-Markdown==3.3.4
+Markdown==3.8
 metafinder==1.2
 netaddr==0.8.0
 netlas==0.5.1
