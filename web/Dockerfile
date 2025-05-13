@@ -58,16 +58,17 @@ RUN add-apt-repository ppa:mozillateam/ppa
 RUN ARCH=$(dpkg --print-architecture) \ 
     && curl -L https://go.dev/dl/go${GOVERSION}.linux-${ARCH}.tar.gz | tar -xzC /usr/local
 
-RUN ARCH=$(dpkg --print-architecture) \ 
-    && if [ "${ARCH}" = "arm64" ]; then \
-      GECKOPATH="geckodriver-v${GECKOVERSION}-linux-aarch64.tar.gz"; \
-    elif [ "${ARCH}" = "amd64" ]; then \
-      GECKOPATH="geckodriver-v${GECKOVERSION}-linux64.tar.gz"; \
-    fi \
+RUN ARCH=$(dpkg --print-architecture) \
+    && case "$ARCH" in \
+        arm64) GECKOPATH="geckodriver-v${GECKOVERSION}-linux-aarch64.tar.gz" ;; \
+        amd64) GECKOPATH="geckodriver-v${GECKOVERSION}-linux64.tar.gz" ;; \
+        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
+    esac \
     && wget https://github.com/mozilla/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH} \
     && tar -xvf ${GECKOPATH} \
     && rm ${GECKOPATH} \
     && mv geckodriver /usr/bin
+
 
 # Install Rust for orjson
 RUN set -e; curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
