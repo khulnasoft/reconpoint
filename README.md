@@ -50,6 +50,95 @@
 
 reconPoint is your ultimate web application reconnaissance suite, designed to supercharge the recon process for security pros, pentesters, and bug bounty hunters. It is a go-to tool that simplifies and streamlines reconnaissance, featuring configurable engines, data correlation, continuous monitoring, database-backed reconnaissance data, and an intuitive user interface. reconPoint redefines how you gather critical information about target web applications.
 
+## 🚀 Development Setup
+
+### Prerequisites
+
+- Docker and Docker Compose
+- Python 3.11+
+- Node.js 16+ (for frontend assets)
+- PostgreSQL 13+
+- Redis 6+
+
+### Quick Start
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/khulnasoft/reconpoint.git
+   cd reconpoint
+   ```
+
+2. Copy the example environment file and update it:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+3. Start the development environment:
+   ```bash
+   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+   ```
+
+4. Run database migrations:
+   ```bash
+   docker-compose exec web python manage.py migrate
+   ```
+
+5. Create a superuser:
+   ```bash
+   docker-compose exec web python manage.py createsuperuser
+   ```
+
+6. Access the application at http://localhost:8000
+
+### Development Workflow
+
+1. **Code Style**
+   - We use Black for code formatting
+   - Run `black .` to format your code
+   - Use `isort .` to sort imports
+
+2. **Type Checking**
+   - We use mypy for static type checking
+   - Run `mypy .` to check types
+
+3. **Testing**
+   - Write tests in the `tests/` directory
+   - Run tests with `pytest`
+   - Generate coverage report with `pytest --cov=.`
+
+4. **Pre-commit Hooks**
+   - Install pre-commit hooks: `pre-commit install`
+   - Run hooks manually: `pre-commit run --all-files`
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how you can help:
+
+1. **Report Bugs**
+   - Check existing issues first
+   - Include steps to reproduce
+   - Add error logs if applicable
+
+2. **Suggest Enhancements**
+   - Open an issue with the "enhancement" label
+   - Describe the use case and benefits
+
+3. **Submit Pull Requests**
+   - Fork the repository
+   - Create a feature branch
+   - Add tests for new features
+   - Update documentation
+   - Submit a PR with a clear description
+
+### Code Review Guidelines
+
+- Keep PRs focused and small
+- Include tests for new features
+- Update documentation when needed
+- Follow existing code style
+- Address all review comments
+
 Traditional reconnaissance tools often fall short in configurability and efficiency. reconPoint addresses these shortcomings and emerges as an excellent alternative to existing commercial tools.
 
 [Watch reconPoint 2.0-jasper release trailer here!](https://youtu.be/VwkOWqiWW5g)
