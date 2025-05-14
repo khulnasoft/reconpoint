@@ -1,0 +1,85 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-json
+    -   id: check-added-large-files
+        args: [--maxkb=5000]
+    -   id: debug-statements
+    -   id: requirements-txt-fixer
+    -   id: mixed-line-ending
+        args: [--fix=lf]
+
+-   repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+    -   id: black
+        language_version: python3.11
+
+-   repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+    -   id: isort
+        name: isort (python)
+        args: [--profile=black, --filter-files]
+
+-   repo: https://github.com/PyCQA/flake8
+    rev: 6.1.0
+    hooks:
+    -   id: flake8
+        additional_dependencies: [flake8-bugbear==23.7.10, flake8-comprehensions==3.12.0]
+        args: [--max-line-length=88, --ignore=E203, --max-complexity=18]
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.7.0
+    hooks:
+    -   id: mypy
+        additional_dependencies: [django-stubs[compatible-mypy]==4.2.0, djangorestframework-stubs==3.14.0, types-requests==2.31.0.1, types-python-dateutil==2.8.19.14, types-pytz==2023.3.1.1]
+        args: [--ignore-missing-imports, --disallow-untyped-defs, --disallow-incomplete-defs]
+
+-   repo: https://github.com/ansible/ansible-lint
+    rev: v6.22.1
+    hooks:
+    -   id: ansible-lint
+        files: \.(yaml|yml)$
+        types: [yaml]
+
+-   repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.32.0
+    hooks:
+    -   id: yamllint
+        args: [--strict, --format, parsable, --config-data, 'extends: default']
+        types: [yaml, yml]
+
+-   repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.16
+    hooks:
+    -   id: mdformat
+        additional_dependencies: [mdformat-gfm, mdformat-toc]
+        args: [--wrap=80, --end-of-line=lf]
+        types: [markdown]
+
+-   repo: local
+    hooks:
+    -   id: bandit
+        name: bandit
+        description: Find common security issues
+        entry: bandit -r . -c pyproject.toml
+        language: system
+        types: [python]
+        pass_filenames: false
+
+    -   id: safety
+        name: safety
+        description: Check for known security vulnerabilities in dependencies
+        entry: safety check --full-report
+        language: system
+        pass_filenames: false
+        always_run: true
+
+ci:
+  autofix_commit_msg: "chore: apply pre-commit fixes"
+  skip: ["mypy"]  # Skip mypy in CI as it's slow, run it separately

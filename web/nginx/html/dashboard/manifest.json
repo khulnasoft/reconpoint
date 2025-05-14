@@ -1,0 +1,18 @@
+{
+    "name": "Nginx Monitoring Dashboard",
+    "short_name": "Nginx Monitor",
+    "description": "Real-time Nginx server monitoring dashboard",
+    "start_url": "/dashboard/",
+    "display": "standalone",
+    "background_color": "#f5f5f5",
+    "theme_color": "#2196F3",
+    "icons": [
+        {
+            "src": "images/icon.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}
+

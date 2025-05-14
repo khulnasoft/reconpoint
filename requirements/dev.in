@@ -1,0 +1,20 @@
+-r base.in
+
+# Development tools
+ipython>=8.18.0
+django-debug-toolbar>=4.2.0
+django-extensions>=3.2.3
+pytest-deadfixtures>=2.2.1
+pytest-sugar>=1.0.0
+pytest-xdist>=3.5.0
+coverage>=7.3.2
+django-coverage-plugin>=3.1.0
+
+# Linting
+pre-commit>=3.5.0
+bandit>=1.7.5
+safety>=2.3.5
+djlint>=1.30.0
+
+# Documentation
+sphinx-autobuild>=2021.3.14

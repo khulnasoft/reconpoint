@@ -1,0 +1,173 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reconpoint"
+version = "0.1.0"
+description = "A security reconnaissance platform"
+readme = "README.md"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Django :: 4.2",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Security"
+]
+dependencies = [
+    "Django>=4.2.0,<5.0.0",
+    "djangorestframework>=3.14.0",
+    "psycopg2-binary>=2.9.9",
+    "celery>=5.3.0",
+    "django-celery-beat>=2.5.0",
+    "drf-yasg>=1.21.7",
+    "python-dotenv>=1.0.0",
+    "requests>=2.31.0",
+    "validators>=0.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ipython>=8.18.0",
+    "django-debug-toolbar>=4.2.0",
+    "django-extensions>=3.2.3",
+    "pytest>=8.0.0",
+    "pytest-django>=4.7.0",
+    "pytest-cov>=4.1.0",
+    "black>=24.0.0",
+    "isort>=5.12.0",
+    "flake8>=7.0.0",
+    "mypy>=1.7.0",
+    "django-stubs[compatible-mypy]>=4.2.0",
+    "djangorestframework-stubs>=3.14.0",
+    "pre-commit>=3.5.0",
+    "bandit>=1.7.5",
+    "safety>=2.3.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-org/reconpoint"
+Documentation = "https://reconpoint.readthedocs.io/"
+Repository = "https://github.com/your-org/reconpoint"
+Changelog = "https://github.com/your-org/reconpoint/blob/main/CHANGELOG.md"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "django.*",
+    "rest_framework.*",
+    "celery.*",
+]
+ignore_missing_imports = true
+
+[tool.bandit]
+# Bandit configuration
+targets = ["reconpoint"]
+recursive = true
+skips = ["B101", "B404"]  # Skip assert_used and import_subprocess
+
+[tool.coverage.run]
+source = ["reconpoint"]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/management/commands/*",
+    "*/wsgi.py",
+    "*/asgi.py",
+    "*/settings/*.py",
+]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __str__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "raise ImportError",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "-v --cov=reconpoint --cov-report=term-missing"
+django_find_project = true
+
+[tool.ruff]
+# Enable pycodestyle ("E"), pyflakes ("F"), and pyupgrade ("UP") rules by default.
+select = ["E", "F", "UP"]
+ignore = []
+
+# Allow autofix for all enabled rules.
+fixable = ["ALL"]
+unfixable = []
+
+# Exclude a variety of commonly ignored directories.
+# Note: these are in addition to the default exclusions.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+# Allow unused variables when they start with an underscore.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Set the line length limit.
+line-length = 88
+
+# Add typing import if required.
+add-noqa = true
