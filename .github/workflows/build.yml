@@ -1,33 +1,54 @@
 name: 🚀 Build and Push Docker image
 
+# Only trigger on specific paths to avoid unnecessary builds
 on:
   push:
     branches: [ master ]
+    paths:
+      - 'web/**'
+      - '.github/workflows/build.yml'
   release:
     types: [published]
   schedule:
     - cron: '0 0 */5 * *'  # Run every 5 days at midnight UTC
+  workflow_dispatch:  # Allow manual triggers
+
+# Environment variables available to all jobs and steps in this workflow
+env:
+  DOCKER_CONTEXT: web/
+  DOCKERFILE: web/Dockerfile
+  DOCKER_PLATFORMS: linux/amd64,linux/arm64
+  DOCKER_CACHE_DIR: /tmp/.buildx-cache
+  PYTHON_VERSION: 3.10
 
 jobs:
   build-and-push:
     name: 🐳 Build and Push Docker image
     runs-on: ubuntu-latest
+    timeout-minutes: 30  # Prevent hanging builds
+    
     strategy:
+      fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
+        platform: [linux/amd64, linux/arm64]
+    
     steps:
       - name: 📥 Checkout the git repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for version detection
 
       - name: 🖥️ Set up QEMU
         uses: docker/setup-qemu-action@v3
 
       - name: 🛠️ Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+          driver-opts: network=host
 
       - name: 🔑 Log in to Docker Hub
+        if: github.event_name != 'schedule'  # Skip for scheduled builds
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -45,14 +66,56 @@ jobs:
             type=semver,pattern=${{ matrix.platform }}-{{major}}
             type=sha,prefix=${{ matrix.platform }}-sha-
             type=schedule,pattern=${{ matrix.platform }}-{{date 'YYYYMMDD'}}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ steps.meta.outputs.created }}
+            org.opencontainers.image.licenses=MIT
 
       - name: 🏗️ Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: web/
+          context: ${{ env.DOCKER_CONTEXT }}
+          file: ${{ env.DOCKERFILE }}
           platforms: ${{ matrix.platform }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+            BUILDKIT_INLINE_CACHE=1
+          provenance: true
+          sbom: true
+          secrets: |
+            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔍 Run security scan
+        if: always()
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.tags }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: 📤 Upload security scan results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: 💬 Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data } = await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ Build failed! Check the workflow run for details.'
+            })
