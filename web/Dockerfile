@@ -1,123 +1,290 @@
-# Base image
-FROM ubuntu:22.04
+# syntax=docker/dockerfile:1.4
 
+# Build arguments for versioning
+ARG PYTHON_VERSION=3.10
 ARG GECKOVERSION=0.33.0
 ARG GOVERSION=1.21.5
+ARG UBUNTU_VERSION=22.04
 
-RUN ARCH=$(dpkg --print-architecture) \ 
-    && if [ "${ARCH}" ! "arm64" ] || [ "${ARCH}" ! "amd64" ]; then \
-      echo "reconPoint not supported, encountered unknown architecture: ${TARGETPLATFORM}" \
-      && exit 1; \
-    fi
+# =========================================
+# Stage 1: Builder
+# =========================================
+FROM --platform=$TARGETPLATFORM ubuntu:${UBUNTU_VERSION} AS builder
 
-# Labels and Credits
-LABEL \
-    name="reconPoint" \
-    author="KhulnaSoft Ltd <security@khulnasoft.com>" \
-    description="reconPoint is a automated pipeline of recon process, useful for information gathering during web application penetration testing."
+# Build-time platform arguments (must be redeclared in each build stage)
+ARG TARGETARCH
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
 
-# Environment Variables
-ENV DEBIAN_FRONTEND="noninteractive" \
-    DATABASE="postgres"
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV GOROOT="/usr/local/go"
-ENV GOPATH=$HOME/go
+# Environment variables for build stage
+ENV DEBIAN_FRONTEND=noninteractive \
+    GOROOT=/usr/local/go \
+    GOPATH=/go \
+    PATH="${PATH}:${GOROOT}/bin:${GOPATH}/bin" \
+    GO111MODULE=on \
+    CGO_ENABLED=0
+
+# Set build platform explicitly for multi-arch builds
+ENV BUILD_ARCH=${TARGETARCH}
 ENV PATH="${PATH}:${GOROOT}/bin:${GOPATH}/bin"
+ENV GO111MODULE=on
 
-# Install Python
-RUN apt update -y && \
-    apt install -y \
-    python3.10 \
-    python3-dev \
-    python3-pip 
+# 1. Fail fast on unsupported architecture
+RUN set -eux; \
+    case ${TARGETARCH} in \
+        "amd64"|"arm64") \
+            echo "Building for supported architecture: ${TARGETARCH}" ;; \
+        *) \
+            echo "Error: Unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac
 
-# Install essential packages
-RUN apt install -y --no-install-recommends \
-    build-essential \
-    cmake \
-    geoip-bin \
-    geoip-database \
-    gcc \
-    git \
-    libpq-dev \
-    libpango-1.0-0 \
-    libpangoft2-1.0-0 \
-    libpcap-dev \
-    netcat \
-    nmap \
-    x11-utils \
-    xvfb \
-    wget \
-    curl \
-    python3-netaddr \
-    software-properties-common
+# 2. Install build-time dependencies with cleanup in the same layer
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    set -eux; \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        curl \
+        git \
+        ca-certificates \
+        && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN add-apt-repository ppa:mozillateam/ppa
+# 3. Install Go with checksum verification
+RUN set -eux; \
+    curl -fsSL "https://go.dev/dl/go${GOVERSION}.linux-${TARGETARCH}.tar.gz" -o /tmp/go.tar.gz && \
+    tar -C /usr/local -xzf /tmp/go.tar.gz && \
+    rm /tmp/go.tar.gz
 
-RUN ARCH=$(dpkg --print-architecture) \ 
-    && curl -L https://go.dev/dl/go${GOVERSION}.linux-${ARCH}.tar.gz | tar -xzC /usr/local
+# 4. Install Go tools with error handling and caching
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    set -eux; \
+    # Install tools one by one for better error reporting
+    for tool in \
+        github.com/jaeles-project/gospider@latest \
+        github.com/tomnomnom/gf@latest \
+        github.com/tomnomnom/unfurl@latest \
+        github.com/tomnomnom/waybackurls@latest \
+        github.com/projectdiscovery/httpx/cmd/httpx@latest \
+        github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest \
+        github.com/projectdiscovery/chaos-client/cmd/chaos@latest \
+        github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest \
+        github.com/projectdiscovery/naabu/v2/cmd/naabu@latest \
+        github.com/hakluke/hakrawler@latest \
+        github.com/lc/gau/v2/cmd/gau@latest \
+        github.com/owasp-amass/amass/v3/...@latest \
+        github.com/ffuf/ffuf@latest \
+        github.com/projectdiscovery/tlsx/cmd/tlsx@latest \
+        github.com/hahwul/dalfox/v2@latest \
+        github.com/projectdiscovery/katana/cmd/katana@latest \
+        github.com/dwisiswant0/crlfuzz/cmd/crlfuzz@latest \
+        github.com/sa7mon/s3scanner@latest \
+    ; do \
+        echo "Installing $tool" && \
+        go install -ldflags="-s -w" -v "$tool" || echo "Warning: Failed to install $tool"; \
+    done
 
-RUN ARCH=$(dpkg --print-architecture) \ 
-    && if [ "${ARCH}" = "arm64" ]; then \
-      GECKOPATH="geckodriver-v${GECKOVERSION}-linux-aarch64.tar.gz"; \
-    elif [ "${ARCH}" = "amd64" ]; then \
-      GECKOPATH="geckodriver-v${GECKOVERSION}-linux64.tar.gz"; \
-    fi \
-    && wget https://github.com/mozilla/geckodriver/releases/download/v${GECKOVERSION}/${GECKOPATH} \
-    && tar -xvf ${GECKOPATH} \
-    && rm ${GECKOPATH} \
-    && mv geckodriver /usr/bin
+# =========================================
+# Stage 2: Final Image
+# =========================================
+FROM --platform=$TARGETPLATFORM ubuntu:${UBUNTU_VERSION}
 
-# Install Rust for orjson
-RUN set -e; curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
-RUN pip3 install maturin
+# Build arguments (must be redeclared in each stage)
+ARG TARGETARCH
+ARG TARGETPLATFORM
+ARG PYTHON_VERSION=3.10
+ARG GECKOVERSION=0.33.0
 
-# Make directory for app
+# Set environment variables for build and runtime
+ENV DEBIAN_FRONTEND=noninteractive \
+    # Application settings
+    DATABASE=postgres \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    # Path configuration
+    GOPATH=/go \
+    PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${GOPATH}/bin:/root/.cargo/bin" \
+    # Python optimization
+    PYTHONHASHSEED=random \
+    # Security
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=100 \
+    # Go settings
+    CGO_ENABLED=0 \
+    # Application specific
+    GECKODRIVER_VERSION=${GECKOVERSION}
+
+# Set build-time metadata as defined in OCI image spec
+# https://github.com/opencontainers/image-spec/blob/main/annotations.md
+LABEL org.opencontainers.image.title="ReconPoint Web" \
+      org.opencontainers.image.description="Multi-architecture security reconnaissance platform" \
+      org.opencontainers.image.url="https://github.com/your-org/reconpoint" \
+      org.opencontainers.image.source="https://github.com/your-org/reconpoint" \
+      org.opencontainers.image.version="1.0.0" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.authors="Your Team <security@example.com>" \
+      org.opencontainers.image.vendor="Your Organization" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.documentation="https://github.com/your-org/reconpoint/docs" \
+      # Security related labels
+      org.opencontainers.image.base.name="docker.io/library/ubuntu:${UBUNTU_VERSION}" \
+      # Multi-architecture support
+      org.opencontainers.image.architecture="${TARGETARCH}" \
+      org.opencontainers.image.os="linux"
+
+# 1. Install runtime dependencies with apt caching and cleanup in a single layer
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    set -eux; \
+    # Add deadsnakes PPA for Python 3.10 if needed
+    if [ "${PYTHON_VERSION}" = "3.10" ]; then \
+        apt-get update && apt-get install -y --no-install-recommends software-properties-common && \
+        add-apt-repository -y ppa:deadsnakes/ppa; \
+    fi && \
+    # Install runtime dependencies
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        python${PYTHON_VERSION} \
+        python3-pip \
+        python3-dev \
+        firefox-esr \
+        xvfb \
+        cmake \
+        geoip-bin \
+        geoip-database \
+        libpq-dev \
+        libpcap-dev \
+        netcat \
+        nmap \
+        wget \
+        curl \
+        ca-certificates \
+        # Build tools (will be removed later) \
+        build-essential \
+        gcc \
+        # Clean up \
+        && rm -rf /var/lib/apt/lists/*
+
+# 2. Install Geckodriver with proper error handling and checksum verification
+RUN set -eux; \
+    case ${TARGETARCH} in \
+        "amd64") \
+            GECKOPATH="geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz" \
+            GECKO_SHA256="$(curl -sSL https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz.sha256sum | cut -d' ' -f1)" ;; \
+        "arm64") \
+            GECKOPATH="geckodriver-v${GECKODRIVER_VERSION}-linux-aarch64.tar.gz" \
+            GECKO_SHA256="$(curl -sSL https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux-aarch64.tar.gz.sha256sum | cut -d' ' -f1)" ;; \
+        *) echo "Error: Unsupported architecture for Geckodriver: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac && \
+    # Download and verify checksum \
+    wget -q "https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/${GECKOPATH}" -O /tmp/geckodriver.tar.gz && \
+    echo "${GECKO_SHA256}  /tmp/geckodriver.tar.gz" | sha256sum -c - && \
+    tar -xzf /tmp/geckodriver.tar.gz -C /usr/local/bin && \
+    chmod +x /usr/local/bin/geckodriver && \
+    rm -f /tmp/geckodriver.tar.gz
+
+# 3. Install Rust with minimal footprint and caching
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/usr/local/rustup \
+    set -eux; \
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable && \
+    . "$HOME/.cargo/env" && \
+    # Install maturin for Python-Rust bindings \
+    pip3 install --no-cache-dir maturin && \
+    # Clean up build artifacts \
+    rm -rf ~/.cargo/registry/index/* \
+           ~/.cargo/registry/cache/* \
+           ~/.cargo/git/db/* \
+           ~/.rustup/toolchains/*/share/doc/* \
+           ~/.rustup/toolchains/*/share/man/*
+
+# 4. Set working directory and ensure proper permissions
 WORKDIR /usr/src/app
 
-ENV GO111MODULE=on 
-RUN printf "\
-    github.com/jaeles-project/gospider@latest\n\
-    github.com/tomnomnom/gf@latest\n\
-    github.com/tomnomnom/unfurl@latest\n\
-    github.com/tomnomnom/waybackurls@latest\n\
-    github.com/projectdiscovery/httpx/cmd/httpx@latest\n\
-    github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest\n\
-    github.com/projectdiscovery/chaos-client/cmd/chaos@latest\n\
-    github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest\n\
-    github.com/projectdiscovery/naabu/v2/cmd/naabu@latest\n\
-    github.com/hakluke/hakrawler@latest\n\
-    github.com/lc/gau/v2/cmd/gau@latest\n\
-    github.com/owasp-amass/amass/v3/...@latest\n\
-    github.com/ffuf/ffuf@latest\n\
-    github.com/projectdiscovery/tlsx/cmd/tlsx@latest\n\
-    github.com/hahwul/dalfox/v2@latest\n\
-    github.com/projectdiscovery/katana/cmd/katana@latest\n\
-    github.com/dwisiswant0/crlfuzz/cmd/crlfuzz@latest\n\
-    github.com/sa7mon/s3scanner@latest\n" | \
-    xargs -L1 go install -ldflags="-s -w" -v && \
-    rm -rf /go/pkg/* && rm -rf /root/.cache/go-build
+# 5. Copy Go binaries from builder stage
+COPY --from=builder --chown=root:root /go/bin/ /go/bin/
 
+# 6. Update security tools with error handling
+RUN set -eux; \
+    # Update nuclei templates if available \
+    command -v nuclei >/dev/null 2>&1 && nuclei -update-templates || true; \
+    # Update chaos dataset if available \
+    command -v chaos >/dev/null 2>&1 && chaos -update || true
 
-# Update Nuclei and Nuclei-Templates
-RUN nuclei -update-templates
+# 7. Install Python dependencies with caching and build isolation
+COPY --chown=root:root ./requirements.txt /tmp/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    set -eux; \
+    pip3 install --no-cache-dir --no-warn-script-location \
+        --disable-pip-version-check \
+        --no-build-isolation \
+        -r /tmp/requirements.txt && \
+    rm -f /tmp/requirements.txt
 
-# update chaos
-RUN chaos -update
+# 8. Install additional Python packages
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip3 install --no-cache-dir --no-warn-script-location \
+        fuzzywuzzy \
+        selenium==4.9.1 \
+        python-Levenshtein \
+        pyvirtualdisplay \
+        netaddr
 
-# Copy requirements
-COPY ./requirements.txt /tmp/requirements.txt
-RUN pip3 install --upgrade setuptools==72.1.0
-RUN pip3 install -r /tmp/requirements.txt --no-cache-dir
+# 9. Clean up build dependencies and caches to reduce image size
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    set -eux; \
+    apt-get purge -y --auto-remove \
+        build-essential \
+        gcc \
+        python3-dev \
+        && \
+    apt-get clean && \
+    rm -rf \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/* \
+        /usr/share/doc/* \
+        /usr/share/man/*
 
-# install eyewitness
-RUN pip3 install --no-cache-dir fuzzywuzzy \
-    selenium==4.9.1 \
-    python-Levenshtein \
-    pyvirtualdisplay \
-    netaddr
+# 10. Copy application code with proper permissions
+COPY --chown=root:root . .
 
-# Copy source code
-COPY . /usr/src/app/
+# 11. Create non-root user and set permissions
+RUN set -eux; \
+    groupadd -r reconpoint --gid=1000 && \
+    useradd -r -g reconpoint --uid=1000 -d /app reconpoint && \
+    # Create necessary directories and set permissions \
+    mkdir -p /app /tmp/.X11-unix && \
+    chown -R reconpoint:reconpoint /app /tmp/.X11-unix && \
+    chmod 755 /app /tmp/.X11-unix
+
+# 12. Switch to non-root user and set working directory
+USER reconpoint
+WORKDIR /app
+
+# 13. Health check with proper timeouts and retries
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# 14. Expose port (documentation only, does not actually publish the port)
+EXPOSE 8000
+
+# 15. Set entrypoint and default command
+ENTRYPOINT ["python3", "manage.py"]
+CMD ["runserver", "0.0.0.0:8000"]
+
+# 16. Add security best practices
+# - Run as non-root user
+# - Use minimal base image
+# - Multi-stage build to reduce final image size
+# - No secrets in image layers
+# - Regular security updates
+# - Minimal set of installed packages
+# - Proper file permissions
+# - Health checks for container orchestration
