@@ -98,6 +98,7 @@ INSTALLED_APPS = [
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'reconPoint.security_middleware.HealthCheckMiddleware',  # NEW: Health checks
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -106,6 +107,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'reconPoint.middleware.UserPreferencesMiddleware',
+    'reconPoint.security_middleware.SecurityHeadersMiddleware',  # NEW: Security headers
+    'reconPoint.security_middleware.RateLimitMiddleware',  # NEW: Rate limiting
+    'reconPoint.security_middleware.RequestValidationMiddleware',  # NEW: Request validation
+    'reconPoint.security_middleware.RequestLoggingMiddleware',  # NEW: Request logging
 ]
 TEMPLATES = [
     {
@@ -138,6 +143,8 @@ REST_FRAMEWORK = {
         'rest_framework_datatables.pagination.DatatablesPageNumberPagination'
     ),
     'PAGE_SIZE': 500,
+    'EXCEPTION_HANDLER': 'reconPoint.error_handlers.custom_exception_handler',  # NEW: Enhanced error handling
+    'DEFAULT_VERSIONING_CLASS': 'reconPoint.api_versioning.HybridVersioning',  # NEW: API versioning
 }
 WSGI_APPLICATION = 'reconPoint.wsgi.application'
 

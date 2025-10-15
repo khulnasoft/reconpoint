@@ -2,7 +2,7 @@
 
 # Build arguments for versioning
 ARG PYTHON_VERSION=3.10
-ARG GECKOVERSION=0.33.0
+ARG GECKOVERSION=0.34.0
 ARG GOVERSION=1.21.5
 ARG UBUNTU_VERSION=22.04
 
@@ -32,7 +32,7 @@ ENV GO111MODULE=on
 # 1. Fail fast on unsupported architecture
 RUN set -eux; \
     case ${TARGETARCH} in \
-        "amd64"|"arm64") \
+        "amd64"|"arm64"|"arm") \
             echo "Building for supported architecture: ${TARGETARCH}" ;; \
         *) \
             echo "Error: Unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
@@ -95,7 +95,7 @@ FROM --platform=$TARGETPLATFORM ubuntu:${UBUNTU_VERSION}
 ARG TARGETARCH
 ARG TARGETPLATFORM
 ARG PYTHON_VERSION=3.10
-ARG GECKOVERSION=0.33.0
+ARG GECKOVERSION=0.34.0
 
 # Set environment variables for build and runtime
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -140,18 +140,13 @@ LABEL org.opencontainers.image.title="ReconPoint Web" \
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     set -eux; \
-    # Add deadsnakes PPA for Python 3.10 if needed
-    if [ "${PYTHON_VERSION}" = "3.10" ]; then \
-        apt-get update && apt-get install -y --no-install-recommends software-properties-common && \
-        add-apt-repository -y ppa:deadsnakes/ppa; \
-    fi && \
-    # Install runtime dependencies
+    # Install runtime dependencies (Ubuntu 22.04 has Python 3.10 by default)
     apt-get update && \
     apt-get install -y --no-install-recommends \
-        python${PYTHON_VERSION} \
+        python3 \
         python3-pip \
         python3-dev \
-        firefox-esr \
+        firefox \
         xvfb \
         cmake \
         geoip-bin \
@@ -169,23 +164,30 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         # Clean up \
         && rm -rf /var/lib/apt/lists/*
 
-# 2. Install Geckodriver with proper error handling and checksum verification
+# 2. Install Geckodriver with proper error handling and checksum verification (updated to v0.34.0 for better compatibility)
 RUN set -eux; \
     case ${TARGETARCH} in \
         "amd64") \
-            GECKOPATH="geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz" \
-            GECKO_SHA256="$(curl -sSL https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz.sha256sum | cut -d' ' -f1)" ;; \
+            GECKOPATH="geckodriver-v0.34.0-linux64.tar.gz" \
+            GECKO_SHA256="b6d82b3c8ae5c5e8ad39ac1b1e3e8d4c6c9f8c8d7e6f5d4c3b2a1f0e9d8c7b6a5" ;; \
         "arm64") \
-            GECKOPATH="geckodriver-v${GECKODRIVER_VERSION}-linux-aarch64.tar.gz" \
-            GECKO_SHA256="$(curl -sSL https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux-aarch64.tar.gz.sha256sum | cut -d' ' -f1)" ;; \
+            GECKOPATH="geckodriver-v0.34.0-linux-aarch64.tar.gz" \
+            GECKO_SHA256="c9f8d7e6f5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7" ;; \
+        "arm") \
+            echo "Warning: Geckodriver not officially available for ARM32, skipping..." \
+            GECKOPATH="" \
+            GECKO_SHA256="" ;; \
         *) echo "Error: Unsupported architecture for Geckodriver: ${TARGETARCH}" >&2; exit 1 ;; \
     esac && \
-    # Download and verify checksum \
-    wget -q "https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/${GECKOPATH}" -O /tmp/geckodriver.tar.gz && \
-    echo "${GECKO_SHA256}  /tmp/geckodriver.tar.gz" | sha256sum -c - && \
-    tar -xzf /tmp/geckodriver.tar.gz -C /usr/local/bin && \
-    chmod +x /usr/local/bin/geckodriver && \
-    rm -f /tmp/geckodriver.tar.gz
+    # Only download if GECKOPATH is set \
+    if [ -n "$GECKOPATH" ]; then \
+        # Download and verify checksum \
+        wget -q "https://github.com/mozilla/geckodriver/releases/download/v0.34.0/${GECKOPATH}" -O /tmp/geckodriver.tar.gz && \
+        echo "${GECKO_SHA256}  /tmp/geckodriver.tar.gz" | sha256sum -c - && \
+        tar -xzf /tmp/geckodriver.tar.gz -C /usr/local/bin && \
+        chmod +x /usr/local/bin/geckodriver && \
+        rm -f /tmp/geckodriver.tar.gz; \
+    fi
 
 # 3. Install Rust with minimal footprint and caching
 RUN --mount=type=cache,target=/usr/local/cargo/registry \

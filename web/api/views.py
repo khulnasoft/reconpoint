@@ -3,7 +3,6 @@ import socket
 import logging
 import requests
 import validators
-import requests
 
 from ipaddress import IPv4Network
 from django.db.models import CharField, Count, F, Q, Value
@@ -620,28 +619,30 @@ class UniversalSearch(APIView):
 			query=query
 		)
 
-		# lookup query in subdomain
-		subdomain = Subdomain.objects.filter(
+		# lookup query in subdomain - Optimized with select_related and limit
+		subdomain = Subdomain.objects.select_related('target_domain').filter(
 			Q(name__icontains=query) |
 			Q(cname__icontains=query) |
 			Q(page_title__icontains=query) |
 			Q(http_url__icontains=query)
-		).distinct('name')
+		).distinct('name')[:50]  # Limit results for performance
 		subdomain_data = SubdomainSerializer(subdomain, many=True).data
 		response['results']['subdomains'] = subdomain_data
 
-		endpoint = EndPoint.objects.filter(
+		# Optimized: Add select_related and limit
+		endpoint = EndPoint.objects.select_related('target_domain').filter(
 			Q(http_url__icontains=query) |
 			Q(page_title__icontains=query)
-		).distinct('http_url')
+		).distinct('http_url')[:50]  # Limit results for performance
 		endpoint_data = EndpointSerializer(endpoint, many=True).data
 		response['results']['endpoints'] = endpoint_data
 
-		vulnerability = Vulnerability.objects.filter(
+		# Optimized: Add select_related and limit
+		vulnerability = Vulnerability.objects.select_related('target_domain').filter(
 			Q(http_url__icontains=query) |
 			Q(name__icontains=query) |
 			Q(description__icontains=query)
-		).distinct()
+		).distinct()[:50]  # Limit results for performance
 		vulnerability_data = VulnerabilitySerializer(vulnerability, many=True).data
 		response['results']['vulnerabilities'] = vulnerability_data
 
@@ -754,14 +755,16 @@ class FetchMostVulnerable(APIView):
 
 		if project_slug:
 			project = Project.objects.get(slug=project_slug)
-			subdomains = Subdomain.objects.filter(target_domain__project=project)
-			domains = Domain.objects.filter(project=project)
+			# Optimized: Use select_related to reduce queries
+			subdomains = Subdomain.objects.select_related('target_domain').filter(target_domain__project=project)
+			domains = Domain.objects.select_related('project').filter(project=project)
 		else:
-			subdomains = Subdomain.objects.all()
-			domains = Domain.objects.all()
+			subdomains = Subdomain.objects.select_related('target_domain').all()
+			domains = Domain.objects.select_related('project').all()
 
 		if scan_history_id:
-			subdomain_query = subdomains.filter(scan_history__id=scan_history_id)
+			# Optimized: Add select_related for scan_history
+			subdomain_query = subdomains.select_related('scan_history').filter(scan_history__id=scan_history_id)
 			if is_ignore_info:
 				most_vulnerable_subdomains = (
 					subdomain_query
@@ -789,7 +792,8 @@ class FetchMostVulnerable(APIView):
 					)
 
 		elif target_id:
-			subdomain_query = subdomains.filter(target_domain__id=target_id)
+			# Optimized: Add select_related for target_domain
+			subdomain_query = subdomains.select_related('target_domain').filter(target_domain__id=target_id)
 			if is_ignore_info:
 				most_vulnerable_subdomains = (
 					subdomain_query
@@ -1013,8 +1017,10 @@ class ListSubScans(APIView):
 		response['status'] = False
 
 		if subdomain_id:
+			# Optimized: Add select_related for related objects
 			subscans = (
 				SubScan.objects
+				.select_related('subdomain', 'scan_history')
 				.filter(subdomain__id=subdomain_id)
 				.order_by('-stop_scan_date')
 			)
@@ -1024,8 +1030,10 @@ class ListSubScans(APIView):
 				response['results'] = results
 
 		elif scan_history:
+			# Optimized: Add select_related for scan_history
 			subscans = (
 				SubScan.objects
+				.select_related('scan_history', 'subdomain')
 				.filter(scan_history__id=scan_history)
 				.order_by('-stop_scan_date')
 			)
@@ -1035,9 +1043,11 @@ class ListSubScans(APIView):
 				response['results'] = results
 
 		elif domain_id:
-			scan_history = ScanHistory.objects.filter(domain__id=domain_id)
+			# Optimized: Use only() to fetch only needed fields and select_related
+			scan_history = ScanHistory.objects.filter(domain__id=domain_id).only('id')
 			subscans = (
 				SubScan.objects
+				.select_related('scan_history', 'subdomain')
 				.filter(scan_history__in=scan_history)
 				.order_by('-stop_scan_date')
 			)
@@ -1415,40 +1425,46 @@ class ScanStatus(APIView):
 	def get(self, request):
 		req = self.request
 		slug = self.request.GET.get('project', None)
-		# main tasks
+		# main tasks - Optimized with select_related
 		recently_completed_scans = (
 			ScanHistory.objects
+			.select_related('domain', 'domain__project')
 			.filter(domain__project__slug=slug)
 			.order_by('-start_scan_date')
 			.filter(Q(scan_status=0) | Q(scan_status=2) | Q(scan_status=3))[:10]
 		)
 		current_scans = (
 			ScanHistory.objects
+			.select_related('domain', 'domain__project')
 			.filter(domain__project__slug=slug)
 			.order_by('-start_scan_date')
 			.filter(scan_status=1)
 		)
 		pending_scans = (
 			ScanHistory.objects
+			.select_related('domain', 'domain__project')
 			.filter(domain__project__slug=slug)
 			.filter(scan_status=-1)
 		)
 
-		# subtasks
+		# subtasks - Optimized with select_related
 		recently_completed_tasks = (
 			SubScan.objects
+			.select_related('scan_history', 'scan_history__domain', 'scan_history__domain__project')
 			.filter(scan_history__domain__project__slug=slug)
 			.order_by('-start_scan_date')
 			.filter(Q(status=0) | Q(status=2) | Q(status=3))[:15]
 		)
 		current_tasks = (
 			SubScan.objects
+			.select_related('scan_history', 'scan_history__domain', 'scan_history__domain__project')
 			.filter(scan_history__domain__project__slug=slug)
 			.order_by('-start_scan_date')
 			.filter(status=1)
 		)
 		pending_tasks = (
 			SubScan.objects
+			.select_related('scan_history', 'scan_history__domain', 'scan_history__domain__project')
 			.filter(scan_history__domain__project__slug=slug)
 			.filter(status=-1)
 		)

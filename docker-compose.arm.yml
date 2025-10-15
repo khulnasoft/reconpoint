@@ -1,0 +1,231 @@
+# Docker Compose configuration for ARM devices (Raspberry Pi, ARM servers)
+# This file contains optimizations for ARM32/ARM64 architectures
+
+version: '3.8'
+
+services:
+  db:
+    restart: always
+    image: "postgres:12.3-alpine"
+    platform: linux/arm64  # or linux/arm/v7 for ARM32
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - reconpoint_network
+    # ARM-specific optimizations
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  redis:
+    restart: always
+    image: "redis:alpine"
+    platform: linux/arm64  # or linux/arm/v7 for ARM32
+    hostname: redis
+    networks:
+      - reconpoint_network
+    # ARM-specific optimizations
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  celery:
+    build:
+      context: ./web
+      platforms:
+        - linux/arm64  # or linux/arm/v7 for ARM32
+    restart: always
+    entrypoint: /usr/src/app/celery-entrypoint.sh
+    volumes:
+      - ./web:/usr/src/app
+      - github_repos:/usr/src/github
+      - wordlist:/usr/src/wordlist
+      - scan_results:/usr/src/scan_results
+      - gf_patterns:/root/.gf
+      - nuclei_templates:/root/nuclei-templates
+      - tool_config:/root/.config
+      - static_volume:/usr/src/app/staticfiles/
+    environment:
+      - DEBUG=0
+      - CELERY_BROKER=redis://redis:6379/0
+      - CELERY_BACKEND=redis://redis:6379/0
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      # ARM-specific: Reduce concurrency for limited resources
+      - MAX_CONCURRENCY=2
+      - MIN_CONCURRENCY=1
+      # ARM-specific: Optimize Python performance
+      - PYTHONOPTIMIZE=1
+      - MALLOC_ARENA_MAX=2
+    depends_on:
+      - db
+      - redis
+    networks:
+      - reconpoint_network
+    # ARM-specific resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  celery-beat:
+    build:
+      context: ./web
+      platforms:
+        - linux/arm64  # or linux/arm/v7 for ARM32
+    entrypoint: /usr/src/app/beat-entrypoint.sh
+    command: celery -A reconPoint beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    environment:
+      - CELERY_BROKER=redis://redis:6379/0
+      - CELERY_BACKEND=redis://redis:6379/0
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - PYTHONOPTIMIZE=1
+      - MALLOC_ARENA_MAX=2
+    depends_on:
+      - celery
+      - db
+    volumes:
+      - ./web:/usr/src/app
+      - github_repos:/usr/src/github
+      - wordlist:/usr/src/wordlist
+      - scan_results:/usr/src/scan_results
+      - gf_patterns:/root/.gf
+      - nuclei_templates:/root/nuclei-templates
+      - tool_config:/root/.config
+    networks:
+      - reconpoint_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  web:
+    build:
+      context: ./web
+      platforms:
+        - linux/arm64  # or linux/arm/v7 for ARM32
+    entrypoint: /usr/src/app/entrypoint.sh
+    restart: always
+    image: reconpoint:arm64  # or reconpoint:arm32
+    environment:
+      - DEBUG=0
+      - CELERY_BROKER=redis://redis:6379/0
+      - CELERY_BACKEND=redis://redis:6379/0
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
+      # ARM-specific optimizations
+      - PYTHONOPTIMIZE=1
+      - MALLOC_ARENA_MAX=2
+      # Gunicorn workers optimized for ARM
+      - GUNICORN_WORKERS=2
+      - GUNICORN_THREADS=2
+    volumes:
+      - ./web:/usr/src/app
+      - github_repos:/usr/src/github
+      - wordlist:/usr/src/wordlist
+      - scan_results:/usr/src/scan_results
+      - gf_patterns:/root/.gf
+      - nuclei_templates:/root/nuclei-templates
+      - tool_config:/root/.config
+      - static_volume:/usr/src/app/staticfiles/
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - reconpoint_network
+    # ARM-specific resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Optional: Lightweight proxy for ARM devices
+  proxy:
+    image: nginx:alpine
+    platform: linux/arm64  # or linux/arm/v7 for ARM32
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - static_volume:/usr/src/app/staticfiles:ro
+    depends_on:
+      - web
+    networks:
+      - reconpoint_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+networks:
+  reconpoint_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  github_repos:
+  wordlist:
+  scan_results:
+  gf_patterns:
+  nuclei_templates:
+  tool_config:
+  static_volume:

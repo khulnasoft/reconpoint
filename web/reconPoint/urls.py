@@ -60,6 +60,8 @@ urlpatterns = [
         serve_protected_media, 
         name='serve_protected_media'
     ),
+    # NEW: Health check and monitoring endpoints
+    path('', include('reconPoint.health_urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 # ] + static(settings.MEDIA_URL, document_root=settings.RECONPOINT_RESULTS) + \
     
