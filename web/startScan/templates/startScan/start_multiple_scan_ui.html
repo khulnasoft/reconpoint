@@ -2,15 +2,12 @@
 {% load static %}
 
 {% block title %}
-Start Scan for Multiple Targets
+Start Scan
 {% endblock title %}
 
 
-
 {% block custom_js_css_link %}
-<link href="{% static 'plugins/jquery-step/jquery.steps.css' %}" rel="stylesheet" type="text/css" />
-<link href="{% static 'plugins/accordions/custom-accordions.css' %}" rel="stylesheet" type="text/css" />
-<link href="{% static 'plugins/selectize/css/selectize.bootstrap3.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'custom/secator_scan.css' %}" rel="stylesheet" type="text/css" />
 {% endblock custom_js_css_link %}
 
 {% block breadcrumb_title %}
@@ -19,16 +16,82 @@ Start Scan for Multiple Targets
 {% endblock breadcrumb_title %}
 
 {% block page_title %}
-  Initiate Scan for Multiple Targets
+Initiate Scan for Multiple Targets
 {% endblock page_title %}
 
 {% block main_content %}
-  {% include "startScan/_items/start_scan_wizard.html" %}
+<div class="row">
+  <div class="col-xl-12">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="header-title">Initiating multiple scan for {{ target_list|length }} targets: </h4>
+        {% for target in target_list %}
+        <span class="badge badge-soft-primary m-1">{{ target }}</span>
+        {% endfor %}
+        <form method="POST" id="start-multi-scan-form" data-secator-id-prefix="start_multi_scan" data-scan-params-level="scan" data-scan-params-target-id="{{ first_target_id|default:'' }}" data-scan-params-project-slug="{{ current_project.slug|default:'' }}" data-scan-params-preview-url="{% url 'api:get_scan_params_effective_preview' %}">
+          {% csrf_token %}
+          {% include 'startScan/_items/secator_hidden_fields.html' with id_prefix='start_multi_scan_' %}
+          {% include 'startScan/_items/secator_profile_hidden_fields.html' with id_prefix='start_multi_scan_' %}
+          <h4 class="header-title mt-4">Choose Execution Mode</h4>
+          {% include 'startScan/_items/secator_execution_mode_selector.html' with scan_title='Scan Type' embed_selection_container=False %}
+          {% include 'startScan/_items/secator_view_toggle.html' with id_prefix='start_multi_scan' %}
+          {% include 'startScan/_items/secator_selection_layout.html' with id_prefix='start_multi_scan' %}
+          <!-- Scan Options Accordion -->
+          {% include 'startScan/_items/secator_scan_options_accordion.html' with domain_name='selected targets' id_prefix='start_multi_scan_' id_suffix='_start_multi_scan' %}
+          
+          <!-- Advanced Configuration Accordion -->
+          {% include 'startScan/_items/secator_advanced_config_accordion.html' with id_prefix='start_multi_scan_' show_random_proxy=False %}
+
+          {% include "shared/_scan_params_effective_display.html" with scan_params_effective=scan_params_effective scan_params_level="target" %}
+
+          <input type="hidden" name="list_of_target_id" value="{{ target_ids }}">
+          {% include 'startScan/_items/secator_start_scan_button.html' %}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock main_content %}
 
 
 {% block page_level_script %}
-<script src="{% static 'plugins/jquery-step/jquery.steps.min.js' %}"></script>
-<script src="{% static 'plugins/selectize/js/standalone/selectize.min.js' %}"></script>
-<script src="{% static 'startScan/js/start-scan-wizard-init.js' %}"></script>
+<script>
+  window.SECATOR_INPUT_TYPES_TARGETS_URL = "{% url "api:get_secator_input_types_targets" %}";
+  window.SECATOR_SELECTION_URL = "{% url "api:get_secator_selection" %}";
+  window.SCAN_PARAMS_EFFECTIVE_PREVIEW_URL = "{% url 'api:get_scan_params_effective_preview' %}";
+</script>
+<script src="{% static 'custom/secator/secator_scan_core.js' %}"></script>
+<script src="{% static 'custom/secator/secator_scan_targets.js' %}"></script>
+<script src="{% static 'custom/secator/secator_scan_tooltips.js' %}"></script>
+<script src="{% static 'custom/secator/secator_compact_list.js' %}"></script>
+<script src="{% static 'custom/secator/secator_selection_listeners.js' %}"></script>
+<script src="{% static 'custom/secator/secator_selection_ajax.js' %}"></script>
+<script src="{% static 'custom/secator/secator_selection_dom.js' %}"></script>
+<script src="{% static 'custom/secator/secator_form_submit.js' %}"></script>
+<script src="{% static 'custom/secator/secator_input_types_ajax.js' %}"></script>
+<script src="{% static 'custom/secator/secator_input_types_tasks.js' %}"></script>
+<script src="{% static 'custom/secator_scan.js' %}"></script>
+<script type="text/javascript">
+$(function(){
+  // Handle scan type card clicks
+  $('.scan-type-card').click(function() {
+    // Remove selected state from all cards
+    $('.scan-type-card').removeAttr('data-selected');
+    $('.scan-type-card input[type="radio"]').prop('checked', false);
+    
+    // Add selected state to clicked card
+    $(this).attr('data-selected', 'true');
+    $(this).find('input[type="radio"]').prop('checked', true);
+  });
+  
+  // Handle scan type change (fallback for radio buttons)
+  $("input[name='scan_type']").change(function() {
+    var scanType = $(this).val();
+    
+    // Update card selection state
+    $('.scan-type-card').removeAttr('data-selected');
+    $('.scan-type-card[data-scan-type="' + scanType + '"]').attr('data-selected', 'true');
+  });
+});
+</script>
 {% endblock page_level_script %}

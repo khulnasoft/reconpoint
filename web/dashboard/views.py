@@ -1,265 +1,363 @@
-import json
-import logging
-
 from datetime import timedelta
+import json
 
-from django.contrib.auth import get_user_model
 from django.contrib import messages
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import get_user_model, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.signals import user_logged_in, user_logged_out
-from django.contrib import messages
-from django.db.models import Count
-from django.db.models.functions import TruncDay
 from django.dispatch import receiver
-from django.shortcuts import redirect, render, get_object_or_404
-from django.utils import timezone
-from django.http import HttpResponseRedirect, JsonResponse
-from django.urls import reverse
-from rolepermissions.roles import assign_role, clear_roles
-from rolepermissions.decorators import has_permission_decorator
+from django.http import (
+    Http404,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    JsonResponse,
+)
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.defaultfilters import slugify
+from django.urls import reverse
+from django.utils import timezone
+from rolepermissions.decorators import has_permission_decorator
+from rolepermissions.roles import assign_role, clear_roles
+
+from dashboard.forms import InterfaceSettingsForm, ProjectForm
+from dashboard.models import NetlasAPIKey, OpenAiAPIKey, Project, UserAPIKey
+from dashboard.services.user_preferences import (
+    PREF_DATATABLES_DISPLAY,
+    PREF_DATATABLES_PAGE_LENGTH,
+    get_datatables_display,
+    get_datatables_page_length,
+    set_user_preference,
+)
+from dashboard.utils import (
+    get_oauth_provider_display_name,
+    get_user_groups,
+    get_user_projects,
+    is_oauth_user,
+)
+from reconPoint.definitions import FOUR_OH_FOUR_URL, PERM_MODIFY_SYSTEM_CONFIGURATIONS
+from reconPoint.utilities.logger import get_module_logger
+from startScan.models import (
+    CountryISO,
+    Domain,
+    EndPoint,
+    IpAddress,
+    Port,
+    ScanActivity,
+    ScanHistory,
+    Subdomain,
+    SubScan,
+    Technology,
+    Vulnerability,
+)
 
 
-from startScan.models import *
-from targetApp.models import Domain
-from dashboard.models import *
-from reconPoint.definitions import *
+PREFIX_DASHBOARD = "[DASHBOARD]"
+logger = get_module_logger(__name__)
 
-
-logger = logging.getLogger(__name__)
 
 def index(request, slug):
     try:
-        project = Project.objects.get(slug=slug)
-    except Exception as e:
-        # if project not found redirect to 404
-        return HttpResponseRedirect(reverse('four_oh_four'))
+        project = Project.get_from_slug(slug)
+    except Project.DoesNotExist:
+        return HttpResponseRedirect(reverse("page_not_found"))
 
-    domains = Domain.objects.filter(project=project)
-    subdomains = Subdomain.objects.filter(scan_history__domain__project__slug=project)
-    endpoints = EndPoint.objects.filter(scan_history__domain__project__slug=project)
-    scan_histories = ScanHistory.objects.filter(domain__project=project)
-    vulnerabilities = Vulnerability.objects.filter(scan_history__domain__project__slug=project)
-    scan_activities = ScanActivity.objects.filter(scan_of__in=scan_histories)
+    # Get activity feed
+    activity_feed = (
+        ScanActivity.objects.filter(scan_of__target__project=project)
+        .select_related("scan_of", "scan_of__target")
+        .order_by("-time")[:50]
+    )
 
-    domain_count = domains.count()
-    endpoint_count = endpoints.count()
-    scan_count = scan_histories.count()
-    subdomain_count = subdomains.count()
-    subdomain_with_ip_count = subdomains.filter(ip_addresses__isnull=False).count()
-    alive_count = subdomains.exclude(http_status__exact=0).count()
-    endpoint_alive_count = endpoints.filter(http_status__exact=200).count()
-
-    info_count = vulnerabilities.filter(severity=0).count()
-    low_count = vulnerabilities.filter(severity=1).count()
-    medium_count = vulnerabilities.filter(severity=2).count()
-    high_count = vulnerabilities.filter(severity=3).count()
-    critical_count = vulnerabilities.filter(severity=4).count()
-    unknown_count = vulnerabilities.filter(severity=-1).count()
-
-    vulnerability_feed = vulnerabilities.order_by('-discovered_date')[:50]
-    activity_feed = scan_activities.order_by('-time')[:50]
-    total_vul_count = info_count + low_count + \
-        medium_count + high_count + critical_count + unknown_count
-    total_vul_ignore_info_count = low_count + \
-        medium_count + high_count + critical_count
     last_week = timezone.now() - timedelta(days=7)
+    date_range = [last_week + timedelta(days=i) for i in range(7)]
 
-    count_targets_by_date = domains.filter(
-        insert_date__gte=last_week).annotate(
-        date=TruncDay('insert_date')).values("date").annotate(
-            created_count=Count('id')).order_by("-date")
-    count_subdomains_by_date = subdomains.filter(
-        discovered_date__gte=last_week).annotate(
-        date=TruncDay('discovered_date')).values("date").annotate(
-            count=Count('id')).order_by("-date")
-    count_vulns_by_date = vulnerabilities.filter(
-        discovered_date__gte=last_week).annotate(
-        date=TruncDay('discovered_date')).values("date").annotate(
-            count=Count('id')).order_by("-date")
-    count_scans_by_date = scan_histories.filter(
-        start_scan_date__gte=last_week).annotate(
-        date=TruncDay('start_scan_date')).values("date").annotate(
-            count=Count('id')).order_by("-date")
-    count_endpoints_by_date = endpoints.filter(
-        discovered_date__gte=last_week).annotate(
-        date=TruncDay('discovered_date')).values("date").annotate(
-            count=Count('id')).order_by("-date")
-
-    last_7_dates = [(timezone.now() - timedelta(days=i)).date()
-                    for i in range(0, 7)]
-
-    targets_in_last_week = []
-    subdomains_in_last_week = []
-    vulns_in_last_week = []
-    scans_in_last_week = []
-    endpoints_in_last_week = []
-
-    for date in last_7_dates:
-        _target = count_targets_by_date.filter(date=date)
-        _subdomain = count_subdomains_by_date.filter(date=date)
-        _vuln = count_vulns_by_date.filter(date=date)
-        _scan = count_scans_by_date.filter(date=date)
-        _endpoint = count_endpoints_by_date.filter(date=date)
-        if _target:
-            targets_in_last_week.append(_target[0]['created_count'])
-        else:
-            targets_in_last_week.append(0)
-        if _subdomain:
-            subdomains_in_last_week.append(_subdomain[0]['count'])
-        else:
-            subdomains_in_last_week.append(0)
-        if _vuln:
-            vulns_in_last_week.append(_vuln[0]['count'])
-        else:
-            vulns_in_last_week.append(0)
-        if _scan:
-            scans_in_last_week.append(_scan[0]['count'])
-        else:
-            scans_in_last_week.append(0)
-        if _endpoint:
-            endpoints_in_last_week.append(_endpoint[0]['count'])
-        else:
-            endpoints_in_last_week.append(0)
-
-    targets_in_last_week.reverse()
-    subdomains_in_last_week.reverse()
-    vulns_in_last_week.reverse()
-    scans_in_last_week.reverse()
-    endpoints_in_last_week.reverse()
-
-    context = {
-        'dashboard_data_active': 'active',
-        'domain_count': domain_count,
-        'endpoint_count': endpoint_count,
-        'scan_count': scan_count,
-        'subdomain_count': subdomain_count,
-        'subdomain_with_ip_count': subdomain_with_ip_count,
-        'alive_count': alive_count,
-        'endpoint_alive_count': endpoint_alive_count,
-        'info_count': info_count,
-        'low_count': low_count,
-        'medium_count': medium_count,
-        'high_count': high_count,
-        'critical_count': critical_count,
-        'unknown_count': unknown_count,
-        'total_vul_count': total_vul_count,
-        'total_vul_ignore_info_count': total_vul_ignore_info_count,
-        'vulnerability_feed': vulnerability_feed,
-        'activity_feed': activity_feed,
-        'targets_in_last_week': targets_in_last_week,
-        'subdomains_in_last_week': subdomains_in_last_week,
-        'vulns_in_last_week': vulns_in_last_week,
-        'scans_in_last_week': scans_in_last_week,
-        'endpoints_in_last_week': endpoints_in_last_week,
-        'last_7_dates': last_7_dates,
-        'project': project
+    # Get timeline data from each model
+    timeline_data = {
+        "targets": Domain.get_project_timeline(project, date_range),
+        "subdomains": Subdomain.get_project_timeline(project, date_range),
+        "vulns": Vulnerability.get_project_timeline(project, date_range),
+        "endpoints": EndPoint.get_project_timeline(project, date_range),
+        "ips": IpAddress.get_project_timeline(project, date_range),
+        "scans": {
+            "pending": ScanHistory.get_project_timeline(project, date_range, status=0),
+            "running": ScanHistory.get_project_timeline(project, date_range, status=1),
+            "completed": ScanHistory.get_project_timeline(project, date_range, status=2),
+            "failed": ScanHistory.get_project_timeline(project, date_range, status=3),
+        },
+        "subscans": {
+            "pending": SubScan.get_project_timeline(project, date_range, status=-1),
+            "running": SubScan.get_project_timeline(project, date_range, status=1),
+            "completed": SubScan.get_project_timeline(project, date_range, status=2),
+            "failed": SubScan.get_project_timeline(project, date_range, status=0),
+            "aborted": SubScan.get_project_timeline(project, date_range, status=3),
+            "finalizing": SubScan.get_project_timeline(project, date_range, status=4),
+        },
     }
 
-    ip_addresses = IpAddress.objects.filter(ip_addresses__in=subdomains)
+    # Get project data from all models
+    ip_data = IpAddress.get_project_data(project)
+    port_data = Port.get_project_data(project)
+    tech_data = Technology.get_project_data(project)
+    country_data = CountryISO.get_project_data(project)
+    vulnerability_data = Vulnerability.get_project_data(project)
 
-    context['total_ips'] = ip_addresses.count()
-    context['most_used_port'] = Port.objects.filter(ports__in=ip_addresses).annotate(count=Count('ports')).order_by('-count')[:7]
-    context['most_used_ip'] = ip_addresses.annotate(count=Count('ip_addresses')).order_by('-count').exclude(ip_addresses__isnull=True)[:7]
-    context['most_used_tech'] = Technology.objects.filter(technologies__in=subdomains).annotate(count=Count('technologies')).order_by('-count')[:7]
+    # Get all counts using project-specific methods
+    domain_counts = Domain.get_project_counts(project)
+    subdomain_counts = Subdomain.get_project_counts(project)
+    endpoint_counts = EndPoint.get_project_counts(project)
+    scan_history_counts = ScanHistory.get_project_counts(project)
+    subscan_counts = SubScan.get_project_counts(project)
+    ip_counts = IpAddress.get_project_counts(project)
 
-    context['most_common_cve'] = CveId.objects.filter(cve_ids__in=vulnerabilities).annotate(nused=Count('cve_ids')).order_by('-nused').values('name', 'nused')[:7]
-    context['most_common_cwe'] = CweId.objects.filter(cwe_ids__in=vulnerabilities).annotate(nused=Count('cwe_ids')).order_by('-nused').values('name', 'nused')[:7]
-    context['most_common_tags'] = VulnerabilityTags.objects.filter(vuln_tags__in=vulnerabilities).annotate(nused=Count('vuln_tags')).order_by('-nused').values('name', 'nused')[:7]
+    context = {
+        "dashboard_data_active": "active",
+        "domain_count": domain_counts["total"],
+        "scan_count": scan_history_counts,
+        "subscan_count": subscan_counts,
+        "subdomain_count": subdomain_counts["total"],
+        "subdomain_with_ip_count": subdomain_counts["with_ip"],
+        "alive_count": subdomain_counts["alive"],
+        "endpoint_count": endpoint_counts["total"],
+        "endpoint_alive_count": endpoint_counts["alive"],
+        "ip_address_count": ip_counts["total"],
+        "ip_alive_count": ip_counts["alive"],
+        "info_count": subdomain_counts["vuln_info"],
+        "low_count": subdomain_counts["vuln_low"],
+        "medium_count": subdomain_counts["vuln_medium"],
+        "high_count": subdomain_counts["vuln_high"],
+        "critical_count": subdomain_counts["vuln_critical"],
+        "unknown_count": subdomain_counts["vuln_unknown"],
+        "total_vul_count": subdomain_counts["total_vuln_count"],
+        "total_vul_ignore_info_count": subdomain_counts["total_vuln_ignore_info_count"],
+        "vulnerability_feed": vulnerability_data["feed"],
+        "activity_feed": activity_feed,
+        "total_ips": ip_data["total_count"],
+        "most_used_ip": ip_data["most_used"],
+        "most_used_port": port_data["most_used"],
+        "most_used_tech": tech_data["most_used"],
+        "asset_countries": country_data["asset_countries"],
+        "targets_in_last_week": timeline_data["targets"],
+        "subdomains_in_last_week": timeline_data["subdomains"],
+        "vulns_in_last_week": timeline_data["vulns"],
+        "endpoints_in_last_week": timeline_data["endpoints"],
+        "ips_in_last_week": timeline_data["ips"],
+        "scans_in_last_week": timeline_data["scans"],
+        "subscans_in_last_week": timeline_data["subscans"],
+        "most_common_cve": vulnerability_data["most_common_cve"],
+        "most_common_cwe": vulnerability_data["most_common_cwe"],
+        "most_common_tags": vulnerability_data["most_common_tags"],
+    }
 
-    context['asset_countries'] = CountryISO.objects.filter(ipaddress__in=ip_addresses).annotate(count=Count('ipaddress')).order_by('-count')
-
-    return render(request, 'dashboard/index.html', context)
+    return render(request, "dashboard/index.html", context)
 
 
-def profile(request, slug):
-    if request.method == 'POST':
+def profile(request):
+    if request.method == "POST":
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
             user = form.save()
             update_session_auth_hash(request, user)
-            messages.success(
-                request,
-                'Your password was successfully changed!')
-            return redirect('profile')
+            messages.success(request, "Your password was successfully changed!")
+            return redirect("profile")
         else:
-            messages.error(request, 'Please correct the error below.')
+            messages.error(request, "Please correct the error below.")
     else:
         form = PasswordChangeForm(request.user)
-    return render(request, 'dashboard/profile.html', {
-        'form': form
-    })
+    return render(request, "dashboard/profile.html", {"form": form})
+
+
+@login_required
+def interface_settings(request):
+    """Display and save interface preferences (e.g. DataTables display mode)."""
+    if request.method == "POST":
+        form = InterfaceSettingsForm(request.POST)
+        if form.is_valid():
+            set_user_preference(
+                request.user,
+                PREF_DATATABLES_DISPLAY,
+                form.cleaned_data["datatables_display"],
+            )
+            set_user_preference(
+                request.user,
+                PREF_DATATABLES_PAGE_LENGTH,
+                form.cleaned_data["datatables_page_length"],
+            )
+            messages.success(request, "Interface settings saved.")
+            return redirect("interface_settings")
+        messages.error(request, "Please correct the error below.")
+    else:
+        form = InterfaceSettingsForm(
+            initial={
+                "datatables_display": get_datatables_display(request.user),
+                "datatables_page_length": get_datatables_page_length(request.user),
+            }
+        )
+    return render(request, "dashboard/interface_settings.html", {"form": form})
 
 
 @has_permission_decorator(PERM_MODIFY_SYSTEM_CONFIGURATIONS, redirect_url=FOUR_OH_FOUR_URL)
-def admin_interface(request, slug):
-    UserModel = get_user_model()
-    users = UserModel.objects.all().order_by('date_joined')
-    return render(
-        request,
-        'dashboard/admin.html',
-        {
-            'users': users
-        }
-    )
+def admin_interface(request):
+    User = get_user_model()  # noqa: N806
+    users = User.objects.prefetch_related("socialaccount_set").all().order_by("date_joined")
+    return render(request, "dashboard/admin.html", {"users": users})
+
+
+class UserModificationError(Exception):
+    def __init__(self, message, status_code=403):
+        self.message = message
+        self.status_code = status_code
+        super().__init__(self.message)
+
+
+def check_user_modification_permissions(current_user, target_user, mode):
+    """Check if current user has permission to modify target user."""
+    if not target_user:
+        raise UserModificationError("User ID not provided", 404)
+
+    # Security checks for superusers and sys_admins
+    if target_user.is_superuser and not current_user.is_superuser:
+        raise UserModificationError("Only superadmin can modify another superadmin")
+
+    # Prevent self-modification for both superusers and sys_admins
+    if (
+        current_user == target_user
+        and mode in ["delete", "change_status"]
+        and (current_user.is_superuser or get_user_groups(current_user) == "sys_admin")
+    ):
+        raise UserModificationError("Administrators cannot delete or deactivate themselves")
+
 
 @has_permission_decorator(PERM_MODIFY_SYSTEM_CONFIGURATIONS, redirect_url=FOUR_OH_FOUR_URL)
-def admin_interface_update(request, slug):
-    mode = request.GET.get('mode')
-    user_id = request.GET.get('user')
-    if user_id:
-        UserModel = get_user_model()
-        user = UserModel.objects.get(id=user_id)
-    if request.method == 'GET':
-        if mode == 'change_status':
-            user.is_active = not user.is_active
-            user.save()
-    elif request.method == 'POST':
-        if mode == 'delete':
-            try:
-                user.delete()
-                messages.add_message(
-                    request,
-                    messages.INFO,
-                    f'User {user.username} successfully deleted.'
-                )
-                messageData = {'status': True}
-            except Exception as e:
-                logger.error(e)
-                messageData = {'status': False}
-        elif mode == 'update':
-            try:
-                response = json.loads(request.body)
-                role = response.get('role')
-                change_password = response.get('change_password')
-                clear_roles(user)
-                assign_role(user, role)
-                if change_password:
-                    user.set_password(change_password)
-                    user.save()
-                messageData = {'status': True}
-            except Exception as e:
-                logger.error(e)
-                messageData = {'status': False, 'error': str(e)}
-        elif mode == 'create':
-            try:
-                response = json.loads(request.body)
-                if not response.get('password'):
-                    messageData = {'status': False, 'error': 'Empty passwords are not allowed'}
-                    return JsonResponse(messageData)
-                UserModel = get_user_model()
-                user = UserModel.objects.create_user(
-                    username=response.get('username'),
-                    password=response.get('password')
-                )
-                assign_role(user, response.get('role'))
-                messageData = {'status': True}
-            except Exception as e:
-                logger.error(e)
-                messageData = {'status': False, 'error': str(e)}
-        return JsonResponse(messageData)
-    return HttpResponseRedirect(reverse('admin_interface', kwargs={'slug': slug}))
+def admin_interface_update(request):
+    mode = request.GET.get("mode")
+    method = request.method
+    target_user = get_user_from_request(request)
+
+    try:
+        if mode and mode != "create":
+            check_user_modification_permissions(request.user, target_user, mode)
+
+        # Check if the request is for user creation
+        if method == "POST" and mode == "create":
+            return handle_post_request(request, mode, None)
+
+        if method == "GET":
+            return handle_get_request(request, mode, target_user)
+        elif method == "POST":
+            return handle_post_request(request, mode, target_user)
+
+    except UserModificationError as e:
+        return JsonResponse({"status": False, "error": e.message}, status=e.status_code)
+
+
+def get_user_from_request(request):
+    if user_id := request.GET.get("user"):
+        User = get_user_model()  # noqa: N806
+        return User.objects.filter(id=user_id).first()  # Use first() to avoid exceptions
+    return None
+
+
+def handle_get_request(request, mode, user):
+    if mode != "change_status":
+        return HttpResponseBadRequest(reverse("admin_interface"), status=400)
+
+    if user is None:
+        messages.add_message(request, messages.ERROR, "User not found.")
+        return HttpResponseRedirect(reverse("admin_interface"))
+    user.is_active = not user.is_active
+    user.save()
+    if user.is_active:
+        messages.add_message(request, messages.INFO, f"User {user.username} successfully activated.")
+    else:
+        messages.add_message(request, messages.INFO, f"User {user.username} successfully deactivated.")
+    return HttpResponseRedirect(reverse("admin_interface"))
+
+
+def handle_post_request(request, mode, user):
+    if mode == "delete":
+        return handle_delete_user(request, user)
+    elif mode == "update":
+        return handle_update_user(request, user)
+    elif mode == "create":
+        return handle_create_user(request)
+    return JsonResponse({"status": False, "error": "Invalid mode"}, status=400)
+
+
+def handle_delete_user(request, user):
+    try:
+        user.delete()
+        messages.add_message(request, messages.INFO, f"User {user.username} successfully deleted.")
+        return JsonResponse({"status": True})
+    except (ValueError, KeyError) as e:
+        logger.log_line(
+            PREFIX_DASHBOARD,
+            "USER",
+            "Error deleting user: %s" % (e,),
+            level="error",
+        )
+        return JsonResponse({"status": False, "error": "An error occurred while deleting the user"})
+
+
+def handle_update_user(request, user):
+    try:
+        response = json.loads(request.body)
+        role = response.get("role")
+        change_password = response.get("change_password")
+        projects = response.get("projects", [])
+
+        clear_roles(user)
+        assign_role(user, role)
+        if change_password:
+            user.set_password(change_password)
+
+        # Update projects - use safer pattern to avoid DoesNotExist errors
+        user.projects.clear()  # Remove all existing projects
+        if projects:
+            # Fetch all valid projects at once
+            valid_projects = Project.objects.filter(id__in=projects)
+            # Verify all requested project IDs exist
+            if valid_projects.count() != len(projects):
+                return JsonResponse({"status": False, "error": "One or more project IDs are invalid"})
+            user.projects.set(valid_projects)
+
+        user.save()
+        return JsonResponse({"status": True})
+    except (ValueError, KeyError, TypeError) as e:
+        logger.log_line(
+            PREFIX_DASHBOARD,
+            "USER",
+            "Error updating user: %s" % (e,),
+            level="error",
+        )
+        return JsonResponse({"status": False, "error": "An error occurred while updating the user"})
+
+
+def handle_create_user(request):
+    try:
+        response = json.loads(request.body)
+        if not response.get("password"):
+            return JsonResponse({"status": False, "error": "Empty passwords are not allowed"})
+
+        User = get_user_model()  # noqa: N806
+        user = User.objects.create_user(username=response.get("username"), password=response.get("password"))
+        assign_role(user, response.get("role"))
+
+        # Add projects
+        projects = response.get("projects", [])
+        for project_id in projects:
+            project = Project.objects.get(id=project_id)
+            user.projects.add(project)
+
+        return JsonResponse({"status": True})
+    except (ValueError, KeyError) as e:
+        logger.log_line(
+            PREFIX_DASHBOARD,
+            "USER",
+            "Error creating user: %s" % (e,),
+            level="error",
+        )
+        return JsonResponse({"status": False, "error": "An error occurred while creating the user"})
 
 
 @receiver(user_logged_out)
@@ -267,171 +365,293 @@ def on_user_logged_out(sender, request, **kwargs):
     messages.add_message(
         request,
         messages.INFO,
-        'You have been successfully logged out. Thank you ' +
-        'for using reconPoint.')
+        "You have been successfully logged out. Thank you " + "for using reconPoint.",
+    )
 
 
 @receiver(user_logged_in)
 def on_user_logged_in(sender, request, **kwargs):
-    messages.add_message(
-        request,
-        messages.INFO,
-        'Hi @' +
-        request.user.username +
-        ' welcome back!')
+    user = kwargs.get("user")
+    messages.add_message(request, messages.INFO, f"Hi @{user.username} welcome back!")
 
 
-def search(request, slug):
-    return render(request, 'dashboard/search.html')
+def search(request):
+    return render(request, "dashboard/search.html")
 
 
 def four_oh_four(request):
-    return render(request, '404.html')
+    return render(request, "404.html")
 
 
-def projects(request, slug):
-    context = {}
-    context['projects'] = Project.objects.all()
-    return render(request, 'dashboard/projects.html', context)
+def projects(request):
+    projects_qs = get_user_projects(request.user)
+    context = {
+        "projects": projects_qs,
+        "has_projects": projects_qs.exists(),
+    }
+    return render(request, "dashboard/projects.html", context)
 
 
+@has_permission_decorator(PERM_MODIFY_SYSTEM_CONFIGURATIONS, redirect_url=FOUR_OH_FOUR_URL)
 def delete_project(request, id):
     obj = get_object_or_404(Project, id=id)
     if request.method == "POST":
         obj.delete()
-        responseData = {
-            'status': 'true'
-        }
-        messages.add_message(
-            request,
-            messages.INFO,
-            'Project successfully deleted!')
+        response_data = {"status": "true"}
+        messages.add_message(request, messages.INFO, "Project successfully deleted!")
     else:
-        responseData = {'status': 'false'}
-        messages.add_message(
-            request,
-            messages.ERROR,
-            'Oops! Project could not be deleted!')
-    return JsonResponse(responseData)
+        response_data = {"status": "false"}
+        messages.add_message(request, messages.ERROR, "Oops! Project could not be deleted!")
+    return JsonResponse(response_data)
 
 
 def onboarding(request):
-    context = {}
-    error = ''
+    # OAuth users should see the dedicated welcome page, not the onboarding form
+    if is_oauth_user(request.user):
+        return redirect("oauth_welcome")
 
-    # check is any projects exists, then redirect to project list else onboarding
-    project = Project.objects.first()
-
-    if project:
-        slug = project.slug
-        return HttpResponseRedirect(reverse('dashboardIndex', kwargs={'slug': slug}))
-
+    error = ""
     if request.method == "POST":
-        project_name = request.POST.get('project_name')
+        project_name = request.POST.get("project_name")
         slug = slugify(project_name)
-        create_username = request.POST.get('create_username')
-        create_password = request.POST.get('create_password')
-        create_user_role = request.POST.get('create_user_role')
-        key_openai = request.POST.get('key_openai')
-        key_netlas = request.POST.get('key_netlas')
-        key_chaos = request.POST.get('key_chaos')
-        key_hackerone = request.POST.get('key_hackerone')
-        username_hackerone = request.POST.get('username_hackerone')
-        bug_bounty_mode = request.POST.get('bug_bounty_mode') == 'on'
+        create_username = request.POST.get("create_username")
+        create_password = request.POST.get("create_password")
+        create_user_role = request.POST.get("create_user_role")
+        key_openai = request.POST.get("key_openai")
+        key_netlas = request.POST.get("key_netlas")
 
         insert_date = timezone.now()
 
         try:
-            Project.objects.create(
-                name=project_name,
-                slug=slug,
-                insert_date=insert_date
-            )
+            project = Project.objects.create(name=project_name, slug=slug, insert_date=insert_date)
+            # Add the creator to the project's users so they can access it
+            if request.user.is_authenticated:
+                project.users.add(request.user)
         except Exception as e:
-            error = ' Could not create project, Error: ' + str(e)
-
-
-        # update currently logged in user's preferences for bug bounty mode
-        user_preferences, _ = UserPreferences.objects.get_or_create(user=request.user)
-        user_preferences.bug_bounty_mode = bug_bounty_mode
-        user_preferences.save()
-
+            logger.log_line(
+                PREFIX_DASHBOARD,
+                "PROJECT",
+                "Could not create project, Error: %s" % (e,),
+                level="error",
+            )
+            error = "Could not create project, check logs for more details"
 
         try:
             if create_username and create_password and create_user_role:
-                UserModel = get_user_model()
-                new_user = UserModel.objects.create_user(
-                    username=create_username,
-                    password=create_password
-                )
-                assign_role(new_user, create_user_role)
-
-
-                # initially bug bounty mode is enabled for new user as selected for current user
-                new_user_preferences, _ = UserPreferences.objects.get_or_create(user=new_user)
-                new_user_preferences.bug_bounty_mode = bug_bounty_mode
-                new_user_preferences.save()
-                
+                User = get_user_model()  # noqa: N806
+                user = User.objects.create_user(username=create_username, password=create_password)
+                assign_role(user, create_user_role)
         except Exception as e:
-            error = ' Could not create User, Error: ' + str(e)
+            logger.log_line(
+                PREFIX_DASHBOARD,
+                "USER",
+                "Could not create User, Error: %s" % (e,),
+                level="error",
+            )
+            error = "Could not create User, check logs for more details"
 
         if key_openai:
-            openai_api_key = OpenAiAPIKey.objects.first()
-            if openai_api_key:
+            if openai_api_key := OpenAiAPIKey.objects.first():
                 openai_api_key.key = key_openai
                 openai_api_key.save()
             else:
                 OpenAiAPIKey.objects.create(key=key_openai)
 
         if key_netlas:
-            netlas_api_key = NetlasAPIKey.objects.first()
-            if netlas_api_key:
+            if netlas_api_key := NetlasAPIKey.objects.first():
                 netlas_api_key.key = key_netlas
                 netlas_api_key.save()
             else:
                 NetlasAPIKey.objects.create(key=key_netlas)
 
-        if key_chaos:
-            chaos_api_key = ChaosAPIKey.objects.first()
-            if chaos_api_key:
-                chaos_api_key.key = key_chaos
-                chaos_api_key.save()
-            else:
-                ChaosAPIKey.objects.create(key=key_chaos)
+    # Get first available project
+    project = get_user_projects(request.user).first()
 
-        if key_hackerone and username_hackerone:
-            hackerone_api_key = HackerOneAPIKey.objects.first()
-            if hackerone_api_key:
-                hackerone_api_key.username = username_hackerone
-                hackerone_api_key.key = key_hackerone
-                hackerone_api_key.save()
-            else:
-                HackerOneAPIKey.objects.create(
-                    username=username_hackerone, 
-                    key=key_hackerone
+    context = {
+        "error": error,
+        "openai_key": OpenAiAPIKey.objects.first(),
+        "netlas_key": NetlasAPIKey.objects.first(),
+    }
+
+    # then redirect to the dashboard
+    if project:
+        slug = project.slug
+        return HttpResponseRedirect(reverse("dashboardIndex", kwargs={"slug": slug}))
+
+    # else redirect to the onboarding
+    return render(request, "dashboard/onboarding.html", context)
+
+
+def list_projects(request):
+    projects = get_user_projects(request.user)
+    return render(request, "dashboard/projects.html", {"projects": projects})
+
+
+def oauth_welcome(request):
+    """
+    Intermediate welcome page for OAuth users.
+    Shows a clear explanation of their account status, permissions,
+    and what an administrator needs to do to grant project access.
+    """
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    user = request.user
+
+    if not is_oauth_user(user):
+        return redirect("onboarding")
+
+    provider_name = get_oauth_provider_display_name(user)
+
+    # Check if user has any assigned projects without building an unused queryset
+    has_projects = Project.objects.filter(users=user).exists()
+
+    # If user has projects, they can proceed — but still show the welcome on first visit
+    context = {
+        "provider_name": provider_name,
+        "has_projects": has_projects,
+    }
+    return render(request, "dashboard/oauth_welcome.html", context)
+
+
+@has_permission_decorator(PERM_MODIFY_SYSTEM_CONFIGURATIONS, redirect_url=FOUR_OH_FOUR_URL)
+def edit_project(request, slug):
+    project = get_object_or_404(Project, slug=slug)
+    if not project.is_user_authorized(request.user):
+        messages.error(request, "You don't have permission to edit this project.")
+        return redirect("list_projects")
+
+    User = get_user_model()  # noqa: N806
+    all_users = User.objects.all()
+
+    if request.method == "POST":
+        form = ProjectForm(request.POST, instance=project)
+        if form.is_valid():
+            # Generate new slug from the project name
+            new_slug = slugify(form.cleaned_data["name"])
+
+            # Check if the new slug already exists (excluding the current project)
+            if Project.objects.exclude(id=project.id).filter(slug=new_slug).exists():
+                form.add_error(
+                    "name",
+                    "A project with a similar name already exists. Please choose a different name.",
                 )
+            else:
+                # Save the form without committing to the database
+                updated_project = form.save(commit=False)
+                # Set the new slug
+                updated_project.slug = new_slug
+                # Now save to the database
+                updated_project.save()
+                # If your form has many-to-many fields, you need to call this
+                form.save_m2m()
 
-    context['error'] = error
-    
+                messages.success(request, "Project updated successfully.")
+                return redirect("list_projects")
+    else:
+        form = ProjectForm(instance=project)
 
-    context['openai_key'] = OpenAiAPIKey.objects.first()
-    context['netlas_key'] = NetlasAPIKey.objects.first()
-    context['chaos_key'] = ChaosAPIKey.objects.first()
-    context['hackerone_key'] = HackerOneAPIKey.objects.first().key
-    context['hackerone_username'] = HackerOneAPIKey.objects.first().username
-
-    context['user_preferences'], _ = UserPreferences.objects.get_or_create(
-        user=request.user
+    return render(
+        request,
+        "dashboard/edit_project.html",
+        {"form": form, "edit_project": project, "users": all_users},
     )
 
-    return render(request, 'dashboard/onboarding.html', context)
+
+def set_current_project(request, slug):
+    if request.method == "GET":
+        project = get_object_or_404(Project, slug=slug)
+        if not get_user_projects(request.user).filter(pk=project.pk).exists():
+            return HttpResponseRedirect(reverse("page_not_found"))
+        messages.success(request, f"Project {project.name} set as current project.")
+        dashboard_url = reverse("dashboardIndex", kwargs={"slug": slug})
+        return render(
+            request,
+            "dashboard/set_current_project_bridge.html",
+            {
+                "project_slug_json": json.dumps(slug),
+                "dashboard_url_json": json.dumps(dashboard_url),
+                "dashboard_url_escaped": dashboard_url,
+            },
+        )
+    return HttpResponseBadRequest("Invalid request method. Only GET is allowed.", status=400)
 
 
+def api_key_management(request):
+    """
+    Display user's API keys management page.
 
-def list_bountyhub_programs(request, slug):
-    context = {}
-    # get parameter to device which platform is being requested
-    platform = request.GET.get('platform') or 'hackerone'
-    context['platform'] = platform.capitalize()
-    
-    return render(request, 'dashboard/bountyhub_programs.html', context)
+    Shows list of user's API keys with creation date, last used, and status.
+    Allows creation, activation/deactivation, and deletion of API keys.
+    """
+    user_api_keys = UserAPIKey.objects.filter(user=request.user).order_by("-created_at")
+    context = {"api_keys": user_api_keys, "page_title": "API Keys Management"}
+
+    # Check if there's a newly created API key to show
+    if new_api_key := request.session.pop("new_api_key", None):
+        context["new_api_key"] = new_api_key
+
+    return render(request, "dashboard/api_keys.html", context)
+
+
+def create_api_key(request):
+    """
+    Create a new API key for the current user.
+
+    Validates the API key name and creates a new UserAPIKey instance.
+    Returns the generated key only once for security.
+    """
+    if request.method == "POST":
+        if name := request.POST.get("name", "").strip():
+            # Check if user already has an API key with this name
+            if UserAPIKey.objects.filter(user=request.user, name=name).exists():
+                messages.error(
+                    request,
+                    f'API Key with name "{name}" already exists. Please choose a different name.',
+                )
+            else:
+                api_key, key = UserAPIKey.objects.create_key(name=name, user=request.user)
+                # Store the new key info in session to display in modal
+                request.session["new_api_key"] = {"name": name, "key": key}
+                messages.success(request, f'API Key "{name}" created successfully!')
+        else:
+            messages.error(request, "API Key name is required.")
+
+    return redirect("api_keys")
+
+
+def delete_api_key(request, key_id):
+    """
+    Delete an API key belonging to the current user.
+
+    Args:
+        key_id (str): Primary key of the API key to delete
+    """
+    if request.method == "POST":
+        api_key = get_object_or_404(UserAPIKey, pk=key_id, user=request.user)
+        key_name = api_key.name
+        api_key.delete()
+        messages.success(request, f'API Key "{key_name}" deleted successfully.')
+
+    return redirect("api_keys")
+
+
+def toggle_api_key(request, key_id):
+    """
+    Toggle the active status of an API key.
+
+    Args:
+        key_id (str): Primary key of the API key to toggle
+    """
+    if request.method == "POST":
+        try:
+            api_key = get_object_or_404(UserAPIKey, pk=key_id, user=request.user)
+            api_key.is_active = not api_key.is_active
+            api_key.save(update_fields=["is_active"])
+
+            status_text = "activated" if api_key.is_active else "deactivated"
+            messages.success(request, f'API Key "{api_key.name}" {status_text} successfully.')
+        except Http404:
+            messages.error(request, "API Key not found or you do not have permission to modify it.")
+
+    return redirect("api_keys")

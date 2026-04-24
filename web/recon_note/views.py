@@ -1,44 +1,177 @@
+"""
+Views for the recon_note app.
+
+This module contains the views for the recon_note app, which handles
+the management of todo notesand related operations.
+"""
+
 import json
+from typing import Optional
 
 from django.http import JsonResponse
 from django.shortcuts import render
 
-from recon_note.models import *
-from startScan.models import *
+from recon_note.models import TodoNote
+from reconPoint.utilities.logger import get_module_logger
+
+
+PREFIX_RECON_NOTE = "[RECON_NOTE]"
+logger = get_module_logger(__name__)
+
+
+def _todo_notes_queryset_for_slug(slug: Optional[str]):
+    queryset = TodoNote.objects.all()
+    if slug:
+        queryset = queryset.filter(project__slug=slug)
+    return queryset
 
 
 def list_note(request, slug):
-    context = {}
-    context['recon_note_active'] = 'active'
-    return render(request, 'note/index.html', context)
+    """
+    list_note renders the list view for recon notes associated with a specific project.
+    It prepares the context for the template and returns the rendered HTML response.
 
-def flip_todo_status(request):
-    if request.method == "POST":
-        body_unicode = request.body.decode('utf-8')
+    Args:
+        request (HttpRequest): The HTTP request object containing metadata about the request.
+        slug (str): The slug of the project for which the recon notes are being listed.
+
+    Returns:
+        HttpResponse: The rendered HTML response for the note list view.
+    """
+    context = {"recon_note_active": "active"}
+    return render(request, "note/index.html", context)
+
+
+def flip_todo_status(request, slug=None):
+    """
+    flip_todo_status toggles the completion status of a todo note based on the provided request data.
+    It processes a POST request, validates the input, and updates the note's status,
+    returning a JSON response indicating the result.
+
+    Args:
+        request (HttpRequest): The HTTP request object containing the note ID and the request method.
+
+    Returns:
+        JsonResponse: A JSON response indicating the success or failure of the operation,
+        along with the updated completion status if successful.
+
+    Raises:
+        JsonDecodeError: If the request body contains invalid JSON.
+        Http404: If the specified todo note does not exist.
+    """
+    if request.method != "POST":
+        return JsonResponse({"status": False, "error": "Invalid request method."}, status=400)
+
+    try:
+        body_unicode = request.body.decode("utf-8")
         body = json.loads(body_unicode)
+    except json.JSONDecodeError as e:
+        logger.log_line(
+            PREFIX_RECON_NOTE,
+            "JSON",
+            "JSON decode error: %s" % (e,),
+            level="error",
+        )
+        return JsonResponse({"status": False, "error": "Invalid JSON."}, status=400)
 
-        note = TodoNote.objects.get(id=body['id'])
-        note.is_done = not note.is_done
-        note.save()
+    note_id = body.get("id")
+    if note_id is None:
+        return JsonResponse({"status": False, "error": "ID is required."}, status=400)
 
-    return JsonResponse({'status': True})
+    try:
+        note = _todo_notes_queryset_for_slug(slug).get(id=note_id)
+    except TodoNote.DoesNotExist:
+        return JsonResponse({"status": False, "error": "Note not found."}, status=404)
 
-def flip_important_status(request):
-    if request.method == "POST":
-        body_unicode = request.body.decode('utf-8')
+    note.is_done = not note.is_done
+    note.save()
+    return JsonResponse({"status": True, "error": False, "is_done": note.is_done}, status=200)
+
+
+def flip_important_status(request, slug=None):
+    """
+    flip_important_status toggles the importance status of a todo note based on the provided request data.
+    It processes a POST request, validates the input, and updates the note's status,
+    returning a JSON response indicating the result.
+
+    Args:
+        request (HttpRequest): The HTTP request object containing the note ID and the request method.
+
+    Returns:
+        JsonResponse: A JSON response indicating the success or failure of the operation,
+        along with the updated importance status if successful.
+
+    Raises:
+        JsonDecodeError: If the request body contains invalid JSON.
+        Http404: If the specified todo note does not exist.
+    """
+    if request.method != "POST":
+        return JsonResponse({"status": False, "error": "Invalid request method."}, status=400)
+
+    try:
+        body_unicode = request.body.decode("utf-8")
         body = json.loads(body_unicode)
+    except json.JSONDecodeError as e:
+        logger.log_line(
+            PREFIX_RECON_NOTE,
+            "JSON",
+            "JSON decode error: %s" % (e,),
+            level="error",
+        )
+        return JsonResponse({"status": False, "error": "Invalid JSON."}, status=400)
 
-        note = TodoNote.objects.get(id=body['id'])
-        note.is_important = not note.is_important
-        note.save()
+    note_id = body.get("id")
+    if note_id is None:
+        return JsonResponse({"status": False, "error": "ID is required."}, status=400)
 
-    return JsonResponse({'status': True})
+    try:
+        note = _todo_notes_queryset_for_slug(slug).get(id=note_id)
+    except TodoNote.DoesNotExist:
+        return JsonResponse({"status": False, "error": "Note not found."}, status=404)
 
-def delete_note(request):
-    if request.method == "POST":
-        body_unicode = request.body.decode('utf-8')
+    note.is_important = not note.is_important
+    note.save()
+    return JsonResponse({"status": True, "error": False, "is_important": note.is_important}, status=200)
+
+
+def delete_note(request, slug=None):
+    """
+    delete_note handles the deletion of a todo note based on the provided request data.
+    It processes a POST request, validates the input, and removes the specified note,
+    returning a JSON response indicating the result.
+
+    Args:
+        request (HttpRequest): The HTTP request object containing the note ID and the request method.
+
+    Returns:
+        JsonResponse: A JSON response indicating the success or failure of the deletion operation.
+
+    Raises:
+        JsonDecodeError: If the request body contains invalid JSON.
+        Http404: If the specified todo note does not exist.
+    """
+    if request.method != "POST":
+        return JsonResponse({"status": False, "error": "Invalid request method."}, status=400)
+
+    try:
+        body_unicode = request.body.decode("utf-8")
         body = json.loads(body_unicode)
+    except json.JSONDecodeError as e:
+        logger.log_line(
+            PREFIX_RECON_NOTE,
+            "JSON",
+            "JSON decode error: %s" % (e,),
+            level="error",
+        )
+        return JsonResponse({"status": False, "error": "Invalid JSON."}, status=400)
 
-        TodoNote.objects.filter(id=body['id']).delete()
+    note_id = body.get("id")
+    if note_id is None:
+        return JsonResponse({"status": False, "error": "ID is required."}, status=400)
 
-    return JsonResponse({'status': True})
+    qs = _todo_notes_queryset_for_slug(slug).filter(id=note_id)
+    if not qs.exists():
+        return JsonResponse({"status": False, "error": "Note not found."}, status=404)
+
+    qs.delete()
+    return JsonResponse({"status": True, "error": False, "deleted": True}, status=200)

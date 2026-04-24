@@ -1,58 +1,132 @@
-name: 🚀 Build and Push Docker image
+name: Docker Image CI
 
 on:
+  pull_request:
+    paths:
+      - 'docker/**'
   push:
-    branches: [ master ]
+    branches:
+      - "master"
+      - "release/**"
+    paths:
+      - 'docker/**'
+    tags:
+      - "v*.*.*"
   release:
     types: [published]
-  schedule:
-    - cron: '0 0 */5 * *'  # Run every 5 days at midnight UTC
+  workflow_dispatch:
+    inputs:
+      push_image:
+        description: 'Push image to registry'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+        - 'true'
+        - 'false'
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: khulnasoft
+  PROJECT: reconpoint
 
 jobs:
   build-and-push:
-    name: 🐳 Build and Push Docker image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
+        image: [web, postgres, redis, ollama, certs, proxy]
     steps:
-      - name: 📥 Checkout the git repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🖥️ Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: Get version
+        id: get_version
+        run: |
+          VERSION=$(cat web/reconPoint/version.txt)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: 🛠️ Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: 🔑 Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
-
-      - name: 🏷️ Extract metadata (tags, labels) for Docker
+      - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: khulnasoft/reconpoint
+          images: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.PROJECT }}
           tags: |
-            type=raw,value=${{ matrix.platform }}-latest,enable={{is_default_branch}}
-            type=semver,pattern=${{ matrix.platform }}-{{version}}
-            type=semver,pattern=${{ matrix.platform }}-{{major}}.{{minor}}
-            type=semver,pattern=${{ matrix.platform }}-{{major}}
-            type=sha,prefix=${{ matrix.platform }}-sha-
-            type=schedule,pattern=${{ matrix.platform }}-{{date 'YYYYMMDD'}}
+            type=ref,event=branch,enable=${{ !contains(github.ref, 'release/') }}
+            type=ref,event=pr
+            type=raw,value=v${{ steps.get_version.outputs.version }},enable=${{ contains(github.ref, 'release/') || github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
+          flavor: |
+            prefix=reconpoint-${{ matrix.image }}-,onlatest=true
 
-      - name: 🏗️ Build and push Docker image
-        uses: docker/build-push-action@v5
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request' || github.event.inputs.push_image == 'true'
+        uses: docker/login-action@v3
         with:
-          context: web/
-          platforms: ${{ matrix.platform }}
-          push: ${{ github.event_name != 'pull_request' }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ vars.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_PAT }}
+      
+      - name: Build and push (attempt 1)
+        id: build_attempt_1
+        continue-on-error: true
+        uses: docker/build-push-action@v6
+        with:
+          context: ./docker/${{ matrix.image }}
+          file: ./docker/${{ matrix.image }}/Dockerfile
+          push: ${{ github.event_name != 'pull_request' || github.event.inputs.push_image == 'true' }}
+          build-args: |
+            HOST_UID=1000
+            HOST_GID=1000
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Build and push (attempt 2 if attempt 1 failed)
+        if: steps.build_attempt_1.outcome == 'failure'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./docker/${{ matrix.image }}
+          file: ./docker/${{ matrix.image }}/Dockerfile
+          push: ${{ github.event_name != 'pull_request' || github.event.inputs.push_image == 'true' }}
+          build-args: |
+            HOST_UID=1000
+            HOST_GID=1000
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+
+  update-release:
+    needs: build-and-push
+    if: github.event_name == 'release' && github.event.action == 'published'
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Update release description
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          release_id=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/latest" | \
+            jq -r .id)
+          
+          images="web postgres redis ollama certs proxy"
+          image_list=""
+          for image in $images; do
+            image_list="${image_list}- ghcr.io/${{ env.OWNER }}/${{ env.PROJECT }}:reconpoint-${image}-${{ github.ref_name }}\n"
+          done
+          
+          body="Docker images for this release:\n${image_list}"
+          
+          curl -X PATCH -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/${release_id}" \
+            -d "{\"body\": \"$body\"}"

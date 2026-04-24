@@ -1,0 +1,7 @@
+services:
+  certs:
+    image: ghcr.io/khulnasoft/reconpoint:reconpoint-certs-v${RECONPOINT_VERSION}
+    env_file:
+      - ../.env
+    volumes:
+      - ./secrets/certs:/certs:rw

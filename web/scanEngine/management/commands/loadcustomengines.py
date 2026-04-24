@@ -1,12 +1,11 @@
 from django.core.management.base import BaseCommand
-from reconPoint.common_func import load_custom_scan_engines
+
+from reconPoint.settings import RECONPOINT_CUSTOM_ENGINES
+from reconPoint.utilities.engine import load_custom_scan_engines
 
 
 class Command(BaseCommand):
-    help = 'Loads custom engines from YAMLs in custom_engines/ folder into database'
+    help = "Loads custom engines from YAMLs in custom_engines/ folder into database"
 
-    @staticmethod
-    def handle(*args, **kwargs):
-        return load_custom_scan_engines('/usr/src/app/custom_engines')
-
-
+    def handle(self, *args, **kwargs):
+        return load_custom_scan_engines(RECONPOINT_CUSTOM_ENGINES)

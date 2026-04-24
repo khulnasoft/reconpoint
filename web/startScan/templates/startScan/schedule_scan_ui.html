@@ -6,32 +6,178 @@
 Schedule Scan
 {% endblock title %}
 
-
 {% block custom_js_css_link %}
-<link href="{% static 'plugins/jquery-step/jquery.steps.css' %}" rel="stylesheet" type="text/css" />
 <link href="{% static 'plugins/accordions/custom-accordions.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'custom/secator_scan.css' %}" rel="stylesheet" type="text/css" />
 <link href="{% static 'plugins/flatpickr/flatpickr.min.css' %}" rel="stylesheet" type="text/css" />
-<link href="{% static 'plugins/selectize/css/selectize.bootstrap3.css' %}" rel="stylesheet" type="text/css" />
 {% endblock custom_js_css_link %}
 
 {% block breadcrumb_title %}
 <li class="breadcrumb-item"><a href="{% url 'list_target' current_project.slug %}">Target</a></li>
 <li class="breadcrumb-item active">Schedule Scan</li>
-<li class="breadcrumb-item active" aria-current="page">{{domain.name}}</li>
+<li class="breadcrumb-item active" aria-current="page">{{ target.value }}</li>
 {% endblock breadcrumb_title %}
 
 {% block page_title %}
-Scheduling scan for {{domain.name}}
+Scheduling scan for {{ target.value }}
 {% endblock page_title %}
 
 {% block main_content %}
-  {% include "startScan/_items/schedule_scan_wizard.html" %}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body start-scan-card-body">
+        <form method="POST" id="schedule-scan-form" data-secator-id-prefix="schedule_scan">
+          {% csrf_token %}
+          <input type="hidden" name="target_id" value="{{ target.id }}">
+          {% include 'startScan/_items/secator_hidden_fields.html' with id_prefix='schedule_scan_' %}
+          {% include 'startScan/_items/secator_profile_hidden_fields.html' with id_prefix='schedule_scan_' %}
+
+          <div id="schedule-scan-content">
+            <h4>Schedule type</h4>
+            <div class="execution-mode-selector mb-4">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <div class="schedule-mode-card" data-mode="periodic" role="button" tabindex="0">
+                    <i class="fas fa-sync-alt"></i>
+                    <h5>Periodic</h5>
+                    <p>Run scan at a fixed interval</p>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="schedule-mode-card" data-mode="clocked" role="button" tabindex="0">
+                    <i class="fas fa-clock"></i>
+                    <h5>One-time</h5>
+                    <p>Run scan at a specific date and time</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input type="hidden" name="scheduled_mode" id="id_scheduled_mode" value="periodic">
+
+            <div id="periodic-options" class="mb-4">
+              <h5 class="mb-2">Run scan every</h5>
+              <div class="row align-items-end">
+                <div class="col-auto">
+                  <input type="number" name="frequency" value="30" min="1" class="form-control form-control-lg" style="width: 6rem;">
+                </div>
+                <div class="col-md-4">
+                  <select class="form-select form-select-lg" name="frequency_type">
+                    <option value="minutes">Minutes</option>
+                    <option value="hours">Hours</option>
+                    <option value="days">Days</option>
+                    <option value="weeks">Weeks</option>
+                    <option value="months">Months</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div id="clocked-options" class="mb-4 d-none">
+              <h5 class="mb-2">Run scan at</h5>
+              <div class="row">
+                <div class="col-md-6 col-lg-4">
+                  <input type="text" id="clockedTime" class="form-control form-control-lg" placeholder="Select date and time" name="scheduled_time" readonly>
+                </div>
+              </div>
+            </div>
+
+            <h4>Choose Execution Mode</h4>
+            {% include 'startScan/_items/secator_execution_mode_selector.html' with scan_title='Scan' embed_selection_container=False %}
+            {% include 'startScan/_items/secator_view_toggle.html' with id_prefix='schedule_scan' %}
+            {% include 'startScan/_items/secator_selection_layout.html' with id_prefix='schedule_scan' %}
+            {% include 'startScan/_items/secator_scan_options_accordion.html' with domain_name=target.value id_prefix='schedule_scan_' %}
+            {% include 'startScan/_items/secator_advanced_config_accordion.html' with id_prefix='schedule_scan_' show_random_proxy=False %}
+          </div>
+
+          <div class="start-scan-button-container">
+            <div class="d-flex justify-content-end">
+              {% comment %}Distinct id to avoid clash with immediate-scan form #start-scan-btn; secator_scan.js uses button[type="submit"] for this form.{% endcomment %}
+              <button type="submit" class="btn btn-secondary btn-lg px-5" id="schedule-scan-btn" disabled>
+                <i class="fas fa-calendar-alt me-2"></i>Schedule Scan
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock main_content %}
 
-
 {% block page_level_script %}
-<script src="{% static 'plugins/jquery-step/jquery.steps.min.js' %}"></script>
+<script>
+  window.SECATOR_INPUT_TYPES_TARGETS_URL = "{% url "api:get_secator_input_types_targets" %}";
+  window.SECATOR_SELECTION_URL = "{% url "api:get_secator_selection" %}";
+</script>
+<script src="{% static 'custom/secator/secator_scan_core.js' %}"></script>
+<script src="{% static 'custom/secator/secator_scan_targets.js' %}"></script>
+<script src="{% static 'custom/secator/secator_scan_tooltips.js' %}"></script>
+<script src="{% static 'custom/secator/secator_compact_list.js' %}"></script>
+<script src="{% static 'custom/secator/secator_selection_listeners.js' %}"></script>
+<script src="{% static 'custom/secator/secator_selection_ajax.js' %}"></script>
+<script src="{% static 'custom/secator/secator_selection_dom.js' %}"></script>
+<script src="{% static 'custom/secator/secator_form_submit.js' %}"></script>
+<script src="{% static 'custom/secator/secator_input_types_ajax.js' %}"></script>
+<script src="{% static 'custom/secator/secator_input_types_tasks.js' %}"></script>
+<script src="{% static 'custom/secator_scan.js' %}"></script>
 <script src="{% static 'plugins/flatpickr/flatpickr.min.js' %}"></script>
-<script src="{% static 'plugins/selectize/js/standalone/selectize.min.js' %}"></script>
-<script src="{% static 'startScan/js/schedule-scan-wizard.js' %}"></script>
+<script>
+(function() {
+  const form = document.getElementById('schedule-scan-form');
+  if (!form) return;
+
+  const timezoneOffsetField = document.createElement('input');
+  timezoneOffsetField.type = 'hidden';
+  timezoneOffsetField.name = 'timezone_offset';
+  timezoneOffsetField.value = String(new Date().getTimezoneOffset());
+  form.appendChild(timezoneOffsetField);
+
+  const modeInput = document.getElementById('id_scheduled_mode');
+  const periodicOptions = document.getElementById('periodic-options');
+  const clockedOptions = document.getElementById('clocked-options');
+  const clockedInput = document.getElementById('clockedTime');
+
+  function setScheduleMode(mode) {
+    modeInput.value = mode;
+    form.querySelectorAll('.schedule-mode-card').forEach(function(card) {
+      card.classList.toggle('selected', card.getAttribute('data-mode') === mode);
+    });
+    periodicOptions.classList.toggle('d-none', mode !== 'periodic');
+    clockedOptions.classList.toggle('d-none', mode !== 'clocked');
+  }
+
+  form.querySelectorAll('.schedule-mode-card').forEach(function(card) {
+    card.addEventListener('click', function() {
+      setScheduleMode(this.getAttribute('data-mode'));
+    });
+    card.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        setScheduleMode(this.getAttribute('data-mode'));
+      }
+    });
+  });
+
+  setScheduleMode('periodic');
+
+  if (clockedInput) {
+    flatpickr(clockedInput, {
+      enableTime: true,
+      dateFormat: 'Y-m-d H:i',
+      minDate: 'today',
+      time_24hr: true
+    });
+  }
+
+  form.addEventListener('submit', function(e) {
+    if (modeInput.value === 'clocked' && (!clockedInput || !clockedInput.value.trim())) {
+      e.preventDefault();
+      clockedOptions.classList.remove('d-none');
+      clockedInput.focus();
+      return;
+    }
+  });
+})();
+</script>
 {% endblock page_level_script %}

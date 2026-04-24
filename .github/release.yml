@@ -1,0 +1,20 @@
+changelog:
+  categories:
+    - title: Added
+      labels:
+        - enhancement
+    - title: Fixed
+      labels:
+        - bug
+    - title: Refactored
+      labels:
+        - refactor
+    - title: Dependencies
+      labels:
+        - dependencies
+    - title: CI/CD
+      labels:
+        - ci
+    - title: documentation
+      labels:
+        - documentation

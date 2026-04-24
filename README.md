@@ -269,6 +269,28 @@ If you encounter any issues during installation or prefer a visual guide, one of
 
 Please note: This is community-curated content and is not owned by reconPoint. The installation process may change, so please refer to the official documentation for the most up-to-date instructions.
 
+## Multi-Platform Support
+
+reconPoint supports multiple architectures including AMD64 and ARM64. The Docker images are built for both platforms, allowing deployment on a variety of hardware including x86_64 servers, ARM-based devices like Raspberry Pi, and cloud platforms supporting multiple architectures.
+
+### Building for Multiple Platforms
+
+To build images for multiple platforms locally:
+
+```bash
+make build-multiplatform
+```
+
+This will create images compatible with both `linux/amd64` and `linux/arm64` architectures.
+
+### Platform-Specific Images
+
+The official Docker images on Docker Hub are available for multiple platforms. When pulling the image, Docker will automatically select the appropriate architecture for your system:
+
+```bash
+docker pull khulnasoft/reconpoint:latest
+```
+
 ## Updating
 
 1. To update reconPoint, run:
