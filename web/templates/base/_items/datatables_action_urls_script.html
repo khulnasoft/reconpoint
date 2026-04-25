@@ -1,0 +1,11 @@
+{% if datatable_action_urls %}
+{{ datatable_action_urls|json_script:"reconpoint-datatable-action-urls" }}
+<script>
+(function(){
+  var el = document.getElementById('reconpoint-datatable-action-urls');
+  if (el && el.textContent) {
+    window.RECONPOINT_DATATABLE_ACTION_URLS = Object.assign(window.RECONPOINT_DATATABLE_ACTION_URLS || {}, JSON.parse(el.textContent));
+  }
+})();
+</script>
+{% endif %}

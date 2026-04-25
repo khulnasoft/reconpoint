@@ -1,16 +1,35 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
+
 import os
 import sys
 
+from reconPoint.settings import UI_REMOTE_DEBUG
+
+
+# Remote debug setup for Web GUI (manage.py runserver only)
+# Note: For daphne (ASGI), debugger is initialized in asgi.py
+if UI_REMOTE_DEBUG and len(sys.argv) > 1 and sys.argv[1] == "runserver":
+    from debugger_setup import setup_debugger
+
+    setup_debugger()
+
 
 def main():
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'reconPoint.settings')
-    # show reconpoint artwork
-    f = open('art/reconPoint.txt', 'r')
-    file_contents = f.read()
-    print (file_contents)
-    f.close()
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "reconPoint.settings")
+
+    # List of commands that should not display the reconpoint artwork (avoids duplicate in container: entrypoint_setup + background run_scheduled_scans; avoids polluting stdout when scripts capture output e.g. generate_secator_api_key --raw-key)
+    skip_art_commands = ["test", "dumpdata", "entrypoint_setup", "run_scheduled_scans", "generate_secator_api_key"]
+
+    if all(cmd not in sys.argv for cmd in skip_art_commands):
+        # show reconpoint artwork
+        try:
+            with open("art/reconPoint.txt", "r", encoding="utf-8") as f:
+                file_contents = f.read()
+                print(file_contents)
+        except FileNotFoundError:
+            print("Failed to display reconPoint artwork.")
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
@@ -22,5 +41,5 @@ def main():
     execute_from_command_line(sys.argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

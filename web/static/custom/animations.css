@@ -1,0 +1,755 @@
+/**
+ * reconPoint - Animations & Transitions
+ * Smooth, professional animations and transitions for enhanced UX
+ */
+
+/* ============================================================================
+   GLOBAL TRANSITIONS & ANIMATIONS
+   ============================================================================ */
+
+* {
+    /* Respect user motion preferences */
+}
+
+/* General fade and slide animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: translateX(-5px);
+    }
+
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: translateX(5px);
+    }
+}
+
+@keyframes glow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 5px rgba(50, 131, 246, 0.5);
+    }
+
+    50% {
+        box-shadow: 0 0 20px rgba(50, 131, 246, 0.8);
+    }
+}
+
+/* ============================================================================
+   PAGE TRANSITIONS
+   ============================================================================ */
+
+body.loading {
+    animation: fadeIn 0.3s ease;
+}
+
+.page-title-box {
+    animation: slideInDown 0.4s ease;
+}
+
+.content {
+    animation: fadeIn 0.3s ease;
+}
+
+/* ============================================================================
+   BUTTON ANIMATIONS
+   ============================================================================ */
+
+.btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.btn:not(:disabled):hover {
+    animation: none;
+}
+
+.btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.btn:active::after {
+    animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+    to {
+        width: 500px;
+        height: 500px;
+        opacity: 0;
+    }
+}
+
+/* Button press animation */
+.btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+/* ============================================================================
+   CARD ANIMATIONS
+   ============================================================================ */
+
+.card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+    animation: cardHover 0.3s ease forwards;
+}
+
+@keyframes cardHover {
+    from {
+        transform: translateY(0px);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    to {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+}
+
+/* Card entrance animation */
+.card {
+    animation: cardEnter 0.5s ease-out;
+}
+
+@keyframes cardEnter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================================================
+   FORM ANIMATIONS
+   ============================================================================ */
+
+.form-control,
+.form-select,
+textarea {
+    transition: all 0.2s ease;
+}
+
+.form-control:focus,
+.form-select:focus,
+textarea:focus {
+    animation: inputFocus 0.2s ease;
+}
+
+@keyframes inputFocus {
+    from {
+        box-shadow: 0 0 0 0 rgba(50, 131, 246, 0);
+    }
+
+    to {
+        box-shadow: 0 0 0 3px rgba(50, 131, 246, 0.1);
+    }
+}
+
+/* Form label animation */
+.form-label {
+    transition: all 0.2s ease;
+}
+
+.form-control:focus~.form-label,
+.form-control:not(:placeholder-shown)~.form-label {
+    transform: translateY(-1.5rem) scale(0.9);
+    color: #3283f6;
+}
+
+/* ============================================================================
+   MODAL ANIMATIONS
+   ============================================================================ */
+
+.modal-content {
+    animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-backdrop {
+    animation: backdropFade 0.2s ease;
+}
+
+@keyframes backdropFade {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal close animation */
+.modal:not(.show) .modal-content {
+    animation: modalSlideOut 0.3s ease forwards;
+    pointer-events: none;
+}
+
+@keyframes modalSlideOut {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+}
+
+/* ============================================================================
+   DROPDOWN ANIMATIONS
+   ============================================================================ */
+
+.dropdown-menu {
+    animation: dropdownEnter 0.2s ease;
+    transform-origin: top;
+}
+
+@keyframes dropdownEnter {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item {
+    transition: all 0.15s ease;
+}
+
+/* ============================================================================
+   NOTIFICATION/ALERT ANIMATIONS
+   ============================================================================ */
+
+.alert {
+    animation: alertSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes alertSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.alert.alert-dismissible .btn-close {
+    transition: all 0.2s ease;
+}
+
+.alert.alert-dismissible .btn-close:hover {
+    transform: rotate(90deg);
+}
+
+/* Toast animation */
+.toast {
+    animation: toastSlideIn 0.3s ease;
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================================================
+   BADGE ANIMATIONS
+   ============================================================================ */
+
+.badge {
+    transition: all 0.2s ease;
+}
+
+.badge:hover {
+    animation: badgePulse 0.3s ease;
+}
+
+@keyframes badgePulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Badge entrance */
+.badge {
+    animation: badgeEnter 0.3s ease;
+}
+
+@keyframes badgeEnter {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ============================================================================
+   LOADING STATES
+   ============================================================================ */
+
+.spinner-border {
+    animation: spin 1s linear infinite;
+}
+
+.spinner-grow {
+    animation: grow 0.75s infinite;
+}
+
+@keyframes grow {
+
+    0%,
+    100% {
+        transform: scale(0);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+}
+
+/* Loading shimmer effect */
+.loading-shimmer {
+    background: linear-gradient(90deg,
+            #f6f7f8 0%,
+            #edeef1 20%,
+            #f6f7f8 40%,
+            #f6f7f8 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+}
+
+/* Skeleton loader pulse */
+.skeleton {
+    background-color: #e9ecef;
+    border-radius: 0.375rem;
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeletonPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ============================================================================
+   TABLE ANIMATIONS
+   ============================================================================ */
+
+.dt-container tbody tr {
+    transition: all 0.15s ease;
+}
+
+.dt-container tbody tr:hover {
+    animation: rowHover 0.2s ease;
+}
+
+@keyframes rowHover {
+    from {
+        background-color: transparent;
+    }
+
+    to {
+        background-color: #f8f9fa;
+    }
+}
+
+.dt-container tbody tr.active {
+    animation: rowActive 0.3s ease;
+}
+
+@keyframes rowActive {
+    from {
+        background-color: transparent;
+        border-left: 0 solid #3283f6;
+    }
+
+    to {
+        background-color: rgba(50, 131, 246, 0.05);
+        border-left: 3px solid #3283f6;
+    }
+}
+
+/* ============================================================================
+   NAVIGATION ANIMATIONS
+   ============================================================================ */
+
+.nav-tabs .nav-link {
+    transition: all 0.2s ease;
+}
+
+.nav-tabs .nav-link.active {
+    animation: navTabActive 0.3s ease;
+}
+
+@keyframes navTabActive {
+    from {
+        border-bottom-color: transparent;
+        color: #6c757d;
+    }
+
+    to {
+        border-bottom-color: #3283f6;
+        color: #3283f6;
+    }
+}
+
+/* Breadcrumb hover */
+.breadcrumb-item a {
+    transition: all 0.2s ease;
+}
+
+.breadcrumb-item a:hover {
+    animation: breadcrumbHover 0.2s ease;
+}
+
+@keyframes breadcrumbHover {
+    0% {
+        transform: translateX(0);
+    }
+
+    50% {
+        transform: translateX(2px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+/* ============================================================================
+   VALIDATION ANIMATIONS
+   ============================================================================ */
+
+.form-control.is-invalid {
+    animation: invalidShake 0.3s ease;
+}
+
+@keyframes invalidShake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: translateX(-2px);
+    }
+
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: translateX(2px);
+    }
+}
+
+.form-control.is-valid {
+    animation: validCheck 0.4s ease;
+}
+
+@keyframes validCheck {
+    0% {
+        border-color: #dee2e6;
+        box-shadow: none;
+    }
+
+    100% {
+        border-color: #198754;
+        box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1);
+    }
+}
+
+/* ============================================================================
+   TRANSITION UTILITIES
+   ============================================================================ */
+
+.transition-fast {
+    transition: all 0.15s ease;
+}
+
+.transition-base {
+    transition: all 0.2s ease;
+}
+
+.transition-slow {
+    transition: all 0.3s ease;
+}
+
+.transition-colors {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.transition-transform {
+    transition: transform 0.2s ease;
+}
+
+.transition-shadow {
+    transition: box-shadow 0.2s ease;
+}
+
+/* ============================================================================
+   REDUCED MOTION SUPPORT
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    /* Disable animations but keep transitions functional */
+    .btn:not(:disabled):hover {
+        transform: none !important;
+    }
+
+    .card:hover {
+        transform: none !important;
+    }
+
+    .pagination .page-link:hover {
+        transform: none !important;
+    }
+}
+
+/* ============================================================================
+   HIGH CONTRAST MODE SUPPORT
+   ============================================================================ */
+
+@media (prefers-contrast: more) {
+
+    /* Increase animation durations for better visibility */
+    .modal-content {
+        animation-duration: 0.5s;
+    }
+
+    .alert {
+        animation-duration: 0.5s;
+    }
+
+    /* More prominent focus states */
+    *:focus-visible {
+        outline-width: 3px;
+    }
+}
+
+/* ============================================================================
+   DARK MODE ANIMATIONS
+   ============================================================================ */
+
+[data-bs-theme="dark"] .modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+[data-bs-theme="dark"] .loading-shimmer {
+    background: linear-gradient(90deg,
+            #2d3139 0%,
+            #1f2937 20%,
+            #2d3139 40%,
+            #2d3139 100%);
+}
+
+[data-bs-theme="dark"] .skeleton {
+    background-color: #374151;
+}

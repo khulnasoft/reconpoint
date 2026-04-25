@@ -1,0 +1,19 @@
+services:
+  db:
+    build: ./postgres
+
+  redis:
+    build: ./redis
+
+  web:
+    build:
+      context: ./web
+      args:
+        HOST_UID: ${HOST_UID}
+        HOST_GID: ${HOST_GID}
+
+  proxy:
+    build: ./proxy
+
+  ollama:
+    build: ./ollama

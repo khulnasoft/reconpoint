@@ -1,0 +1,654 @@
+/**
+ * reconPoint - Advanced Component Styling
+ * Enhanced styling for tables, forms, and specialized components
+ */
+
+/* ============================================================================
+   ADVANCED FORM COMPONENTS
+   ============================================================================ */
+
+/* Input Group Enhancements */
+.input-group {
+    gap: 0;
+}
+
+.input-group>.form-control:not(:last-child),
+.input-group>.form-select:not(:last-child) {
+    border-radius: 0.375rem 0 0 0.375rem;
+}
+
+.input-group>.btn:not(:first-child) {
+    border-radius: 0 0.375rem 0.375rem 0;
+    margin-left: -1px;
+}
+
+.input-group .btn-outline-secondary {
+    border-color: #dee2e6;
+    color: #6c757d;
+}
+
+.input-group .btn-outline-secondary:hover {
+    background-color: transparent;
+    border-color: #3283f6;
+    color: #3283f6;
+}
+
+/* Checkbox and Radio Button Enhancements */
+.form-check {
+    padding-left: 0;
+    margin-bottom: 1rem;
+}
+
+.form-check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: 0.125rem;
+    margin-right: 0.75rem;
+    cursor: pointer;
+    border: 2px solid #dee2e6;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    background-color: #fff;
+}
+
+.form-check-input:checked {
+    background-color: #3283f6;
+    border-color: #3283f6;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+}
+
+.form-check-input:checked:hover {
+    background-color: #1e5bc4;
+    border-color: #1e5bc4;
+}
+
+.form-check-input:focus {
+    border-color: #3283f6;
+    box-shadow: 0 0 0 0.2rem rgba(50, 131, 246, 0.25);
+}
+
+.form-check-label {
+    cursor: pointer;
+    margin-bottom: 0;
+    user-select: none;
+    font-weight: 500;
+}
+
+/* Toggle Switch */
+.form-switch .form-check-input {
+    width: 3rem;
+    height: 1.5rem;
+    margin-left: -2.5rem;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+    background-position: left center;
+    background-repeat: no-repeat;
+    border-radius: 2rem;
+}
+
+.form-switch .form-check-input:checked {
+    background-position: right center;
+    background-color: #3283f6;
+}
+
+/* Select/Dropdown Enhancements */
+.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
+}
+
+.form-select:focus {
+    border-color: #3283f6;
+    box-shadow: 0 0 0 0.2rem rgba(50, 131, 246, 0.15);
+}
+
+/* ============================================================================
+   DATATABLE ADVANCED STYLING
+   ============================================================================ */
+
+/* DataTable Container */
+.dt-container {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* DataTable Header */
+.dt-container .dt-head-row {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.dt-container .dt-head-cell {
+    font-weight: 600;
+    font-size: 0.7875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1rem 0.75rem !important;
+    color: #495057;
+    white-space: nowrap;
+}
+
+/* DataTable Body */
+.dt-container .dt-body-row {
+    transition: all 0.15s ease;
+}
+
+.dt-container .dt-body-row:hover {
+    background-color: #f8f9fa;
+    box-shadow: inset 3px 0 0 #3283f6;
+}
+
+.dt-container .dt-body-cell {
+    padding: 0.75rem !important;
+    vertical-align: middle;
+}
+
+/* DataTable Pagination */
+.dt-paging {
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.dt-paging .dt-paging-button {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    background-color: #fff;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.dt-paging .dt-paging-button:hover:not(.disabled) {
+    background-color: #e9ecef;
+    border-color: #3283f6;
+    color: #3283f6;
+}
+
+.dt-paging .dt-paging-button.active {
+    background-color: #3283f6;
+    border-color: #3283f6;
+    color: #fff;
+}
+
+.dt-paging .dt-paging-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* DataTable Info */
+.dt-info {
+    padding: 1rem 0.75rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* ============================================================================
+   TAB COMPONENTS
+   ============================================================================ */
+
+.nav-tabs {
+    border-bottom: 2px solid #e9ecef;
+    gap: 0;
+}
+
+.nav-tabs .nav-link {
+    color: #6c757d;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    margin-bottom: -2px;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #3283f6;
+    border-bottom-color: rgba(50, 131, 246, 0.3);
+}
+
+.nav-tabs .nav-link.active {
+    color: #3283f6;
+    border-bottom-color: #3283f6;
+    background-color: transparent;
+}
+
+.tab-pane {
+    padding: 1.5rem 0;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================================================
+   ACCORDION COMPONENTS
+   ============================================================================ */
+
+.accordion {
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.accordion-item {
+    border: 1px solid #e9ecef;
+    margin-bottom: -1px;
+    background-color: #fff;
+    transition: all 0.2s ease;
+}
+
+.accordion-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.accordion-button {
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    color: #212529;
+    background-color: #fff;
+    border: none;
+    box-shadow: none;
+    transition: all 0.2s ease;
+}
+
+.accordion-button:hover {
+    background-color: #f8f9fa;
+    color: #3283f6;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: rgba(50, 131, 246, 0.05);
+    color: #3283f6;
+    box-shadow: none;
+}
+
+.accordion-body {
+    padding: 1.5rem;
+    background-color: #fafbfc;
+    border-top: 1px solid #e9ecef;
+}
+
+/* ============================================================================
+   LIST COMPONENTS
+   ============================================================================ */
+
+.list-group {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.list-group-item {
+    border: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+    transition: all 0.2s ease;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+    border-color: #3283f6;
+    padding-left: 1.75rem;
+}
+
+.list-group-item.active {
+    background: linear-gradient(135deg, #3283f6 0%, #1e5bc4 100%);
+    border-color: #3283f6;
+    color: #fff;
+}
+
+.list-group-item-action:hover,
+.list-group-item-action:focus {
+    color: #3283f6;
+    text-decoration: none;
+}
+
+/* ============================================================================
+   PROGRESS BAR ENHANCEMENTS
+   ============================================================================ */
+
+.progress {
+    height: 0.5rem;
+    border-radius: 0.5rem;
+    background-color: #e9ecef;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, #3283f6 0%, #5fa3ff 100%);
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(50, 131, 246, 0.3);
+}
+
+.progress-bar.bg-success {
+    background: linear-gradient(90deg, #198754 0%, #28a745 100%) !important;
+}
+
+.progress-bar.bg-danger {
+    background: linear-gradient(90deg, #dc3545 0%, #ff6b6b 100%) !important;
+}
+
+.progress-bar.bg-warning {
+    background: linear-gradient(90deg, #ffc107 0%, #ffdb4d 100%) !important;
+}
+
+/* ============================================================================
+   BREADCRUMB ENHANCEMENTS
+   ============================================================================ */
+
+.breadcrumb {
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 0;
+    border-bottom: none;
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.breadcrumb-item {
+    display: inline-flex;
+    align-items: center;
+}
+
+.breadcrumb-item+.breadcrumb-item::before {
+    content: '/';
+    display: inline-block;
+    padding: 0 0.5rem;
+    color: #6c757d;
+}
+
+.breadcrumb-item a {
+    color: #3283f6;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb-item a:hover {
+    color: #1e5bc4;
+    text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* ============================================================================
+   DROPDOWN MENU ENHANCEMENTS
+   ============================================================================ */
+
+.dropdown-menu {
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 0.5rem 0;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1.25rem;
+    color: #495057;
+    transition: all 0.15s ease;
+    font-weight: 500;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+    color: #3283f6;
+    padding-left: 1.5rem;
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+    background-color: rgba(50, 131, 246, 0.1);
+    color: #3283f6;
+}
+
+.dropdown-divider {
+    margin: 0.5rem 0;
+    border-top: 1px solid #e9ecef;
+}
+
+.dropdown-header {
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+}
+
+/* ============================================================================
+   TOOLTIP & POPOVER ENHANCEMENTS
+   ============================================================================ */
+
+.tooltip-inner {
+    background-color: rgba(33, 37, 41, 0.95);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    max-width: 200px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.bs-tooltip-auto[data-popper-placement^="top"] .tooltip-arrow::before,
+.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: rgba(33, 37, 41, 0.95);
+}
+
+.popover {
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+}
+
+.popover-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.popover-body {
+    padding: 1rem;
+    font-size: 0.875rem;
+    color: #495057;
+}
+
+/* ============================================================================
+   PAGINATION ENHANCEMENTS
+   ============================================================================ */
+
+.pagination {
+    gap: 0.25rem;
+}
+
+.page-link {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    color: #3283f6;
+    padding: 0.5rem 0.75rem;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.page-link:hover {
+    color: #1e5bc4;
+    background-color: #e9ecef;
+    border-color: #3283f6;
+}
+
+.page-link.active {
+    background: linear-gradient(135deg, #3283f6 0%, #1e5bc4 100%);
+    border-color: #3283f6;
+    color: #fff;
+}
+
+.page-link.disabled {
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* ============================================================================
+   SPINNER & LOADING STATES
+   ============================================================================ */
+
+.spinner-border {
+    border-width: 0.2em;
+    border-color: rgba(50, 131, 246, 0.15);
+    border-right-color: #3283f6;
+}
+
+.spinner-border-sm {
+    border-width: 0.2em;
+    width: 1rem;
+    height: 1rem;
+}
+
+.spinner-grow {
+    background: linear-gradient(135deg, rgba(50, 131, 246, 0.2) 0%, #3283f6 100%);
+}
+
+/* ============================================================================
+   COLLAPSE/ACCORDION ANIMATIONS
+   ============================================================================ */
+
+.collapse {
+    transition: all 0.3s ease;
+}
+
+.collapse.show {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================================================
+   RESPONSIVE TABLE WRAPPING
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .table-responsive {
+        max-height: 600px;
+    }
+
+    .dt-container .dt-head-cell {
+        font-size: 0.7rem;
+        padding: 0.75rem 0.5rem !important;
+    }
+
+    .dt-container .dt-body-cell {
+        padding: 0.5rem !important;
+        font-size: 0.8rem;
+    }
+
+    .breadcrumb {
+        font-size: 0.75rem;
+    }
+
+    .nav-tabs .nav-link {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* ============================================================================
+   READONLY/DISABLED STATES
+   ============================================================================ */
+
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.form-control:disabled::placeholder,
+.form-control[readonly]::placeholder {
+    color: #adb5bd;
+}
+
+/* ============================================================================
+   EDGE CASE STYLING
+   ============================================================================ */
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state-text {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Error state */
+.has-error {
+    color: #dc3545;
+}
+
+.has-error .form-control {
+    border-color: #dc3545;
+}
+
+/* Success state */
+.has-success {
+    color: #198754;
+}
+
+.has-success .form-control {
+    border-color: #198754;
+}
+
+/* Warning state */
+.has-warning {
+    color: #ffc107;
+}
+
+.has-warning .form-control {
+    border-color: #ffc107;
+}

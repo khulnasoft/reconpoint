@@ -2,6 +2,7 @@ web/custom_engines*
 Pipfile*
 resume.cfg
 *.txt
+!version.txt
 *.log
 *.pot
 *.pyc
@@ -38,6 +39,24 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# IDE files
+.vscode/settings.json
+.vscode/tasks-and-contexts.json
+.idea/
+.cursor/*
+!.cursor/rules
+!.cursor/rules/**
+!.cursor/skills
+!.cursor/skills/**
+.claude/*
+!.claude/rules
+!.claude/rules/**
+!.claude/skills
+!.claude/skills/**
+.zed/
+.VSCodeCounter/
+.sourcery.yaml
+
 *.manifest
 *.spec
 
@@ -56,9 +75,19 @@ docs/_build/
 staticfiles/
 
 secret
-/secrets
+docker/secrets
+logs
 
 get-docker.sh
 
+# Database backups (host volume dumps)
+backup/
+
 # Environment variables
 .env
+
+# Celery
+*.pid
+
+analyse*
+*.json
